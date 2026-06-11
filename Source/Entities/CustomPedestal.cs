@@ -118,6 +118,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> managedEntityIds = new HashSet<int>();
         private readonly List<Entity> managedEntities = new List<Entity>();
+        private readonly Dictionary<Type, FieldInfo?> speedFieldInfos = new Dictionary<Type, FieldInfo?>();
         private readonly bool breakable;
         private readonly float brokenDisableDuration;
         private readonly bool showReturnLine;
@@ -294,10 +295,14 @@ namespace Celeste.Mod.BalintHelper.Entities
 
                 float delay = returnDelay;
 
+                bool isInstant = false;
                 // Instant-in-bounds override
                 if (delay > 0f && instantReturnInBounds
                     && target.CollidePoint(entity.Center))
+                {
                     delay = 0f;
+                    isInstant = true;
+                }
 
                 // Max-distance check — skip return entirely if too far
                 if (maxDistance > 0f
@@ -305,7 +310,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
 
                 if (delay <= 0f)
-                    TeleportEntityTo(entity, target);
+                    TeleportEntityTo(entity, target, !isInstant);
                 else
                     returnTimers[entity] = delay;
             }
@@ -406,14 +411,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                     theo.Speed += direction * baseDirectionMultiplier;
                     theo.Speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
                 }
-                else
+                else if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField))
                 {
-                    // TODO: optimize this, this should be a one-time thing when we initially resolve entity types (and that way we can also null-check & field type check (Vector2) and skip this step for unsupported entities)
-                    FieldInfo speedField = ClaimedEntity.GetType().GetField(
-                        "Speed",
-                        BindingFlags.Instance | BindingFlags.Public
-                    );
-
                     if (speedField != null && speedField.FieldType == typeof(Vector2))
                     {
                         Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity)!;
@@ -449,7 +448,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         // ── Teleport ──────────────────────────────────────────────────────────────
 
-        private void TeleportEntityTo(Entity entity, CustomPedestal target)
+        private void TeleportEntityTo(Entity entity, CustomPedestal target, bool playEffects = true)
         {
             ReleaseClaim(entity);
 
@@ -461,17 +460,18 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             TheoCrystalSpeedField?.SetValue(entity, Vector2.Zero);
 
-            if (entity is not TheoCrystal)
+            if (entity is not TheoCrystal && speedFieldInfos.TryGetValue(entity.GetType(), out var speedField))
             {
-                var speedField = entity.GetType().GetField("Speed",
-                    BindingFlags.Instance | BindingFlags.Public);
                 speedField?.SetValue(entity, Vector2.Zero);
             }
 
             TheoCrystalOnPedestalProp?.SetValue(entity, true);
 
-            EmitParticleBurst(PtExplode, entity.Center, 8);
-            Audio.Play(soundTeleport, entity.Position);
+            if (playEffects)
+            {
+                EmitParticleBurst(PtExplode, entity.Center, 8);
+                Audio.Play(soundTeleport, entity.Position);
+            }
         }
 
         private CustomPedestal? FindClaimingPedestal(Entity entity)
@@ -594,7 +594,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                 if (e.Get<Holdable>() == null)
                     continue;
 
-                bool byType = managedTypeNames.Contains(e.GetType().Name);
+                var type = e.GetType();
+                bool byType = managedTypeNames.Contains(e.SourceData?.Name ?? "") || managedTypeNames.Contains(type.Name);
                 bool byId = false;
 
                 if (!byType && managedEntityIds.Count > 0)
@@ -604,7 +605,22 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
 
                 if (byType || byId)
-                    managedEntities.Add(e);
+                {
+                    if (!speedFieldInfos.TryGetValue(type, out var fi))
+                    {
+                        fi = type.GetField("Speed",
+                            BindingFlags.Instance | BindingFlags.Public);
+                        if (fi?.FieldType != typeof(Vector2))
+                        {
+                            fi = null;
+                        }
+                        speedFieldInfos[type] = fi;
+                    }
+                    if (fi != null)
+                    {
+                        managedEntities.Add(e);
+                    }
+                }
             }
         }
 
