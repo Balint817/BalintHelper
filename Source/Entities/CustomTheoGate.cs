@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -25,6 +26,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly Shaker shaker;
         private readonly TheoModes theoMode;
         private readonly Vector2 holdingCheckFrom;
+        private readonly string entityTypesRaw;
+        private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<int> managedEntityIds = new HashSet<int>();
 
         private float drawHeight;
         private float drawHeightMoveSpeed;
@@ -37,6 +41,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             closedHeight = data.Height;
             theoMode = data.Enum("theoMode", TheoModes.Any);
+            entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
+            ParseManagedEntityFilters();
 
             Add(sprite = GFX.SpriteBank.Create("templegate_theo"));
             sprite.X = Collider.Width / 2f;
@@ -104,22 +110,17 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             float maxDistanceSq = open ? HoldingCloseDistSq : HoldingOpenDistSq;
-            bool foundRelevantCrystal = false;
+            bool foundRelevantHoldable = false;
 
-            foreach (Entity entity in Scene.Tracker.GetEntities<TheoCrystal>())
+            foreach (Entity entity in GetManagedHoldables())
             {
-                if (entity is not TheoCrystal crystal)
+                if (entity.X > X + 10f)
                 {
                     continue;
                 }
 
-                if (crystal.X > X + 10f)
-                {
-                    continue;
-                }
-
-                foundRelevantCrystal = true;
-                bool isNearby = Vector2.DistanceSquared(holdingCheckFrom, crystal.Center) < maxDistanceSq;
+                foundRelevantHoldable = true;
+                bool isNearby = Vector2.DistanceSquared(holdingCheckFrom, entity.Center) < maxDistanceSq;
 
                 if (theoMode == TheoModes.Any)
                 {
@@ -134,7 +135,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
 
-            if (!foundRelevantCrystal)
+            if (!foundRelevantHoldable)
             {
                 return true;
             }
@@ -193,6 +194,55 @@ namespace Celeste.Mod.BalintHelper.Entities
             else
             {
                 lockState = false;
+            }
+        }
+
+        private void ParseManagedEntityFilters()
+        {
+            managedTypeNames.Clear();
+            managedEntityIds.Clear();
+
+            var tokens = entityTypesRaw
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var raw in tokens)
+            {
+                var token = raw.Trim();
+                if (token.Length == 0)
+                    continue;
+
+                if (int.TryParse(token, out int entityId))
+                    managedEntityIds.Add(entityId);
+                else
+                    managedTypeNames.Add(token);
+            }
+        }
+
+        private bool IsManagedEntity(Entity entity)
+        {
+            var type = entity.GetType();
+            bool byType = managedTypeNames.Contains(entity.SourceData?.Name ?? "") || managedTypeNames.Contains(type.Name);
+            if (byType)
+                return true;
+
+            if (managedEntityIds.Count > 0 && entity.SourceData?.ID is int entityId)
+                return managedEntityIds.Contains(entityId);
+
+            return false;
+        }
+
+        private IEnumerable<Entity> GetManagedHoldables()
+        {
+            if (Scene == null)
+                yield break;
+
+            foreach (Entity entity in Scene.Entities)
+            {
+                if (entity.Get<Holdable>() == null)
+                    continue;
+
+                if (IsManagedEntity(entity))
+                    yield return entity;
             }
         }
         public override void Render()
