@@ -27,7 +27,7 @@ customPedestal.placements = {
             particleBreak          = "",
             soundTeleport          = "event:/game/05_mirror_temple/crystaltheo_appear",
             soundBreak             = "event:/game/05_mirror_temple/crystaltheo_break_free",
-            soundRepair            = "event:/game/general/strawberry_get",
+            soundRepair            = "event:/game/09_core/iceblock_reappear",
         }
     }
 }
