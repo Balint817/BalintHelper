@@ -33,14 +33,14 @@ namespace Celeste.Mod.BalintHelper.Entities
     ///   breakable              – bool    Allow dashing into pedestal to break it (default false)
     ///   brokenDisableDuration  – float   Seconds pedestal stays broken (<=0 = forever, default 0)
     ///   showReturnLine         – bool    Emit particle trail during return countdown (default true)
-    ///   particleReturn         – string  GFX.Game atlas path for trail particle sprite
-    ///                            (blank = built-in cyan blob)
-    ///   particleExplode        – string  GFX.Game atlas path for teleport burst particle sprite
-    ///                            (blank = built-in cyan blob)
-    ///   particleBreak          – string  GFX.Game atlas path for break debris particle sprite
-    ///                            (blank = built-in white shard)
-    ///   particleRepair         – string  GFX.Game atlas path for repair burst particle sprite
-    ///                            (blank = built-in cyan blob)
+    ///   returnParticleColorA   – string  Primary color for blob return particles (default "7fffff")
+    ///   returnParticleColorB   – string  Secondary color for blob return particles (default "ffffff")
+    ///   explodeParticleColorA  – string  Primary color for zappysmoke teleport particles (default "7fffff")
+    ///   explodeParticleColorB  – string  Secondary color for zappysmoke teleport particles (default "ffffff")
+    ///   breakParticleColorA    – string  Primary color for shard break particles (default "ffffff")
+    ///   breakParticleColorB    – string  Secondary color for shard break particles (default "aaaaaa")
+    ///   repairParticleColorA   – string  Primary color for smoke repair particles (default "7fffff")
+    ///   repairParticleColorB   – string  Secondary color for smoke repair particles (default "ffffff")
     ///   soundTeleport          – string  FMOD event for teleport
     ///   soundBreak             – string  FMOD event for break
     ///   soundRepair            – string  FMOD event for repair
@@ -58,58 +58,18 @@ namespace Celeste.Mod.BalintHelper.Entities
             typeof(TheoCrystal).GetField("Speed",
                 BindingFlags.Instance | BindingFlags.Public)!;
 
-        // ── Built-in fallback particle types (lazy) ───────────────────────────────
-        private static ParticleType? s_ReturnLineFallback;
-        private static ParticleType? s_ExplodeFallback;
-        private static ParticleType? s_BreakFallback;
+        // ── Particle defaults ─────────────────────────────────────────────────────
+        private const string DefaultReturnParticleColorA = "7fffff";
+        private const string DefaultReturnParticleColorB = "ffffff";
+        private const string DefaultExplodeParticleColorA = "7fffff";
+        private const string DefaultExplodeParticleColorB = "ffffff";
+        private const string DefaultBreakParticleColorA = "ffffff";
+        private const string DefaultBreakParticleColorB = "aaaaaa";
+        private const string DefaultRepairParticleColorA = "7fffff";
+        private const string DefaultRepairParticleColorB = "ffffff";
 
-        private static ParticleType GetReturnLineFallback() => s_ReturnLineFallback ??= new ParticleType
-        {
-            Source = GFX.Game["particles/blob"],
-            Color = Calc.HexToColor("7fffff"),
-            Color2 = Calc.HexToColor("ffffff"),
-            ColorMode = ParticleType.ColorModes.Fade,
-            FadeMode = ParticleType.FadeModes.Late,
-            Size = 0.2f,
-            SizeRange = 0.05f,
-            SpeedMin = 0.1f,
-            SpeedMax = 2f,
-            LifeMin = 0.03f,
-            LifeMax = 0.06f,
-            DirectionRange = (float)Math.PI * 2f
-        };
-
-        private static ParticleType GetExplodeFallback() => s_ExplodeFallback ??= new ParticleType
-        {
-            Source = GFX.Game["particles/blob"],
-            Color = Calc.HexToColor("7fffff"),
-            Color2 = Calc.HexToColor("ffffff"),
-            ColorMode = ParticleType.ColorModes.Fade,
-            FadeMode = ParticleType.FadeModes.Late,
-            Size = 0.6f,
-            SizeRange = 0.2f,
-            SpeedMin = 25f,
-            SpeedMax = 70f,
-            LifeMin = 0.3f,
-            LifeMax = 0.6f,
-            DirectionRange = (float)Math.PI * 2f
-        };
-
-        private static ParticleType GetBreakFallback() => s_BreakFallback ??= new ParticleType
-        {
-            Color = Color.White,
-            Color2 = Calc.HexToColor("aaaaaa"),
-            ColorMode = ParticleType.ColorModes.Blink,
-            FadeMode = ParticleType.FadeModes.Late,
-            Size = 0.5f,
-            SizeRange = 0.2f,
-            SpeedMin = 25f,
-            SpeedMax = 65f,
-            Acceleration = Vector2.UnitY * 80f,
-            LifeMin = 0.3f,
-            LifeMax = 0.7f,
-            DirectionRange = (float)Math.PI * 2f
-        };
+        private static readonly string[] RepairParticleAtlases = { "particles/smoke0", "particles/smoke1", "particles/smoke2", "particles/smoke3" };
+        private static readonly string[] ExplodeParticleAtlases = { "particles/zappysmoke00", "particles/zappysmoke01", "particles/zappysmoke02", "particles/zappysmoke03" };
 
         // ── Configuration ─────────────────────────────────────────────────────────
         private readonly string spriteNormalPath;
@@ -126,10 +86,14 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly float brokenDisableDuration;
         private readonly bool showReturnLine;
 
-        private readonly string particleReturnAtlas;
-        private readonly string particleExplodeAtlas;
-        private readonly string particleBreakAtlas;
-        private readonly string particleRepairAtlas;
+        private readonly Color returnParticleColorA;
+        private readonly Color returnParticleColorB;
+        private readonly Color explodeParticleColorA;
+        private readonly Color explodeParticleColorB;
+        private readonly Color breakParticleColorA;
+        private readonly Color breakParticleColorB;
+        private readonly Color repairParticleColorA;
+        private readonly Color repairParticleColorB;
 
         private readonly string soundTeleport;
         private readonly string soundBreak;
@@ -141,10 +105,10 @@ namespace Celeste.Mod.BalintHelper.Entities
         private ParticleType? _ptBreak;
         private ParticleType? _ptRepair;
 
-        private ParticleType PtReturnLine => _ptReturnLine ??= BuildParticleType(particleReturnAtlas, GetReturnLineFallback());
-        private ParticleType PtExplode => _ptExplode ??= BuildParticleType(particleExplodeAtlas, GetExplodeFallback());
-        private ParticleType PtBreak => _ptBreak ??= BuildParticleType(particleBreakAtlas, GetBreakFallback());
-        private ParticleType PtRepair => _ptRepair ??= BuildParticleType(particleRepairAtlas, GetExplodeFallback());
+        private ParticleType PtReturnLine => _ptReturnLine ??= CreateReturnParticleType();
+        private ParticleType PtExplode => _ptExplode ??= CreateExplodeParticleType();
+        private ParticleType PtBreak => _ptBreak ??= CreateBreakParticleType();
+        private ParticleType PtRepair => _ptRepair ??= CreateRepairParticleType();
 
         // ── Runtime state ─────────────────────────────────────────────────────────
         private sealed class SharedReturnState
@@ -185,10 +149,14 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             ParseManagedEntityFilters();
 
-            particleReturnAtlas = data.Attr("particleReturn", "");
-            particleExplodeAtlas = data.Attr("particleExplode", "");
-            particleBreakAtlas = data.Attr("particleBreak", "");
-            particleRepairAtlas = data.Attr("particleRepair", "");
+            returnParticleColorA = ReadColor(data, "returnParticleColorA", DefaultReturnParticleColorA);
+            returnParticleColorB = ReadColor(data, "returnParticleColorB", DefaultReturnParticleColorB);
+            explodeParticleColorA = ReadColor(data, "explodeParticleColorA", DefaultExplodeParticleColorA);
+            explodeParticleColorB = ReadColor(data, "explodeParticleColorB", DefaultExplodeParticleColorB);
+            breakParticleColorA = ReadColor(data, "breakParticleColorA", DefaultBreakParticleColorA);
+            breakParticleColorB = ReadColor(data, "breakParticleColorB", DefaultBreakParticleColorB);
+            repairParticleColorA = ReadColor(data, "repairParticleColorA", DefaultRepairParticleColorA);
+            repairParticleColorB = ReadColor(data, "repairParticleColorB", DefaultRepairParticleColorB);
 
             soundTeleport = data.Attr("soundTeleport", "event:/game/01_forsaken_city/birdbros_thrust");
             soundBreak = data.Attr("soundBreak", "event:/game/05_mirror_temple/crystaltheo_break_free");
@@ -478,7 +446,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 ClaimedEntity = null;
             }
 
-            EmitParticleBurst(PtBreak, Center, 8);
+            EmitParticleBurst(PtBreak, Center, 20);
             (Scene as Level)?.Flash(Color.White * 0.25f);
             Celeste.Freeze(0.05f);
             Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
@@ -502,7 +470,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             spriteNormalImg.Visible = true;
             spriteBrokenImg.Visible = false;
 
-            EmitParticleBurst(PtRepair, Center, 8);
+            EmitParticleFamilyBurst(PtRepair, RepairParticleAtlases, 20);
             Audio.Play(soundRepair, Position);
         }
 
@@ -531,7 +499,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (playEffects)
             {
-                EmitParticleBurst(PtExplode, entity.Center, 8);
+                target.EmitParticleFamilyBurst(PtExplode, ExplodeParticleAtlases, 20);
                 Audio.Play(soundTeleport, entity.Position);
             }
         }
@@ -758,6 +726,74 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static Vector2 SnapPosition(CustomPedestal pedestal)
             => pedestal.Position + new Vector2(0f, -32f);
 
+        private ParticleType CreateReturnParticleType() => new ParticleType
+        {
+            Source = GFX.Game["particles/blob"],
+            Color = returnParticleColorA,
+            Color2 = returnParticleColorB,
+            ColorMode = ParticleType.ColorModes.Fade,
+            FadeMode = ParticleType.FadeModes.Late,
+            Size = 0.2f,
+            SizeRange = 0.05f,
+            SpeedMin = 0.1f,
+            SpeedMax = 2f,
+            LifeMin = 0.03f,
+            LifeMax = 0.06f,
+            DirectionRange = (float)Math.PI * 2f
+        };
+
+        private ParticleType CreateExplodeParticleType() => new ParticleType
+        {
+            Source = GFX.Game[ExplodeParticleAtlases[0]],
+            Color = explodeParticleColorA,
+            Color2 = explodeParticleColorB,
+            ColorMode = ParticleType.ColorModes.Fade,
+            FadeMode = ParticleType.FadeModes.Late,
+            Size = 0.6f,
+            SizeRange = 0.2f,
+            SpeedMin = 25f,
+            SpeedMax = 70f,
+            LifeMin = 0.3f,
+            LifeMax = 0.6f,
+            DirectionRange = (float)Math.PI * 2f
+        };
+
+        private ParticleType CreateBreakParticleType() => new ParticleType
+        {
+            Source = GFX.Game["particles/shard"],
+            Color = breakParticleColorA,
+            Color2 = breakParticleColorB,
+            ColorMode = ParticleType.ColorModes.Blink,
+            FadeMode = ParticleType.FadeModes.Late,
+            Size = 0.5f,
+            SizeRange = 0.2f,
+            SpeedMin = 25f,
+            SpeedMax = 65f,
+            Acceleration = Vector2.UnitY * 80f,
+            LifeMin = 0.3f,
+            LifeMax = 0.7f,
+            DirectionRange = (float)Math.PI * 2f
+        };
+
+        private ParticleType CreateRepairParticleType() => new ParticleType
+        {
+            Source = GFX.Game[RepairParticleAtlases[0]],
+            Color = repairParticleColorA,
+            Color2 = repairParticleColorB,
+            ColorMode = ParticleType.ColorModes.Fade,
+            FadeMode = ParticleType.FadeModes.Late,
+            Size = 0.6f,
+            SizeRange = 0.2f,
+            SpeedMin = 25f,
+            SpeedMax = 70f,
+            LifeMin = 0.3f,
+            LifeMax = 0.6f,
+            DirectionRange = (float)Math.PI * 2f
+        };
+
+        private static Color ReadColor(EntityData data, string key, string fallbackHex)
+            => Calc.HexToColor(data.Attr(key, fallbackHex));
+
         // Emit one particle every other step (3 points instead of 6) for a lighter trail
         private void EmitReturnLine(Vector2 from, CustomPedestal target)
         {
@@ -780,15 +816,27 @@ namespace Celeste.Mod.BalintHelper.Entities
             (Scene as Level)?.Particles.Emit(type, count, pos, Vector2.One * 4f);
         }
 
-        private static ParticleType BuildParticleType(string atlasPath, ParticleType fallback)
+        private void EmitParticleFamilyBurst(ParticleType type, IReadOnlyList<string> atlases, int count)
         {
-            if (string.IsNullOrWhiteSpace(atlasPath) || !GFX.Game.Has(atlasPath))
-                return fallback;
+            var particles = (Scene as Level)?.Particles;
+            if (particles == null || atlases.Count == 0)
+                return;
 
-            return new ParticleType(fallback)
+            var sprite = spriteBrokenImg.Visible ? spriteBrokenImg : spriteNormalImg;
+            var source = new Rectangle(
+                (int)MathF.Round(X - sprite.Origin.X),
+                (int)MathF.Round(Y - sprite.Origin.Y),
+                Math.Max(1, (int)MathF.Round(sprite.Width)),
+                Math.Max(1, (int)MathF.Round(sprite.Height)));
+
+            for (int i = 0; i < count; i++)
             {
-                Source = GFX.Game[atlasPath]
-            };
+                type.Source = GFX.Game[atlases[Calc.Random.Next(atlases.Count)]];
+                var position = new Vector2(
+                    Calc.Random.Range(source.Left, source.Right),
+                    Calc.Random.Range(source.Top, source.Bottom));
+                particles.Emit(type, position);
+            }
         }
     }
 }
