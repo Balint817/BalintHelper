@@ -414,7 +414,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 TheoCrystalOnPedestalProp?.SetValue(ClaimedEntity, false);
 
-                const float baseDirectionMultiplier = 200f;
+                const float baseDirectionMultiplier = 150f;
                 const float verticalSpeedOffset = 0.1f;
                 const float verticalSpeedMultiplier = 150f;
 
