@@ -1,0 +1,6 @@
+- Name: BalintHelper
+  Version: 1.0.0
+  DLL: bin/BalintHelper.dll
+  DependsOn:
+    - Name: Everest
+      Version: 1.5577.0

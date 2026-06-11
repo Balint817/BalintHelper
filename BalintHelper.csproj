@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	<TargetFramework>net8.0</TargetFramework>
+	<LangVersion>latest</LangVersion>
+	<AssemblyName>BalintHelper</AssemblyName>
+	<RootNamespace>Celeste.Mod.BalintHelper</RootNamespace>
+	<Nullable>enable</Nullable>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	<CelestePrefix Condition="'$(CelestePrefix)' == ''">$(CelesteDir)</CelestePrefix>
+  </PropertyGroup>
+
+  <!--Disable "Copy Local" for all references-->
+  <ItemDefinitionGroup>
+	<Reference Private="false" />
+  </ItemDefinitionGroup>
+
+  <ItemGroup>
+	<Reference Include="$(CelestePrefix)/Celeste.dll" Private="false" />
+	<Reference Include="$(CelestePrefix)/MMHOOK_Celeste.dll" Private="false" />
+	<Reference Include="$(CelestePrefix)/FNA.dll" Private="false" />
+  </ItemGroup>
+
+  <Target Name="CopyFiles" AfterTargets="Build" Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb" Outputs="bin\$(AssemblyName).dll;bin\$(AssemblyName).pdb">
+	<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll" DestinationFolder="bin" />
+	<Copy SourceFiles="$(OutputPath)\$(AssemblyName).pdb" DestinationFolder="bin" />
+  </Target>
+
+  <!-- Stage a ready-to-copy mod folder at ./BalintHelper/ after every build -->
+  <Target Name="StageModFolder" AfterTargets="CopyFiles">
+	<PropertyGroup>
+	  <ModStageDir>BalintHelper\</ModStageDir>
+	</PropertyGroup>
+
+	<!-- Copy DLL + PDB -->
+	<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll" DestinationFolder="$(ModStageDir)bin" />
+	<Copy SourceFiles="$(OutputPath)\$(AssemblyName).pdb" DestinationFolder="$(ModStageDir)bin" />
+
+	<!-- Copy everest.yaml -->
+	<Copy SourceFiles="everest.yaml" DestinationFolder="$(ModStageDir)" />
+
+	<!-- Copy Loenn folder if it exists -->
+	<ItemGroup>
+	  <LoennFiles Include="Loenn\**\*.*" />
+	</ItemGroup>
+	<Copy SourceFiles="@(LoennFiles)" DestinationFolder="$(ModStageDir)Loenn\%(RecursiveDir)" />
+
+	<Message Text="Mod staged at: $(ModStageDir)" Importance="high" />
+  </Target>
+
+</Project>
