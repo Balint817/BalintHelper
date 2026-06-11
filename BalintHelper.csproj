@@ -39,10 +39,12 @@
 	<Copy SourceFiles="everest.yaml" DestinationFolder="$(ModStageDir)" />
 
 	<!-- Copy Loenn folder if it exists -->
-	<ItemGroup>
-	  <LoennFiles Include="Loenn\**\*.*" />
-	</ItemGroup>
-	<Copy SourceFiles="@(LoennFiles)" DestinationFolder="$(ModStageDir)Loenn\%(RecursiveDir)" />
+	  <ItemGroup>
+		  <AssetFiles Include="Assets\**\*.*" />
+	  </ItemGroup>
+
+	  <Copy SourceFiles="@(AssetFiles)"
+			DestinationFolder="$(ModStageDir)%(RecursiveDir)" />
 
 	<Message Text="Mod staged at: $(ModStageDir)" Importance="high" />
   </Target>
