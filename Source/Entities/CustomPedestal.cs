@@ -117,7 +117,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly string entityTypesRaw;
         private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> managedEntityIds = new HashSet<int>();
-        private readonly Dictionary<Type, FieldInfo> entityIdFieldCache = new Dictionary<Type, FieldInfo>();
         private readonly List<Entity> managedEntities = new List<Entity>();
         private readonly bool breakable;
         private readonly float brokenDisableDuration;
@@ -383,7 +382,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (player == null)
                 return;
 
-            if (player.DashAttacking && CollideCheck(player))
+            if (player.DashAttacking && player.DashDir != Vector2.Zero && CollideCheck(player))
             {
                 Break(player.DashDir);
             }
@@ -600,16 +599,8 @@ namespace Celeste.Mod.BalintHelper.Entities
 
                 if (!byType && managedEntityIds.Count > 0)
                 {
-                    var type = e.GetType();
-                    if (!entityIdFieldCache.TryGetValue(type, out FieldInfo idField))
-                    {
-                        idField = type.GetField("entityID", BindingFlags.Instance | BindingFlags.NonPublic)
-                            ?? type.GetField("ID", BindingFlags.Instance | BindingFlags.Public);
-                        entityIdFieldCache[type] = idField;
-                    }
-
-                    if (idField?.GetValue(e) is EntityID eid)
-                        byId = managedEntityIds.Contains(eid.ID);
+                    if (e.SourceData?.ID is int eid)
+                        byId = managedEntityIds.Contains(eid);
                 }
 
                 if (byType || byId)
