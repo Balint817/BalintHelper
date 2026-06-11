@@ -179,7 +179,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             particleBreakAtlas = data.Attr("particleBreak", "");
             particleRepairAtlas = data.Attr("particleRepair", "");
 
-            soundTeleport = data.Attr("soundTeleport", "event:/game/05_mirror_temple/crystaltheo_appear");
+            soundTeleport = data.Attr("soundTeleport", "event:/game/01_forsaken_city/birdbros_thrust");
             soundBreak = data.Attr("soundBreak", "event:/game/05_mirror_temple/crystaltheo_break_free");
             soundRepair = data.Attr("soundRepair", "event:/game/09_core/iceblock_reappear");
 

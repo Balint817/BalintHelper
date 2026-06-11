@@ -26,7 +26,7 @@ customPedestal.placements = {
             particleExplode        = "",
             particleBreak          = "",
             particleRepair         = "",
-            soundTeleport          = "event:/game/05_mirror_temple/crystaltheo_appear",
+            soundTeleport          = "event:/game/01_forsaken_city/birdbros_thrust",
             soundBreak             = "event:/game/05_mirror_temple/crystaltheo_break_free",
             soundRepair            = "event:/game/09_core/iceblock_reappear",
         }
