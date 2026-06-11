@@ -53,8 +53,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             typeof(TheoCrystal).GetField("Speed",
                 BindingFlags.Instance | BindingFlags.Public);
 
-        // ── Built-in fallback particle types ─────────────────────────────────────
-        // These are created lazily so GFX.Game is already loaded at that point.
+        // ── Built-in fallback particle types (lazy) ───────────────────────────────
         private static ParticleType s_ReturnLineFallback;
         private static ParticleType s_ExplodeFallback;
         private static ParticleType s_BreakFallback;
@@ -66,12 +65,12 @@ namespace Celeste.Mod.BalintHelper.Entities
             Color2 = Calc.HexToColor("ffffff"),
             ColorMode = ParticleType.ColorModes.Fade,
             FadeMode = ParticleType.FadeModes.Late,
-            Size = 0.5f,
-            SizeRange = 0.25f,
-            SpeedMin = 5f,
-            SpeedMax = 20f,
-            LifeMin = 0.3f,
-            LifeMax = 0.6f,
+            Size = 0.2f,
+            SizeRange = 0.05f,
+            SpeedMin = 0.1f,
+            SpeedMax = 2f,
+            LifeMin = 0.03f,
+            LifeMax = 0.06f,
             DirectionRange = (float)Math.PI * 2f
         };
 
@@ -82,29 +81,28 @@ namespace Celeste.Mod.BalintHelper.Entities
             Color2 = Calc.HexToColor("ffffff"),
             ColorMode = ParticleType.ColorModes.Fade,
             FadeMode = ParticleType.FadeModes.Late,
-            Size = 0.8f,
-            SizeRange = 0.3f,
-            SpeedMin = 40f,
-            SpeedMax = 100f,
-            LifeMin = 0.4f,
-            LifeMax = 0.8f,
+            Size = 0.6f,
+            SizeRange = 0.2f,
+            SpeedMin = 25f,
+            SpeedMax = 70f,
+            LifeMin = 0.3f,
+            LifeMax = 0.6f,
             DirectionRange = (float)Math.PI * 2f
         };
 
-        // "Break" particles: white shards, no atlas particle needed – we define sizes directly.
         private static ParticleType GetBreakFallback() => s_BreakFallback ??= new ParticleType
         {
             Color = Color.White,
             Color2 = Calc.HexToColor("aaaaaa"),
             ColorMode = ParticleType.ColorModes.Blink,
             FadeMode = ParticleType.FadeModes.Late,
-            Size = 0.6f,
-            SizeRange = 0.3f,
-            SpeedMin = 30f,
-            SpeedMax = 80f,
+            Size = 0.5f,
+            SizeRange = 0.2f,
+            SpeedMin = 25f,
+            SpeedMax = 65f,
             Acceleration = Vector2.UnitY * 80f,
-            LifeMin = 0.4f,
-            LifeMax = 0.9f,
+            LifeMin = 0.3f,
+            LifeMax = 0.7f,
             DirectionRange = (float)Math.PI * 2f
         };
 
@@ -119,7 +117,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly float brokenDisableDuration;
         private readonly bool showReturnLine;
 
-        // Atlas paths for custom particle sprites (empty = use fallback)
         private readonly string particleReturnAtlas;
         private readonly string particleExplodeAtlas;
         private readonly string particleBreakAtlas;
@@ -128,7 +125,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly string soundBreak;
         private readonly string soundRepair;
 
-        // Lazily built from atlas paths (or fallback) on first use
+        // Lazily resolved particle types
         private ParticleType _ptReturnLine;
         private ParticleType _ptExplode;
         private ParticleType _ptBreak;
@@ -145,14 +142,17 @@ namespace Celeste.Mod.BalintHelper.Entities
         private float brokenTimer = 0f;
 
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
-        private Entity claimedEntity = null;
+        public Entity ClaimedEntity { get; private set; } = null;
 
         // returnTimers[entity] = seconds remaining before that entity teleports back.
+        // Shared across ALL pedestals via the first (authority) pedestal's dictionary.
+        // Non-authority pedestals delegate everything to the authority.
         private readonly Dictionary<Entity, float> returnTimers = new Dictionary<Entity, float>();
 
+        // Tracks which entities we have seen before to detect first-spawn.
+        private readonly HashSet<Entity> knownEntities = new HashSet<Entity>();
+
         // Previous-frame holder per entity (Player or null).
-        // Stored as Entity? to avoid the CS0029 "cannot convert Player to Component" error:
-        // Holdable.Holder is typed as Player, not Component.
         private readonly Dictionary<Entity, Player> prevHolder = new Dictionary<Entity, Player>();
 
         // ── Constructor ───────────────────────────────────────────────────────────
@@ -169,7 +169,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             brokenDisableDuration = data.Float("brokenDisableDuration", 0f);
             showReturnLine = data.Bool("showReturnLine", true);
 
-            // Read atlas paths; empty string means "use built-in fallback"
             particleReturnAtlas = data.Attr("particleReturn", "");
             particleExplodeAtlas = data.Attr("particleExplode", "");
             particleBreakAtlas = data.Attr("particleBreak", "");
@@ -178,7 +177,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             soundBreak = data.Attr("soundBreak", "event:/game/05_mirror_temple/crystaltheo_break_free");
             soundRepair = data.Attr("soundRepair", "event:/game/general/strawberry_get");
 
-            // Sprites are added immediately; GFX.Game is available at ctor time.
             spriteNormalImg = new Image(GFX.Game[spriteNormalPath]);
             spriteNormalImg.JustifyOrigin(0.5f, 1f);
             Add(spriteNormalImg);
@@ -209,13 +207,33 @@ namespace Celeste.Mod.BalintHelper.Entities
                 candidates[0].Depth = Depth + 1;
         }
 
+        // ── Authority check ───────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns true if this pedestal is the "authority" — the first non-broken
+        /// one in scene order. Only the authority runs entity management logic each
+        /// frame; all others just handle their own broken-repair timer and snap.
+        /// </summary>
+        private bool IsAuthority()
+        {
+            var all = Scene.Tracker.GetEntities<CustomPedestal>();
+            // Scene.Tracker ordering matches EntityList insertion order.
+            // We want the first pedestal in the list that is still in the scene.
+            foreach (Entity e in all)
+            {
+                if (e is CustomPedestal p)
+                    return p == this; // First one found = authority
+            }
+            return true;
+        }
+
         // ── Update ────────────────────────────────────────────────────────────────
 
         public override void Update()
         {
             base.Update();
 
-            // Broken repair countdown
+            // ── Broken repair countdown (every pedestal handles its own) ──────────
             if (isBroken)
             {
                 if (brokenDisableDuration > 0f)
@@ -223,43 +241,62 @@ namespace Celeste.Mod.BalintHelper.Entities
                     brokenTimer -= Engine.DeltaTime;
                     if (brokenTimer <= 0f) Repair();
                 }
+
+                // Snap logic still runs even when broken: if we recover mid-frame,
+                // claimed entity will be snapped next frame by authority.
                 return;
             }
 
+            // ── Non-authority pedestals: only snap their own claimed entity ───────
+            if (!IsAuthority())
+            {
+                SnapClaimed();
+                return;
+            }
+
+            // ── Authority: full entity management ────────────────────────────────
             var candidates = GetManagedEntities();
 
-            // ── Detect hold / release transitions ────────────────────────────────
             foreach (var entity in candidates)
             {
                 var holdable = entity.Get<Holdable>();
                 if (holdable == null) continue;
 
-                // Holdable.Holder is Player (not Component), so we store Player?.
                 Player currentHolder = holdable.Holder;
                 prevHolder.TryGetValue(entity, out Player lastHolder);
                 prevHolder[entity] = currentHolder;
 
                 bool isHeld = currentHolder != null;
                 bool wasHeld = lastHolder != null;
+                bool isFirstSeen = !knownEntities.Contains(entity);
+
+                knownEntities.Add(entity);
 
                 if (isHeld)
                 {
+                    // Entity is being carried — cancel any pending return timer
+                    // and release whichever pedestal currently claims it.
                     returnTimers.Remove(entity);
-                    if (claimedEntity == entity) claimedEntity = null;
+                    ReleaseClaim(entity);
                     continue;
                 }
 
-                if (wasHeld && !isHeld)
+                // ── First seen (spawned but never held) OR just released ──────────
+                bool shouldQueue = isFirstSeen || (wasHeld && !isHeld);
+
+                if (shouldQueue)
                 {
                     var target = FindBestPedestal(entity, null);
                     if (target == null) continue;
 
                     float delay = returnDelay;
 
+                    // Instant-in-bounds override
                     if (delay > 0f && instantReturnInBounds
                         && target.CollidePoint(entity.Center))
                         delay = 0f;
 
+                    // Max-distance check — skip return entirely if too far
                     if (maxDistance > 0f
                         && Vector2.Distance(entity.Position, target.Position) > maxDistance)
                         continue;
@@ -271,14 +308,17 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
 
-            // ── Process return timers ─────────────────────────────────────────────
+            // ── Remove timers for entities that are no longer candidates ─────────
+            // (e.g. left the room)
+            var candidateSet = new HashSet<Entity>(candidates);
             var expired = new List<Entity>();
 
+            // ── Process return timers ─────────────────────────────────────────────
             foreach (var kvp in returnTimers.ToList())
             {
                 var entity = kvp.Key;
 
-                if (!candidates.Contains(entity))
+                if (!candidateSet.Contains(entity))
                 {
                     expired.Add(entity);
                     continue;
@@ -286,6 +326,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
                 float remaining = kvp.Value - Engine.DeltaTime;
 
+                // Emit return-line particles
                 if (showReturnLine)
                 {
                     var lineTarget = FindBestPedestal(entity, null);
@@ -307,18 +348,25 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             foreach (var e in expired) returnTimers.Remove(e);
 
-            // ── Snap claimed entity to pedestal ───────────────────────────────────
-            if (claimedEntity != null)
+            // ── Snap this pedestal's own claimed entity ───────────────────────────
+            SnapClaimed();
+        }
+
+        // ── Snap helper ───────────────────────────────────────────────────────────
+
+        private void SnapClaimed()
+        {
+            if (ClaimedEntity == null || isBroken) return;
+
+            var holdable = ClaimedEntity.Get<Holdable>();
+            bool isHeld = holdable?.Holder != null;
+
+            if (!isHeld && !returnTimers.ContainsKey(ClaimedEntity))
             {
-                var holdable = claimedEntity.Get<Holdable>();
-                bool isHeld = holdable?.Holder != null;
-                if (!isHeld && !returnTimers.ContainsKey(claimedEntity))
-                {
-                    claimedEntity.Position = SnapPosition(this);
-                    (claimedEntity as Actor)?.ZeroRemainderX();
-                    (claimedEntity as Actor)?.ZeroRemainderY();
-                    TheoCrystalOnPedestalProp?.SetValue(claimedEntity, true);
-                }
+                ClaimedEntity.Position = SnapPosition(this);
+                (ClaimedEntity as Actor)?.ZeroRemainderX();
+                (ClaimedEntity as Actor)?.ZeroRemainderY();
+                TheoCrystalOnPedestalProp?.SetValue(ClaimedEntity, true);
             }
         }
 
@@ -332,16 +380,16 @@ namespace Celeste.Mod.BalintHelper.Entities
             Collidable = false;
             brokenTimer = brokenDisableDuration > 0f ? brokenDisableDuration : float.MaxValue;
 
-            if (claimedEntity != null)
+            if (ClaimedEntity != null)
             {
-                TheoCrystalOnPedestalProp?.SetValue(claimedEntity, false);
-                claimedEntity = null;
+                TheoCrystalOnPedestalProp?.SetValue(ClaimedEntity, false);
+                ClaimedEntity = null;
             }
 
             spriteNormalImg.Visible = false;
             spriteBrokenImg.Visible = true;
 
-            EmitParticleBurst(PtBreak, Center, 14);
+            EmitParticleBurst(PtBreak, Center, 8);
             (Scene as Level)?.Flash(Color.White * 0.5f);
             Celeste.Freeze(0.05f);
             Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
@@ -365,24 +413,16 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void TeleportEntityTo(Entity entity, CustomPedestal target)
         {
-            foreach (var ped in Scene.Tracker
-                         .GetEntities<CustomPedestal>()
-                         .Cast<CustomPedestal>())
-            {
-                if (ped.claimedEntity == entity)
-                    ped.claimedEntity = null;
-            }
+            ReleaseClaim(entity);
 
-            target.claimedEntity = entity;
+            target.ClaimedEntity = entity;
             entity.Position = SnapPosition(target);
 
             (entity as Actor)?.ZeroRemainderX();
             (entity as Actor)?.ZeroRemainderY();
 
-            // Zero speed via reflection for TheoCrystal (public field)
             TheoCrystalSpeedField?.SetValue(entity, Vector2.Zero);
 
-            // For other holdable types, also attempt a public Speed field
             if (entity is not TheoCrystal)
             {
                 var speedField = entity.GetType().GetField("Speed",
@@ -392,8 +432,20 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             TheoCrystalOnPedestalProp?.SetValue(entity, true);
 
-            EmitParticleBurst(PtExplode, entity.Center, 16);
+            EmitParticleBurst(PtExplode, entity.Center, 8);
             Audio.Play(soundTeleport, entity.Position);
+        }
+
+        /// <summary>Removes this entity's claim from whichever pedestal holds it.</summary>
+        private void ReleaseClaim(Entity entity)
+        {
+            foreach (var ped in Scene.Tracker
+                         .GetEntities<CustomPedestal>()
+                         .Cast<CustomPedestal>())
+            {
+                if (ped.ClaimedEntity == entity)
+                    ped.ClaimedEntity = null;
+            }
         }
 
         // ── Pedestal selection ────────────────────────────────────────────────────
@@ -407,12 +459,14 @@ namespace Celeste.Mod.BalintHelper.Entities
                 .OrderBy(p => Vector2.DistanceSquared(entity.Position, p.Position))
                 .ToList();
 
+            // Prefer pedestal that already claims this entity
             foreach (var p in all)
-                if (p.claimedEntity == entity) return p;
+                if (p.ClaimedEntity == entity) return p;
 
+            // Nearest unclaimed within maxDistance
             foreach (var p in all)
             {
-                if (p.claimedEntity != null) continue;
+                if (p.ClaimedEntity != null) continue;
                 if (maxDistance > 0f
                     && Vector2.Distance(entity.Position, p.Position) > maxDistance)
                     continue;
@@ -502,37 +556,31 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static Vector2 SnapPosition(CustomPedestal pedestal)
             => pedestal.Position + new Vector2(0f, -32f);
 
+        // Emit one particle every other step (3 points instead of 6) for a lighter trail
         private void EmitReturnLine(Vector2 from, CustomPedestal target)
         {
             var particles = (Scene as Level)?.Particles;
             if (particles == null) return;
 
-            const int steps = 5;
+            const int steps = 3;
             var to = SnapPosition(target);
             for (int i = 0; i <= steps; i++)
             {
                 var pos = Vector2.Lerp(from, to, i / (float)steps);
-                particles.Emit(PtReturnLine, 1, pos, Vector2.One * 2f);
+                particles.Emit(PtReturnLine, 1, pos, Vector2.One * 1.5f);
             }
         }
 
         private void EmitParticleBurst(ParticleType type, Vector2 pos, int count)
         {
-            (Scene as Level)?.Particles.Emit(type, count, pos, Vector2.One * 6f);
+            (Scene as Level)?.Particles.Emit(type, count, pos, Vector2.One * 4f);
         }
 
-        /// <summary>
-        /// Builds a ParticleType that uses a custom atlas sprite when <paramref name="atlasPath"/>
-        /// is non-empty and exists in GFX.Game, otherwise returns <paramref name="fallback"/>.
-        /// The returned type copies all settings from <paramref name="fallback"/> and only
-        /// overrides the Source texture, so speed/life/colour ranges stay consistent.
-        /// </summary>
         private static ParticleType BuildParticleType(string atlasPath, ParticleType fallback)
         {
             if (string.IsNullOrWhiteSpace(atlasPath) || !GFX.Game.Has(atlasPath))
                 return fallback;
 
-            // Clone the fallback settings, swap only the source sprite.
             return new ParticleType(fallback)
             {
                 Source = GFX.Game[atlasPath]
