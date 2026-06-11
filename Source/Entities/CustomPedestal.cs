@@ -476,7 +476,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             spriteBrokenImg.Visible = true;
 
             EmitParticleBurst(PtBreak, Center, 8);
-            (Scene as Level)?.Flash(Color.White * 0.5f);
+            (Scene as Level)?.Flash(Color.White * 0.25f);
             Celeste.Freeze(0.05f);
             Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
             Audio.Play(soundBreak, Position);
