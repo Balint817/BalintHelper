@@ -137,9 +137,13 @@ namespace Celeste.Mod.BalintHelper.Entities
         // ── Runtime state ─────────────────────────────────────────────────────────
         private Image spriteNormalImg;
         private Image spriteBrokenImg;
+        private Image repairFlashImg;
 
         private bool isBroken = false;
         private float brokenTimer = 0f;
+        private float repairFlashTimer = 0f;
+
+        private const float RepairFlashDuration = 0.12f;
 
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity ClaimedEntity { get; private set; } = null;
@@ -185,6 +189,12 @@ namespace Celeste.Mod.BalintHelper.Entities
             spriteBrokenImg.JustifyOrigin(0.5f, 1f);
             spriteBrokenImg.Visible = false;
             Add(spriteBrokenImg);
+
+            repairFlashImg = new Image(GFX.Game[spriteNormalPath]);
+            repairFlashImg.JustifyOrigin(0.5f, 1f);
+            repairFlashImg.Visible = false;
+            repairFlashImg.Color = Color.White * 0f;
+            Add(repairFlashImg);
 
             EnableAssistModeChecks = false;
             Depth = 8998;
@@ -232,6 +242,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             base.Update();
 
+            UpdateRepairFlash();
             TryBreakFromDash();
 
             // ── Broken repair countdown (every pedestal handles its own) ──────────
@@ -396,10 +407,14 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 TheoCrystalOnPedestalProp?.SetValue(ClaimedEntity, false);
 
+                const float baseDirectionMultiplier = 200f;
+                const float verticalSpeedOffset = 0.1f;
+                const float verticalSpeedMultiplier = 150f;
+
                 if (ClaimedEntity is TheoCrystal theo)
                 {
-                    theo.Speed += direction * 80f;
-                    theo.Speed.Y = (direction.Y-0.1f) * 60f;
+                    theo.Speed += direction * baseDirectionMultiplier;
+                    theo.Speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
                 }
                 else
                 {
@@ -411,8 +426,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                     if (speedField != null && speedField.FieldType == typeof(Vector2))
                     {
                         Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity);
-                        speed += direction * 80f;
-                        speed.Y = (direction.Y - 0.1f) * 60f;
+                        speed += direction * baseDirectionMultiplier;
+                        speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
                         speedField.SetValue(ClaimedEntity, speed);
                     }
                 }
@@ -422,6 +437,9 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             spriteNormalImg.Visible = false;
             spriteBrokenImg.Visible = true;
+            repairFlashTimer = 0f;
+            repairFlashImg.Visible = false;
+            repairFlashImg.Color = Color.White * 0f;
 
             EmitParticleBurst(PtBreak, Center, 8);
             (Scene as Level)?.Flash(Color.White * 0.5f);
@@ -436,8 +454,37 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             spriteNormalImg.Visible = true;
             spriteBrokenImg.Visible = false;
+            repairFlashTimer = RepairFlashDuration;
 
             Audio.Play(soundRepair, Position);
+        }
+
+        private void UpdateRepairFlash()
+        {
+            if (repairFlashTimer <= 0f)
+            {
+                if (repairFlashImg.Visible)
+                {
+                    repairFlashImg.Visible = false;
+                    repairFlashImg.Color = Color.White * 0f;
+                }
+                return;
+            }
+
+            repairFlashTimer = Math.Max(0f, repairFlashTimer - Engine.DeltaTime);
+
+            float t = 1f - (repairFlashTimer / RepairFlashDuration);
+            float alpha = t < 0.5f ? t / 0.5f : (1f - t) / 0.5f;
+
+            if (!spriteNormalImg.Visible)
+            {
+                repairFlashImg.Visible = false;
+                repairFlashImg.Color = Color.White * 0f;
+                return;
+            }
+
+            repairFlashImg.Visible = alpha > 0f;
+            repairFlashImg.Color = Color.White * alpha;
         }
 
         // ── Teleport ──────────────────────────────────────────────────────────────
