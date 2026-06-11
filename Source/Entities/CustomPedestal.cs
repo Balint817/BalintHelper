@@ -331,15 +331,21 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
                 }
 
+                var timedTarget = FindBestPedestal(entity, null);
+
+                // Instant-in-bounds should also apply while waiting on a timer.
+                if (instantReturnInBounds && timedTarget != null && timedTarget.CollidePoint(entity.Center))
+                {
+                    TeleportEntityTo(entity, timedTarget, false);
+                    expired.Add(entity);
+                    continue;
+                }
+
                 float remaining = kvp.Value - Engine.DeltaTime;
 
                 // Emit return-line particles
-                if (showReturnLine)
-                {
-                    var lineTarget = FindBestPedestal(entity, null);
-                    if (lineTarget != null)
-                        EmitReturnLine(entity.Center, lineTarget);
-                }
+                if (showReturnLine && timedTarget != null)
+                    EmitReturnLine(entity.Center, timedTarget);
 
                 if (remaining <= 0f)
                 {
