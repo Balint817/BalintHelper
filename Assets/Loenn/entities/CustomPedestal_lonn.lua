@@ -15,6 +15,7 @@ customPedestal.placements = {
         data = {
             spriteNormal           = "characters/theoCrystal/pedestal",
             spriteBroken           = "characters/theoCrystal/pedestal",
+            startBroken            = false,
             returnDelay            = 2.0,
             instantReturnInBounds  = false,
             maxDistance            = 0.0,
@@ -37,6 +38,7 @@ customPedestal.fieldInformation = {
     returnDelay           = { fieldType = "number", minimumValue = 0.0 },
     maxDistance           = { fieldType = "number", minimumValue = 0.0 },
     brokenDisableDuration = { fieldType = "number", minimumValue = 0.0 },
+    startBroken           = { fieldType = "boolean" },
     entityTypes           = { fieldType = "string" },
     spriteNormal          = { fieldType = "string" },
     spriteBroken          = { fieldType = "string" },

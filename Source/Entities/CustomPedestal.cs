@@ -21,6 +21,8 @@ namespace Celeste.Mod.BalintHelper.Entities
     ///                            (default "characters/theoCrystal/pedestal")
     ///   spriteBroken           – string  Atlas path for broken state sprite
     ///                            (default "characters/theoCrystal/pedestal")
+    ///   startBroken            – bool    Spawn already broken without break effects
+    ///                            and recover after brokenDisableDuration (default false)
     ///   returnDelay            – float   Seconds after release before teleport back (default 0)
     ///   instantReturnInBounds  – bool    Teleport immediately when released inside
     ///                            the pedestal collider (default false)
@@ -156,10 +158,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private Image spriteNormalImg;
         private Image spriteBrokenImg;
 
+        private readonly bool startBroken;
         private bool isBroken = false;
         private float brokenTimer = 0f;
-
-        private bool startBroken = false;
 
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity? ClaimedEntity { get; private set; } = null;
@@ -218,6 +219,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         public override void Awake(Scene scene)
         {
             base.Awake(scene);
+
+            if (breakable && startBroken)
+                ApplyBrokenState(false);
 
             RefreshManagedEntities();
             foreach (var entity in managedEntities)
@@ -445,9 +449,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         }
         private void Break(Vector2 direction)
         {
-            isBroken = true;
-            brokenTimer = brokenDisableDuration > 0f ? brokenDisableDuration : float.MaxValue;
-
+            ApplyBrokenState(true);
 
             if (ClaimedEntity != null)
             {
@@ -476,14 +478,21 @@ namespace Celeste.Mod.BalintHelper.Entities
                 ClaimedEntity = null;
             }
 
-            spriteNormalImg.Visible = false;
-            spriteBrokenImg.Visible = true;
-
             EmitParticleBurst(PtBreak, Center, 8);
             (Scene as Level)?.Flash(Color.White * 0.25f);
             Celeste.Freeze(0.05f);
             Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
             Audio.Play(soundBreak, Position);
+        }
+
+        private void ApplyBrokenState(bool resetTimer)
+        {
+            isBroken = true;
+            if (resetTimer)
+                brokenTimer = brokenDisableDuration > 0f ? brokenDisableDuration : float.MaxValue;
+
+            spriteNormalImg.Visible = false;
+            spriteBrokenImg.Visible = true;
         }
 
         private void Repair()
