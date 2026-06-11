@@ -154,9 +154,11 @@ namespace Celeste.Mod.BalintHelper.Entities
         public Entity? ClaimedEntity { get; private set; } = null;
 
         // returnTimers[entity] = seconds remaining before that entity teleports back.
+        // returnTargets[entity] = pedestal currently targeted by the timer.
         // Shared across ALL pedestals via the first (authority) pedestal's dictionary.
         // Non-authority pedestals delegate everything to the authority.
         private readonly Dictionary<Entity, float> returnTimers = new Dictionary<Entity, float>();
+        private readonly Dictionary<Entity, CustomPedestal> returnTargets = new Dictionary<Entity, CustomPedestal>();
 
         // ── Constructor ───────────────────────────────────────────────────────────
         public CustomPedestal(EntityData data, Vector2 offset)
@@ -277,6 +279,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     // Entity is being carried — cancel any pending return timer
                     // and release whichever pedestal currently claims it.
                     returnTimers.Remove(entity);
+                    returnTargets.Remove(entity);
                     ReleaseClaim(entity);
                     continue;
                 }
@@ -293,11 +296,11 @@ namespace Celeste.Mod.BalintHelper.Entities
                 var target = FindBestPedestal(entity, null);
                 if (target == null) continue;
 
-                float delay = returnDelay;
+                float delay = target.returnDelay;
 
                 bool isInstant = false;
                 // Instant-in-bounds override
-                if (delay > 0f && instantReturnInBounds
+                if (delay > 0f && target.instantReturnInBounds
                     && target.CollidePoint(entity.Center))
                 {
                     delay = 0f;
@@ -305,14 +308,19 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
 
                 // Max-distance check — skip return entirely if too far
-                if (maxDistance > 0f
-                    && Vector2.Distance(entity.Position, target.Position) > maxDistance)
+                if (target.maxDistance > 0f
+                    && Vector2.Distance(entity.Position, target.Position) > target.maxDistance)
                     continue;
 
                 if (delay <= 0f)
+                {
                     TeleportEntityTo(entity, target, !isInstant);
+                }
                 else
+                {
                     returnTimers[entity] = delay;
+                    returnTargets[entity] = target;
+                }
             }
 
             // ── Remove timers for entities that are no longer candidates ─────────
@@ -332,19 +340,39 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
 
                 var timedTarget = FindBestPedestal(entity, null);
+                if (timedTarget == null)
+                {
+                    expired.Add(entity);
+                    continue;
+                }
+
+                // If target changed while counting down, restart timer using new target settings.
+                if (!returnTargets.TryGetValue(entity, out var previousTarget) || previousTarget != timedTarget)
+                {
+                    returnTargets[entity] = timedTarget;
+                    returnTimers[entity] = timedTarget.returnDelay;
+                }
 
                 // Instant-in-bounds should also apply while waiting on a timer.
-                if (instantReturnInBounds && timedTarget != null && timedTarget.CollidePoint(entity.Center))
+                if (timedTarget.instantReturnInBounds && timedTarget.CollidePoint(entity.Center))
                 {
                     TeleportEntityTo(entity, timedTarget, false);
                     expired.Add(entity);
                     continue;
                 }
 
-                float remaining = kvp.Value - Engine.DeltaTime;
+                // Re-check distance constraint against current target while timer runs.
+                if (timedTarget.maxDistance > 0f
+                    && Vector2.Distance(entity.Position, timedTarget.Position) > timedTarget.maxDistance)
+                {
+                    expired.Add(entity);
+                    continue;
+                }
+
+                float remaining = returnTimers[entity] - Engine.DeltaTime;
 
                 // Emit return-line particles
-                if (showReturnLine && timedTarget != null)
+                if (timedTarget.showReturnLine)
                     EmitReturnLine(entity.Center, timedTarget);
 
                 if (remaining <= 0f)
@@ -359,7 +387,11 @@ namespace Celeste.Mod.BalintHelper.Entities
                     returnTimers[entity] = remaining;
                 }
             }
-            foreach (var e in expired) returnTimers.Remove(e);
+            foreach (var e in expired)
+            {
+                returnTimers.Remove(e);
+                returnTargets.Remove(e);
+            }
 
             // ── Snap this pedestal's own claimed entity ───────────────────────────
             SnapClaimed();
