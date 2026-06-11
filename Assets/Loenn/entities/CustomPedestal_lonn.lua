@@ -11,7 +11,7 @@ customPedestal.justification = {0.5, 1.0}
 
 customPedestal.placements = {
     {
-        name = "normal",
+        name = "Custom Theo Crystal Pedestal",
         data = {
             spriteNormal           = "characters/theoCrystal/pedestal",
             spriteBroken           = "characters/theoCrystal/pedestal",
@@ -39,23 +39,40 @@ customPedestal.placements = {
 }
 
 customPedestal.fieldInformation = {
-    returnDelay           = { fieldType = "number", minimumValue = 0.0 },
-    maxDistance           = { fieldType = "number", minimumValue = 0.0 },
-    brokenDisableDuration = { fieldType = "number", minimumValue = 0.0 },
-    entityTypes           = { fieldType = "string" },
-    spriteNormal          = { fieldType = "string" },
-    spriteBroken          = { fieldType = "string" },
-    returnParticleColorA  = { fieldType = "color" },
-    returnParticleColorB  = { fieldType = "color" },
-    explodeParticleColorA = { fieldType = "color" },
-    explodeParticleColorB = { fieldType = "color" },
-    breakParticleColorA   = { fieldType = "color" },
-    breakParticleColorB   = { fieldType = "color" },
-    repairParticleColorA  = { fieldType = "color" },
-    repairParticleColorB  = { fieldType = "color" },
-    soundTeleport         = { fieldType = "string" },
-    soundBreak            = { fieldType = "string" },
-    soundRepair           = { fieldType = "string" },
+    returnDelay           = { fieldType = "number", minimumValue = 0.0, description = "Time in seconds before teleporting" },
+    maxDistance           = { fieldType = "number", minimumValue = 0.0, description = "Maximum distance at which a teleport can occur, or 0 for no limit" },
+    brokenDisableDuration = { fieldType = "number", minimumValue = 0.0, description = "Time in seconds the pedestal stays inactive after being broken, or 0 to stay broken" },
+    entityTypes           = { fieldType = "string", description = "Comma-separated entity type names and/or numeric Lönn entity IDs to track. Entities must be holdable." },
+    spriteNormal          = { fieldType = "string", description = "Atlas path for intact state sprite" },
+    spriteBroken          = { fieldType = "string", description = "Atlas path for broken state sprite" },
+    returnParticleColorA  = { fieldType = "color", description = "Primary color for the return line's particles" },
+    returnParticleColorB  = { fieldType = "color", description = "Secondary color for the return line's particles" },
+    explodeParticleColorA = { fieldType = "color", description = "Primary color for the teleport particles" },
+    explodeParticleColorB = { fieldType = "color", description = "Secondary color for the teleport particles" },
+    breakParticleColorA   = { fieldType = "color", description = "Primary color for the break particles" },
+    breakParticleColorB   = { fieldType = "color", description = "Secondary color for the break particles" },
+    repairParticleColorA  = { fieldType = "color", description = "Primary color for the repair particles" },
+    repairParticleColorB  = { fieldType = "color", description = "Secondary color for the repair particles" },
+    soundTeleport         = { fieldType = "string", description = "Sound event for teleporting" },
+    soundBreak            = { fieldType = "string", description = "Sound event for breaking" },
+    soundRepair           = { fieldType = "string", description = "Sound event for repairing" },
+    breakable			  = { fieldType = "boolean", description = "Whether the pedestal can be 'broken' (disabled) by dashing into it." },
+    startBroken			  = { fieldType = "boolean", description = "Whether the pedestal starts in a broken (disabled) state." },
+    instantReturnInBounds = { fieldType = "boolean", description = "Whether delay should be skipped within the pedestal's hitbox." },
+    showReturnLine		  = { fieldType = "boolean", description = "Whether to show a line of particles returning to the pedestal to show where an entity is being teleported." },
+}
+
+trigger.fieldOrder = {
+    "x", "y",
+    "returnDelay", "brokenDisableDuration",
+    "maxDistance", "entityTypes",
+    "breakable", "startBroken", "instantReturnInBounds", "showReturnLine",
+    "spriteNormal", "spriteBroken",
+    "soundTeleport", "soundBreak", "soundRepair",
+    "returnParticleColorA", "returnParticleColorB",
+    "explodeParticleColorA", "explodeParticleColorB",
+    "breakParticleColorA", "breakParticleColorB",
+    "repairParticleColorA", "repairParticleColorB",
 }
 
 -- Explicit selection() to bypass the entity.width/height branch in getSelectionUnsafe.
