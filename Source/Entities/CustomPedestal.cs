@@ -210,8 +210,13 @@ namespace Celeste.Mod.BalintHelper.Entities
             base.Awake(scene);
 
             RefreshManagedEntities();
-            if (managedEntities.Count > 0)
-                managedEntities[0].Depth = Depth + 1;
+            foreach (var entity in managedEntities)
+            {
+                if (entity.Depth <= Depth)
+                {
+                    entity.Depth = Depth + 1;
+                }
+            }
         }
 
         // ── Authority check ───────────────────────────────────────────────────────
