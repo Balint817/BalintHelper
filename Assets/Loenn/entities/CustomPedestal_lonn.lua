@@ -62,7 +62,7 @@ customPedestal.fieldInformation = {
     showReturnLine		  = { fieldType = "boolean", description = "Whether to show a line of particles returning to the pedestal to show where an entity is being teleported." },
 }
 
-trigger.fieldOrder = {
+customPedestal.fieldOrder = {
     "x", "y",
     "returnDelay", "brokenDisableDuration",
     "maxDistance", "entityTypes",
