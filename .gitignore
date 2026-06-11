@@ -363,3 +363,4 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /BalintHelper/Loenn/entities/CustomPedestal_lonn.lua
+/BalintHelper/Loenn/triggers/dashCooldownResetTrigger.lua
