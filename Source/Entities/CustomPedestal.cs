@@ -166,12 +166,12 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             spriteNormalPath = data.Attr("spriteNormal", "characters/theoCrystal/pedestal");
             spriteBrokenPath = data.Attr("spriteBroken", "characters/theoCrystal/pedestal");
-            returnDelay = Math.Max(0f, data.Float("returnDelay", 0f));
+            returnDelay = Math.Max(0f, data.Float("returnDelay", 2.0f));
             instantReturnInBounds = data.Bool("instantReturnInBounds", false);
             maxDistance = data.Float("maxDistance", 0f);
             entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
             breakable = data.Bool("breakable", false);
-            brokenDisableDuration = data.Float("brokenDisableDuration", 0f);
+            brokenDisableDuration = data.Float("brokenDisableDuration", 5.0f);
             showReturnLine = data.Bool("showReturnLine", true);
 
             ParseManagedEntityFilters();
