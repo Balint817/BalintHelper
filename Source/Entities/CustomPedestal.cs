@@ -175,7 +175,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             soundTeleport = data.Attr("soundTeleport", "event:/game/05_mirror_temple/crystaltheo_appear");
             soundBreak = data.Attr("soundBreak", "event:/game/05_mirror_temple/crystaltheo_break_free");
-            soundRepair = data.Attr("soundRepair", "event:/game/general/strawberry_get");
+            soundRepair = data.Attr("soundRepair", "event:/game/09_core/iceblock_reappear");
 
             spriteNormalImg = new Image(GFX.Game[spriteNormalPath]);
             spriteNormalImg.JustifyOrigin(0.5f, 1f);
@@ -190,8 +190,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             Depth = 8998;
             Collider.Position = new Vector2(-16f, -64f);
             Collidable = false;
+            AllowStaticMovers = false;
 
-            OnDashCollide = HandleDash;
             Tag = Tags.TransitionUpdate;
         }
 
@@ -200,7 +200,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         public override void Awake(Scene scene)
         {
             base.Awake(scene);
-            Collidable = breakable;
 
             var candidates = GetManagedEntities();
             if (candidates.Count > 0)
@@ -232,6 +231,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         public override void Update()
         {
             base.Update();
+
+            TryBreakFromDash();
 
             // ── Broken repair countdown (every pedestal handles its own) ──────────
             if (isBroken)
@@ -371,18 +372,51 @@ namespace Celeste.Mod.BalintHelper.Entities
         }
 
         // ── Dash handler ──────────────────────────────────────────────────────────
-
-        private DashCollisionResults HandleDash(Player player, Vector2 direction)
+        private void TryBreakFromDash()
         {
-            if (!breakable || isBroken) return DashCollisionResults.NormalCollision;
+            if (!breakable || isBroken || Scene == null)
+                return;
 
+            Player player = Scene.Tracker.GetEntity<Player>();
+            if (player == null)
+                return;
+
+            if (player.DashAttacking && CollideCheck(player))
+            {
+                Break(player.DashDir);
+            }
+        }
+        private void Break(Vector2 direction)
+        {
             isBroken = true;
-            Collidable = false;
             brokenTimer = brokenDisableDuration > 0f ? brokenDisableDuration : float.MaxValue;
+
 
             if (ClaimedEntity != null)
             {
                 TheoCrystalOnPedestalProp?.SetValue(ClaimedEntity, false);
+
+                if (ClaimedEntity is TheoCrystal theo)
+                {
+                    theo.Speed += direction * 80f;
+                    theo.Speed.Y = (direction.Y-0.1f) * 60f;
+                }
+                else
+                {
+                    FieldInfo speedField = ClaimedEntity.GetType().GetField(
+                        "Speed",
+                        BindingFlags.Instance | BindingFlags.Public
+                    );
+
+                    if (speedField != null && speedField.FieldType == typeof(Vector2))
+                    {
+                        Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity);
+                        speed += direction * 80f;
+                        speed.Y = (direction.Y - 0.1f) * 60f;
+                        speedField.SetValue(ClaimedEntity, speed);
+                    }
+                }
+
                 ClaimedEntity = null;
             }
 
@@ -394,14 +428,11 @@ namespace Celeste.Mod.BalintHelper.Entities
             Celeste.Freeze(0.05f);
             Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
             Audio.Play(soundBreak, Position);
-
-            return DashCollisionResults.Rebound;
         }
 
         private void Repair()
         {
             isBroken = false;
-            Collidable = breakable;
 
             spriteNormalImg.Visible = true;
             spriteBrokenImg.Visible = false;
