@@ -499,7 +499,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (playEffects)
             {
-                target.EmitParticleFamilyBurst(PtExplode, ExplodeParticleAtlases, 20);
+                target.EmitParticleFamilyBurst(PtExplode, ExplodeParticleAtlases, 15);
                 Audio.Play(soundTeleport, entity.Position);
             }
         }
@@ -823,11 +823,17 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return;
 
             var sprite = spriteBrokenImg.Visible ? spriteBrokenImg : spriteNormalImg;
+
+            const float areaScale = 0.66f;
+
+            var width = sprite.Width * areaScale;
+            var height = sprite.Height * areaScale;
+
             var source = new Rectangle(
-                (int)MathF.Round(X - sprite.Origin.X),
-                (int)MathF.Round(Y - sprite.Origin.Y),
-                Math.Max(1, (int)MathF.Round(sprite.Width)),
-                Math.Max(1, (int)MathF.Round(sprite.Height)));
+                (int)(X - sprite.Origin.X + (sprite.Width - width) * 0.5f),
+                (int)(Y - sprite.Origin.Y + (sprite.Height - height) * 0.5f),
+                Math.Max(1, (int)width),
+                Math.Max(1, (int)height));
 
             for (int i = 0; i < count; i++)
             {

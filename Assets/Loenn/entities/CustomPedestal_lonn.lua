@@ -42,7 +42,6 @@ customPedestal.fieldInformation = {
     returnDelay           = { fieldType = "number", minimumValue = 0.0 },
     maxDistance           = { fieldType = "number", minimumValue = 0.0 },
     brokenDisableDuration = { fieldType = "number", minimumValue = 0.0 },
-    startBroken           = { fieldType = "boolean" },
     entityTypes           = { fieldType = "string" },
     spriteNormal          = { fieldType = "string" },
     spriteBroken          = { fieldType = "string" },
