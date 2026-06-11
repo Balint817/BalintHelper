@@ -157,11 +157,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         // Non-authority pedestals delegate everything to the authority.
         private readonly Dictionary<Entity, float> returnTimers = new Dictionary<Entity, float>();
 
-        // Tracks which entities we have seen before to detect first-spawn.
-        private readonly HashSet<Entity> knownEntities = new HashSet<Entity>();
-
-        // Previous-frame holder per entity (Player or null).
-        private readonly Dictionary<Entity, Player> prevHolder = new Dictionary<Entity, Player>();
 
         // ── Constructor ───────────────────────────────────────────────────────────
         public CustomPedestal(EntityData data, Vector2 offset)
@@ -281,15 +276,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 var holdable = entity.Get<Holdable>();
                 if (holdable == null) continue;
 
-                Player currentHolder = holdable.Holder;
-                prevHolder.TryGetValue(entity, out var lastHolder);
-                prevHolder[entity] = currentHolder;
-
-                bool isHeld = currentHolder != null;
-                bool wasHeld = lastHolder != null;
-                bool isFirstSeen = !knownEntities.Contains(entity);
-
-                knownEntities.Add(entity);
+                bool isHeld = holdable.Holder != null;
 
                 if (isHeld)
                 {
@@ -300,31 +287,34 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
                 }
 
-                // ── First seen (spawned but never held) OR just released ──────────
-                bool shouldQueue = isFirstSeen || (wasHeld && !isHeld);
+                // Track all matching, non-held entities continuously.
+                // Skip entities already claimed by a non-broken pedestal or already queued.
+                var claimingPedestal = FindClaimingPedestal(entity);
+                if (claimingPedestal != null && !claimingPedestal.isBroken)
+                    continue;
 
-                if (shouldQueue)
-                {
-                    var target = FindBestPedestal(entity, null);
-                    if (target == null) continue;
+                if (returnTimers.ContainsKey(entity))
+                    continue;
 
-                    float delay = returnDelay;
+                var target = FindBestPedestal(entity, null);
+                if (target == null) continue;
 
-                    // Instant-in-bounds override
-                    if (delay > 0f && instantReturnInBounds
-                        && target.CollidePoint(entity.Center))
-                        delay = 0f;
+                float delay = returnDelay;
 
-                    // Max-distance check — skip return entirely if too far
-                    if (maxDistance > 0f
-                        && Vector2.Distance(entity.Position, target.Position) > maxDistance)
-                        continue;
+                // Instant-in-bounds override
+                if (delay > 0f && instantReturnInBounds
+                    && target.CollidePoint(entity.Center))
+                    delay = 0f;
 
-                    if (delay <= 0f)
-                        TeleportEntityTo(entity, target);
-                    else if (!returnTimers.ContainsKey(entity))
-                        returnTimers[entity] = delay;
-                }
+                // Max-distance check — skip return entirely if too far
+                if (maxDistance > 0f
+                    && Vector2.Distance(entity.Position, target.Position) > maxDistance)
+                    continue;
+
+                if (delay <= 0f)
+                    TeleportEntityTo(entity, target);
+                else
+                    returnTimers[entity] = delay;
             }
 
             // ── Remove timers for entities that are no longer candidates ─────────
@@ -522,16 +512,25 @@ namespace Celeste.Mod.BalintHelper.Entities
             Audio.Play(soundTeleport, entity.Position);
         }
 
-        /// <summary>Removes this entity's claim from whichever pedestal holds it.</summary>
-        private void ReleaseClaim(Entity entity)
+        private CustomPedestal? FindClaimingPedestal(Entity entity)
         {
             foreach (var ped in Scene.Tracker
                          .GetEntities<CustomPedestal>()
                          .Cast<CustomPedestal>())
             {
                 if (ped.ClaimedEntity == entity)
-                    ped.ClaimedEntity = null;
+                    return ped;
             }
+
+            return null;
+        }
+
+        /// <summary>Removes this entity's claim from whichever pedestal holds it.</summary>
+        private void ReleaseClaim(Entity entity)
+        {
+            var ped = FindClaimingPedestal(entity);
+            if (ped != null)
+                ped.ClaimedEntity = null;
         }
 
         // ── Pedestal selection ────────────────────────────────────────────────────
@@ -666,8 +665,10 @@ namespace Celeste.Mod.BalintHelper.Entities
             var particles = (Scene as Level)?.Particles;
             if (particles == null) return;
 
-            const int steps = 3;
             var to = SnapPosition(target);
+            var length = (to - from).Abs().Length();
+            var steps = (int)MathF.Ceiling(length / 8); // 1 tile == 8 pixels
+            
             for (int i = 0; i <= steps; i++)
             {
                 var pos = Vector2.Lerp(from, to, i / (float)steps);
