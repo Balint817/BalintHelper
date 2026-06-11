@@ -159,6 +159,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private bool isBroken = false;
         private float brokenTimer = 0f;
 
+        private bool startBroken = false;
+
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity? ClaimedEntity { get; private set; } = null;
 
@@ -190,6 +192,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             soundTeleport = data.Attr("soundTeleport", "event:/game/01_forsaken_city/birdbros_thrust");
             soundBreak = data.Attr("soundBreak", "event:/game/05_mirror_temple/crystaltheo_break_free");
             soundRepair = data.Attr("soundRepair", "event:/game/09_core/iceblock_reappear");
+
+            startBroken = data.Bool("startBroken", false);
 
             spriteNormalImg = new Image(GFX.Game[spriteNormalPath]);
             spriteNormalImg.JustifyOrigin(0.5f, 1f);
