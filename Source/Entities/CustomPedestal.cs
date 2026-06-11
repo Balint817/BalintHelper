@@ -164,8 +164,11 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             startBroken = data.Bool("startBroken", false);
 
+            var visibilityFlag = startBroken && breakable;
+
             spriteNormalImg = new Image(GFX.Game[spriteNormalPath]);
             spriteNormalImg.JustifyOrigin(0.5f, 1f);
+            spriteNormalImg.Visible = !visibilityFlag;
             Add(spriteNormalImg);
 
             spriteBrokenImg = new Image(GFX.Game[spriteBrokenPath]);
