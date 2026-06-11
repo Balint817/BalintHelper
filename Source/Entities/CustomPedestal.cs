@@ -47,16 +47,16 @@ namespace Celeste.Mod.BalintHelper.Entities
         // ── Reflection: TheoCrystal.OnPedestal, Speed ────────────────────────────
         private static readonly PropertyInfo TheoCrystalOnPedestalProp =
             typeof(TheoCrystal).GetProperty("OnPedestal",
-                BindingFlags.Instance | BindingFlags.Public);
+                BindingFlags.Instance | BindingFlags.Public)!;
 
         private static readonly FieldInfo TheoCrystalSpeedField =
             typeof(TheoCrystal).GetField("Speed",
-                BindingFlags.Instance | BindingFlags.Public);
+                BindingFlags.Instance | BindingFlags.Public)!;
 
         // ── Built-in fallback particle types (lazy) ───────────────────────────────
-        private static ParticleType s_ReturnLineFallback;
-        private static ParticleType s_ExplodeFallback;
-        private static ParticleType s_BreakFallback;
+        private static ParticleType? s_ReturnLineFallback;
+        private static ParticleType? s_ExplodeFallback;
+        private static ParticleType? s_BreakFallback;
 
         private static ParticleType GetReturnLineFallback() => s_ReturnLineFallback ??= new ParticleType
         {
@@ -126,9 +126,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly string soundRepair;
 
         // Lazily resolved particle types
-        private ParticleType _ptReturnLine;
-        private ParticleType _ptExplode;
-        private ParticleType _ptBreak;
+        private ParticleType? _ptReturnLine;
+        private ParticleType? _ptExplode;
+        private ParticleType? _ptBreak;
 
         private ParticleType PtReturnLine => _ptReturnLine ??= BuildParticleType(particleReturnAtlas, GetReturnLineFallback());
         private ParticleType PtExplode => _ptExplode ??= BuildParticleType(particleExplodeAtlas, GetExplodeFallback());
@@ -146,7 +146,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private const float RepairFlashDuration = 0.12f;
 
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
-        public Entity ClaimedEntity { get; private set; } = null;
+        public Entity? ClaimedEntity { get; private set; } = null;
 
         // returnTimers[entity] = seconds remaining before that entity teleports back.
         // Shared across ALL pedestals via the first (authority) pedestal's dictionary.
@@ -275,7 +275,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 if (holdable == null) continue;
 
                 Player currentHolder = holdable.Holder;
-                prevHolder.TryGetValue(entity, out Player lastHolder);
+                prevHolder.TryGetValue(entity, out var lastHolder);
                 prevHolder[entity] = currentHolder;
 
                 bool isHeld = currentHolder != null;
@@ -418,6 +418,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
                 else
                 {
+                    // TODO: optimize this, this should be a one-time thing when we initially resolve entity types (and that way we can also null-check & field type check (Vector2) and skip this step for unsupported entities)
                     FieldInfo speedField = ClaimedEntity.GetType().GetField(
                         "Speed",
                         BindingFlags.Instance | BindingFlags.Public
@@ -425,7 +426,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
                     if (speedField != null && speedField.FieldType == typeof(Vector2))
                     {
-                        Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity);
+                        Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity)!;
                         speed += direction * baseDirectionMultiplier;
                         speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
                         speedField.SetValue(ClaimedEntity, speed);
@@ -528,7 +529,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         // ── Pedestal selection ────────────────────────────────────────────────────
 
-        private CustomPedestal FindBestPedestal(Entity entity, CustomPedestal exclude)
+        private CustomPedestal? FindBestPedestal(Entity entity, CustomPedestal? exclude)
         {
             var all = Scene.Tracker
                 .GetEntities<CustomPedestal>()
@@ -554,7 +555,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             return null;
         }
 
-        private CustomPedestal ResolveConflict(Entity entity)
+        private CustomPedestal? ResolveConflict(Entity entity)
         {
             var target = FindBestPedestal(entity, null);
             if (target == null) return null;

@@ -28,7 +28,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             typeof(Player).GetField(
                 "dashCooldownTimer",
                 BindingFlags.Instance | BindingFlags.NonPublic
-            );
+            )!;
 
         // ── Per-instance config ───────────────────────────────────────────────────
         private readonly float value;
@@ -100,7 +100,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private static float GetDashCooldown(Player player)
         {
             if (DashCooldownTimerField == null) return 0f;
-            return (float)DashCooldownTimerField.GetValue(player);
+            return (float)DashCooldownTimerField.GetValue(player)!;
         }
 
         private static void SetDashCooldown(Player player, float value)
