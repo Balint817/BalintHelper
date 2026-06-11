@@ -113,6 +113,10 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool instantReturnInBounds;
         private readonly float maxDistance;
         private readonly string entityTypesRaw;
+        private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<int> managedEntityIds = new HashSet<int>();
+        private readonly Dictionary<Type, FieldInfo> entityIdFieldCache = new Dictionary<Type, FieldInfo>();
+        private readonly List<Entity> managedEntities = new List<Entity>();
         private readonly bool breakable;
         private readonly float brokenDisableDuration;
         private readonly bool showReturnLine;
@@ -173,6 +177,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             brokenDisableDuration = data.Float("brokenDisableDuration", 0f);
             showReturnLine = data.Bool("showReturnLine", true);
 
+            ParseManagedEntityFilters();
+
             particleReturnAtlas = data.Attr("particleReturn", "");
             particleExplodeAtlas = data.Attr("particleExplode", "");
             particleBreakAtlas = data.Attr("particleBreak", "");
@@ -211,9 +217,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             base.Awake(scene);
 
-            var candidates = GetManagedEntities();
-            if (candidates.Count > 0)
-                candidates[0].Depth = Depth + 1;
+            RefreshManagedEntities();
+            if (managedEntities.Count > 0)
+                managedEntities[0].Depth = Depth + 1;
         }
 
         // ── Authority check ───────────────────────────────────────────────────────
@@ -267,7 +273,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             // ── Authority: full entity management ────────────────────────────────
-            var candidates = GetManagedEntities();
+            RefreshManagedEntities();
+            var candidates = managedEntities;
 
             foreach (var entity in candidates)
             {
@@ -593,41 +600,59 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         // ── Entity collection ─────────────────────────────────────────────────────
 
-        private List<Entity> GetManagedEntities()
+        private void ParseManagedEntityFilters()
         {
-            var result = new List<Entity>();
+            managedTypeNames.Clear();
+            managedEntityIds.Clear();
+
             var tokens = entityTypesRaw
                 .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var raw in tokens)
             {
                 var token = raw.Trim();
-                if (int.TryParse(token, out int entityId))
-                {
-                    foreach (var e in Scene.Entities)
-                    {
-                        if (e.Get<Holdable>() == null) continue;
-                        var idField = e.GetType().GetField("entityID",
-                            BindingFlags.Instance | BindingFlags.NonPublic)
-                            ?? e.GetType().GetField("ID",
-                            BindingFlags.Instance | BindingFlags.Public);
-                        if (idField?.GetValue(e) is EntityID eid && eid.ID == entityId)
-                            result.Add(e);
-                    }
-                }
-                else
-                {
-                    foreach (var e in Scene.Entities)
-                    {
-                        if (e.GetType().Name == token
-                            && e.Get<Holdable>() != null
-                            && !result.Contains(e))
-                            result.Add(e);
-                    }
-                }
-            }
+                if (token.Length == 0)
+                    continue;
 
-            return result;
+                if (int.TryParse(token, out int entityId))
+                    managedEntityIds.Add(entityId);
+                else
+                    managedTypeNames.Add(token);
+            }
+        }
+
+        private void RefreshManagedEntities()
+        {
+            managedEntities.Clear();
+
+            if (Scene == null)
+                return;
+
+            foreach (var e in Scene.Entities)
+            {
+                if (e.Get<Holdable>() == null)
+                    continue;
+
+                bool byType = managedTypeNames.Contains(e.GetType().Name);
+                bool byId = false;
+
+                if (!byType && managedEntityIds.Count > 0)
+                {
+                    var type = e.GetType();
+                    if (!entityIdFieldCache.TryGetValue(type, out FieldInfo idField))
+                    {
+                        idField = type.GetField("entityID", BindingFlags.Instance | BindingFlags.NonPublic)
+                            ?? type.GetField("ID", BindingFlags.Instance | BindingFlags.Public);
+                        entityIdFieldCache[type] = idField;
+                    }
+
+                    if (idField?.GetValue(e) is EntityID eid)
+                        byId = managedEntityIds.Contains(eid.ID);
+                }
+
+                if (byType || byId)
+                    managedEntities.Add(e);
+            }
         }
 
         // ── Visual helpers ────────────────────────────────────────────────────────
