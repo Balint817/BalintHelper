@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -144,6 +145,14 @@ namespace Celeste.Mod.BalintHelper.Entities
         private ParticleType PtRepair => _ptRepair ??= BuildParticleType(particleRepairAtlas, GetExplodeFallback());
 
         // ── Runtime state ─────────────────────────────────────────────────────────
+        private sealed class SharedReturnState
+        {
+            public readonly Dictionary<Entity, float> ReturnTimers = new Dictionary<Entity, float>();
+            public readonly Dictionary<Entity, CustomPedestal> ReturnTargets = new Dictionary<Entity, CustomPedestal>();
+        }
+
+        private static readonly ConditionalWeakTable<Scene, SharedReturnState> sharedReturnStates = new ConditionalWeakTable<Scene, SharedReturnState>();
+
         private Image spriteNormalImg;
         private Image spriteBrokenImg;
 
@@ -153,12 +162,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity? ClaimedEntity { get; private set; } = null;
 
-        // returnTimers[entity] = seconds remaining before that entity teleports back.
-        // returnTargets[entity] = pedestal currently targeted by the timer.
-        // Shared across ALL pedestals via the first (authority) pedestal's dictionary.
-        // Non-authority pedestals delegate everything to the authority.
-        private readonly Dictionary<Entity, float> returnTimers = new Dictionary<Entity, float>();
-        private readonly Dictionary<Entity, CustomPedestal> returnTargets = new Dictionary<Entity, CustomPedestal>();
+        private readonly SharedReturnState detachedReturnState = new SharedReturnState();
+        private Dictionary<Entity, float> returnTimers => GetSharedReturnState().ReturnTimers;
+        private Dictionary<Entity, CustomPedestal> returnTargets => GetSharedReturnState().ReturnTargets;
 
         // ── Constructor ───────────────────────────────────────────────────────────
         public CustomPedestal(EntityData data, Vector2 offset)
@@ -221,22 +227,35 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         // ── Authority check ───────────────────────────────────────────────────────
 
+        private SharedReturnState GetSharedReturnState()
+            => Scene == null
+                ? detachedReturnState
+                : sharedReturnStates.GetValue(Scene, static _ => new SharedReturnState());
+
         /// <summary>
         /// Returns true if this pedestal is the "authority" — the first non-broken
         /// one in scene order. Only the authority runs entity management logic each
         /// frame; all others just handle their own broken-repair timer and snap.
         /// </summary>
-        private bool IsAuthority()
+        private bool IsAuthority() => GetAuthorityPedestal() == this;
+
+        private CustomPedestal? GetAuthorityPedestal()
         {
-            var all = Scene.Tracker.GetEntities<CustomPedestal>();
-            // Scene.Tracker ordering matches EntityList insertion order.
-            // We want the first pedestal in the list that is still in the scene.
-            foreach (Entity e in all)
+            if (Scene == null)
+                return null;
+
+            CustomPedestal? fallback = null;
+            foreach (var entity in Scene.Tracker.GetEntities<CustomPedestal>())
             {
-                if (e is CustomPedestal p)
-                    return p == this; // First one found = authority
+                if (entity is not CustomPedestal pedestal)
+                    continue;
+
+                fallback ??= pedestal;
+                if (!pedestal.isBroken)
+                    return pedestal;
             }
-            return true;
+
+            return fallback;
         }
 
         // ── Update ────────────────────────────────────────────────────────────────
@@ -271,120 +290,104 @@ namespace Celeste.Mod.BalintHelper.Entities
             // ── Authority: full entity management ────────────────────────────────
             RefreshManagedEntities();
             var candidates = managedEntities;
+            var eligibleEntities = new List<Entity>();
 
             foreach (var entity in candidates)
             {
                 var holdable = entity.Get<Holdable>();
-                if (holdable == null) continue;
+                if (holdable == null)
+                    continue;
 
-                bool isHeld = holdable.Holder != null;
-
-                if (isHeld)
+                if (holdable.Holder != null)
                 {
-                    // Entity is being carried — cancel any pending return timer
-                    // and release whichever pedestal currently claims it.
                     returnTimers.Remove(entity);
                     returnTargets.Remove(entity);
                     ReleaseClaim(entity);
                     continue;
                 }
 
-                // Track all matching, non-held entities continuously.
-                // Skip entities already claimed by a non-broken pedestal or already queued.
                 var claimingPedestal = FindClaimingPedestal(entity);
-                if (claimingPedestal != null && !claimingPedestal.isBroken)
-                    continue;
-
-                if (returnTimers.ContainsKey(entity))
-                    continue;
-
-                var target = FindBestPedestal(entity, null);
-                if (target == null) continue;
-
-                float delay = target.returnDelay;
-
-                bool isInstant = false;
-                // Instant-in-bounds override
-                if (delay > 0f && target.instantReturnInBounds
-                    && target.CollidePoint(entity.Center))
+                if (claimingPedestal != null)
                 {
-                    delay = 0f;
-                    isInstant = true;
+                    if (claimingPedestal.isBroken)
+                    {
+                        claimingPedestal.ClaimedEntity = null;
+                    }
+                    else
+                    {
+                        returnTimers.Remove(entity);
+                        returnTargets.Remove(entity);
+                        continue;
+                    }
                 }
 
-                // Max-distance check — skip return entirely if too far
-                if (target.maxDistance > 0f
-                    && Vector2.Distance(entity.Position, target.Position) > target.maxDistance)
-                    continue;
+                eligibleEntities.Add(entity);
+            }
 
-                if (delay <= 0f)
+            var eligibleSet = new HashSet<Entity>(eligibleEntities);
+            foreach (var entity in returnTimers.Keys.ToList())
+            {
+                if (!eligibleSet.Contains(entity))
                 {
-                    TeleportEntityTo(entity, target, !isInstant);
-                }
-                else
-                {
-                    returnTimers[entity] = delay;
-                    returnTargets[entity] = target;
+                    returnTimers.Remove(entity);
+                    returnTargets.Remove(entity);
                 }
             }
 
-            // ── Remove timers for entities that are no longer candidates ─────────
-            // (e.g. left the room)
-            var candidateSet = new HashSet<Entity>(candidates);
-            var expired = new List<Entity>();
+            var assignments = AssignTargets(eligibleEntities);
 
-            // ── Process return timers ─────────────────────────────────────────────
+            foreach (var entity in eligibleEntities)
+            {
+                if (!assignments.TryGetValue(entity, out var target))
+                {
+                    returnTimers.Remove(entity);
+                    returnTargets.Remove(entity);
+                    continue;
+                }
+
+                bool instantInBounds;
+                float delay = GetTargetDelay(entity, target, out instantInBounds);
+                bool targetChanged = !returnTargets.TryGetValue(entity, out var previousTarget) || previousTarget != target;
+
+                if (delay <= 0f)
+                {
+                    TeleportEntityTo(entity, target, !instantInBounds);
+                    continue;
+                }
+
+                if (targetChanged || !returnTimers.ContainsKey(entity))
+                {
+                    returnTargets[entity] = target;
+                    returnTimers[entity] = delay;
+                }
+            }
+
+            var expired = new List<Entity>();
             foreach (var kvp in returnTimers.ToList())
             {
                 var entity = kvp.Key;
-
-                if (!candidateSet.Contains(entity))
+                if (!assignments.TryGetValue(entity, out var timedTarget))
                 {
                     expired.Add(entity);
                     continue;
                 }
 
-                var timedTarget = FindBestPedestal(entity, null);
-                if (timedTarget == null)
-                {
-                    expired.Add(entity);
-                    continue;
-                }
-
-                // If target changed while counting down, restart timer using new target settings.
-                if (!returnTargets.TryGetValue(entity, out var previousTarget) || previousTarget != timedTarget)
-                {
-                    returnTargets[entity] = timedTarget;
-                    returnTimers[entity] = timedTarget.returnDelay;
-                }
-
-                // Instant-in-bounds should also apply while waiting on a timer.
-                if (timedTarget.instantReturnInBounds && timedTarget.CollidePoint(entity.Center))
+                bool instantInBounds;
+                GetTargetDelay(entity, timedTarget, out instantInBounds);
+                if (instantInBounds)
                 {
                     TeleportEntityTo(entity, timedTarget, false);
                     expired.Add(entity);
                     continue;
                 }
 
-                // Re-check distance constraint against current target while timer runs.
-                if (timedTarget.maxDistance > 0f
-                    && Vector2.Distance(entity.Position, timedTarget.Position) > timedTarget.maxDistance)
-                {
-                    expired.Add(entity);
-                    continue;
-                }
-
-                float remaining = returnTimers[entity] - Engine.DeltaTime;
-
-                // Emit return-line particles
                 if (timedTarget.showReturnLine)
                     EmitReturnLine(entity.Center, timedTarget);
 
+                float remaining = kvp.Value - Engine.DeltaTime;
                 if (remaining <= 0f)
                 {
-                    var target = ResolveConflict(entity);
-                    if (target != null)
-                        TeleportEntityTo(entity, target);
+                    TeleportEntityTo(entity, timedTarget);
                     expired.Add(entity);
                 }
                 else
@@ -392,10 +395,11 @@ namespace Celeste.Mod.BalintHelper.Entities
                     returnTimers[entity] = remaining;
                 }
             }
-            foreach (var e in expired)
+
+            foreach (var entity in expired)
             {
-                returnTimers.Remove(e);
-                returnTargets.Remove(e);
+                returnTimers.Remove(entity);
+                returnTargets.Remove(entity);
             }
 
             // ── Snap this pedestal's own claimed entity ───────────────────────────
@@ -493,6 +497,8 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void TeleportEntityTo(Entity entity, CustomPedestal target, bool playEffects = true)
         {
+            returnTimers.Remove(entity);
+            returnTargets.Remove(entity);
             ReleaseClaim(entity);
 
             target.ClaimedEntity = entity;
@@ -540,67 +546,134 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         // ── Pedestal selection ────────────────────────────────────────────────────
 
-        private CustomPedestal? FindBestPedestal(Entity entity, CustomPedestal? exclude)
+        private Dictionary<Entity, CustomPedestal> AssignTargets(IEnumerable<Entity> entities)
         {
-            var all = Scene.Tracker
-                .GetEntities<CustomPedestal>()
-                .Cast<CustomPedestal>()
-                .Where(p => !p.isBroken && p != exclude)
-                .OrderBy(p => Vector2.DistanceSquared(entity.Position, p.Position))
-                .ToList();
+            var assignments = new Dictionary<Entity, CustomPedestal>();
+            var pedestalOwners = new Dictionary<CustomPedestal, Entity>();
 
-            // Prefer pedestal that already claims this entity
-            foreach (var p in all)
-                if (p.ClaimedEntity == entity) return p;
-
-            // Nearest unclaimed within maxDistance
-            foreach (var p in all)
+            foreach (var entity in entities.OrderBy(GetStableId))
             {
-                if (p.ClaimedEntity != null) continue;
-                if (maxDistance > 0f
-                    && Vector2.Distance(entity.Position, p.Position) > maxDistance)
-                    continue;
-                return p;
+                TryAssignTarget(entity, assignments, pedestalOwners, new HashSet<CustomPedestal>());
             }
 
-            return null;
+            return assignments;
         }
 
-        private CustomPedestal? ResolveConflict(Entity entity)
+        private bool TryAssignTarget(
+            Entity entity,
+            Dictionary<Entity, CustomPedestal> assignments,
+            Dictionary<CustomPedestal, Entity> pedestalOwners,
+            HashSet<CustomPedestal> excluded)
         {
-            var target = FindBestPedestal(entity, null);
-            if (target == null) return null;
-
-            float myTimer = returnTimers.TryGetValue(entity, out float mt) ? mt : 0f;
-
-            foreach (var kvp in returnTimers)
+            foreach (var pedestal in GetCandidatePedestals(entity))
             {
-                if (kvp.Key == entity) continue;
+                if (excluded.Contains(pedestal))
+                    continue;
 
-                var theirTarget = FindBestPedestal(kvp.Key, null);
-                if (theirTarget != target) continue;
-
-                float theirTimer = kvp.Value;
-                bool iWin;
-
-                if (Math.Abs(myTimer - theirTimer) > 0.01f)
-                    iWin = myTimer < theirTimer;
-                else
+                if (!pedestalOwners.TryGetValue(pedestal, out var currentOwner))
                 {
-                    float myDist = Vector2.Distance(entity.Position, target.Position);
-                    float theirDist = Vector2.Distance(kvp.Key.Position, target.Position);
-                    if (Math.Abs(myDist - theirDist) > 1f)
-                        iWin = myDist < theirDist;
-                    else
-                        iWin = entity.GetHashCode() > kvp.Key.GetHashCode();
+                    pedestalOwners[pedestal] = entity;
+                    assignments[entity] = pedestal;
+                    return true;
                 }
 
-                if (!iWin)
-                    return FindBestPedestal(entity, target);
+                if (currentOwner == entity)
+                {
+                    assignments[entity] = pedestal;
+                    return true;
+                }
+
+                if (!HasHigherPriority(entity, currentOwner, pedestal))
+                    continue;
+
+                pedestalOwners[pedestal] = entity;
+                assignments[entity] = pedestal;
+                assignments.Remove(currentOwner);
+
+                var nextExcluded = new HashSet<CustomPedestal>(excluded)
+                {
+                    pedestal
+                };
+                TryAssignTarget(currentOwner, assignments, pedestalOwners, nextExcluded);
+                return true;
             }
 
-            return target;
+            assignments.Remove(entity);
+            return false;
         }
+
+        private IEnumerable<CustomPedestal> GetCandidatePedestals(Entity entity)
+        {
+            if (Scene == null)
+                return Enumerable.Empty<CustomPedestal>();
+
+            return Scene.Tracker
+                .GetEntities<CustomPedestal>()
+                .Cast<CustomPedestal>()
+                .Where(p => CanTargetPedestal(entity, p))
+                .OrderBy(p => Vector2.DistanceSquared(entity.Position, p.Position))
+                .ThenBy(GetStableId)
+                .ToList();
+        }
+
+        private bool CanTargetPedestal(Entity entity, CustomPedestal pedestal)
+        {
+            if (pedestal.isBroken)
+                return false;
+
+            if (pedestal.ClaimedEntity != null && pedestal.ClaimedEntity != entity)
+                return false;
+
+            if (pedestal.maxDistance > 0f
+                && Vector2.Distance(entity.Position, pedestal.Position) > pedestal.maxDistance)
+                return false;
+
+            return true;
+        }
+
+        private bool HasHigherPriority(Entity contender, Entity incumbent, CustomPedestal pedestal)
+        {
+            float contenderTimer = GetPriorityTimer(contender, pedestal);
+            float incumbentTimer = GetPriorityTimer(incumbent, pedestal);
+            if (Math.Abs(contenderTimer - incumbentTimer) > 0.01f)
+                return contenderTimer < incumbentTimer;
+
+            float contenderDistance = Vector2.DistanceSquared(contender.Position, pedestal.Position);
+            float incumbentDistance = Vector2.DistanceSquared(incumbent.Position, pedestal.Position);
+            if (Math.Abs(contenderDistance - incumbentDistance) > 1f)
+                return contenderDistance < incumbentDistance;
+
+            return GetStableId(contender) < GetStableId(incumbent);
+        }
+
+        private float GetPriorityTimer(Entity entity, CustomPedestal pedestal)
+        {
+            if (returnTargets.TryGetValue(entity, out var currentTarget)
+                && currentTarget == pedestal
+                && returnTimers.TryGetValue(entity, out var remaining))
+            {
+                return remaining;
+            }
+
+            return GetTargetDelay(entity, pedestal, out _);
+        }
+
+        private float GetTargetDelay(Entity entity, CustomPedestal pedestal, out bool instantInBounds)
+        {
+            float delay = pedestal.returnDelay;
+            instantInBounds = false;
+
+            if (delay > 0f && pedestal.instantReturnInBounds && pedestal.CollidePoint(entity.Center))
+            {
+                delay = 0f;
+                instantInBounds = true;
+            }
+
+            return delay;
+        }
+
+        private static int GetStableId(Entity entity)
+            => entity.SourceData?.ID ?? RuntimeHelpers.GetHashCode(entity);
 
         // ── Entity collection ─────────────────────────────────────────────────────
 
