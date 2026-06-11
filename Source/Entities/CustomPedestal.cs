@@ -138,7 +138,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             : base(data.Position + offset, 32f, 32f, safe: false)
         {
             spriteNormalPath = data.Attr("spriteNormal", "characters/theoCrystal/pedestal");
-            spriteBrokenPath = data.Attr("spriteBroken", "characters/theoCrystal/pedestal");
+            spriteBrokenPath = data.Attr("spriteBroken", "objects/pedestal/damaged");
             returnDelay = Math.Max(0f, data.Float("returnDelay", 2.0f));
             instantReturnInBounds = data.Bool("instantReturnInBounds", true);
             maxDistance = data.Float("maxDistance", 0f);
