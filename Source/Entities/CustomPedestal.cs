@@ -189,7 +189,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             base.Awake(scene);
 
             if (breakable && startBroken)
-                ApplyBrokenState(false);
+                ApplyBrokenState();
 
             RefreshManagedEntities();
             foreach (var entity in managedEntities)
@@ -417,7 +417,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         }
         private void Break(Vector2 direction)
         {
-            ApplyBrokenState(true);
+            ApplyBrokenState();
 
             if (ClaimedEntity != null)
             {
@@ -453,11 +453,11 @@ namespace Celeste.Mod.BalintHelper.Entities
             Audio.Play(soundBreak, Position);
         }
 
-        private void ApplyBrokenState(bool resetTimer)
+        private void ApplyBrokenState()
         {
             isBroken = true;
-            if (resetTimer)
-                brokenTimer = brokenDisableDuration > 0f ? brokenDisableDuration : float.MaxValue;
+
+            brokenTimer = brokenDisableDuration > 0f ? brokenDisableDuration : float.MaxValue;
 
             spriteNormalImg.Visible = false;
             spriteBrokenImg.Visible = true;
