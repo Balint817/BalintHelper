@@ -36,6 +36,8 @@ namespace Celeste.Mod.BalintHelper.Entities
     ///                            (blank = built-in cyan blob)
     ///   particleBreak          – string  GFX.Game atlas path for break debris particle sprite
     ///                            (blank = built-in white shard)
+    ///   particleRepair         – string  GFX.Game atlas path for repair burst particle sprite
+    ///                            (blank = built-in cyan blob)
     ///   soundTeleport          – string  FMOD event for teleport
     ///   soundBreak             – string  FMOD event for break
     ///   soundRepair            – string  FMOD event for repair
@@ -124,6 +126,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly string particleReturnAtlas;
         private readonly string particleExplodeAtlas;
         private readonly string particleBreakAtlas;
+        private readonly string particleRepairAtlas;
 
         private readonly string soundTeleport;
         private readonly string soundBreak;
@@ -133,21 +136,19 @@ namespace Celeste.Mod.BalintHelper.Entities
         private ParticleType? _ptReturnLine;
         private ParticleType? _ptExplode;
         private ParticleType? _ptBreak;
+        private ParticleType? _ptRepair;
 
         private ParticleType PtReturnLine => _ptReturnLine ??= BuildParticleType(particleReturnAtlas, GetReturnLineFallback());
         private ParticleType PtExplode => _ptExplode ??= BuildParticleType(particleExplodeAtlas, GetExplodeFallback());
         private ParticleType PtBreak => _ptBreak ??= BuildParticleType(particleBreakAtlas, GetBreakFallback());
+        private ParticleType PtRepair => _ptRepair ??= BuildParticleType(particleRepairAtlas, GetExplodeFallback());
 
         // ── Runtime state ─────────────────────────────────────────────────────────
         private Image spriteNormalImg;
         private Image spriteBrokenImg;
-        private Image repairFlashImg;
 
         private bool isBroken = false;
         private float brokenTimer = 0f;
-        private float repairFlashTimer = 0f;
-
-        private const float RepairFlashDuration = 0.12f;
 
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity? ClaimedEntity { get; private set; } = null;
@@ -156,7 +157,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         // Shared across ALL pedestals via the first (authority) pedestal's dictionary.
         // Non-authority pedestals delegate everything to the authority.
         private readonly Dictionary<Entity, float> returnTimers = new Dictionary<Entity, float>();
-
 
         // ── Constructor ───────────────────────────────────────────────────────────
         public CustomPedestal(EntityData data, Vector2 offset)
@@ -177,6 +177,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             particleReturnAtlas = data.Attr("particleReturn", "");
             particleExplodeAtlas = data.Attr("particleExplode", "");
             particleBreakAtlas = data.Attr("particleBreak", "");
+            particleRepairAtlas = data.Attr("particleRepair", "");
 
             soundTeleport = data.Attr("soundTeleport", "event:/game/05_mirror_temple/crystaltheo_appear");
             soundBreak = data.Attr("soundBreak", "event:/game/05_mirror_temple/crystaltheo_break_free");
@@ -190,12 +191,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             spriteBrokenImg.JustifyOrigin(0.5f, 1f);
             spriteBrokenImg.Visible = false;
             Add(spriteBrokenImg);
-
-            repairFlashImg = new Image(GFX.Game[spriteNormalPath]);
-            repairFlashImg.JustifyOrigin(0.5f, 1f);
-            repairFlashImg.Visible = false;
-            repairFlashImg.Color = Color.White * 0f;
-            Add(repairFlashImg);
 
             EnableAssistModeChecks = false;
             Depth = 8998;
@@ -243,7 +238,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             base.Update();
 
-            UpdateRepairFlash();
             TryBreakFromDash();
 
             // ── Broken repair countdown (every pedestal handles its own) ──────────
@@ -435,9 +429,6 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             spriteNormalImg.Visible = false;
             spriteBrokenImg.Visible = true;
-            repairFlashTimer = 0f;
-            repairFlashImg.Visible = false;
-            repairFlashImg.Color = Color.White * 0f;
 
             EmitParticleBurst(PtBreak, Center, 8);
             (Scene as Level)?.Flash(Color.White * 0.5f);
@@ -452,37 +443,9 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             spriteNormalImg.Visible = true;
             spriteBrokenImg.Visible = false;
-            repairFlashTimer = RepairFlashDuration;
 
+            EmitParticleBurst(PtRepair, Center, 8);
             Audio.Play(soundRepair, Position);
-        }
-
-        private void UpdateRepairFlash()
-        {
-            if (repairFlashTimer <= 0f)
-            {
-                if (repairFlashImg.Visible)
-                {
-                    repairFlashImg.Visible = false;
-                    repairFlashImg.Color = Color.White * 0f;
-                }
-                return;
-            }
-
-            repairFlashTimer = Math.Max(0f, repairFlashTimer - Engine.DeltaTime);
-
-            float t = 1f - (repairFlashTimer / RepairFlashDuration);
-            float alpha = t < 0.5f ? t / 0.5f : (1f - t) / 0.5f;
-
-            if (!spriteNormalImg.Visible)
-            {
-                repairFlashImg.Visible = false;
-                repairFlashImg.Color = Color.White * 0f;
-                return;
-            }
-
-            repairFlashImg.Visible = alpha > 0f;
-            repairFlashImg.Color = Color.White * alpha;
         }
 
         // ── Teleport ──────────────────────────────────────────────────────────────
@@ -668,7 +631,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             var to = SnapPosition(target);
             var length = (to - from).Abs().Length();
             var steps = (int)MathF.Ceiling(length / 8); // 1 tile == 8 pixels
-            
+
             for (int i = 0; i <= steps; i++)
             {
                 var pos = Vector2.Lerp(from, to, i / (float)steps);
