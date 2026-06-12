@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 
-namespace Celeste.Mod.BalintHelper.Source.Entities
+namespace Celeste.Mod.BalintHelper.Entities
 {
     [CustomEntity("BalintHelper/SilentFloatingDebris")]
     [Tracked(false)]

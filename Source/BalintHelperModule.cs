@@ -1,5 +1,5 @@
 using Celeste.Mod;
-using Celeste.Mod.BalintHelper.Source.Entities;
+using Celeste.Mod.BalintHelper.Entities;
 using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.BalintHelper

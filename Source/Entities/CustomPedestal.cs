@@ -15,35 +15,6 @@ namespace Celeste.Mod.BalintHelper.Entities
     /// A fully-customisable replacement for TheoCrystalPedestal that supports
     /// multiple pedestals per map, configurable return timers, breakability,
     /// particle trails, and any Holdable entity type.
-    ///
-    /// Lönn properties:
-    ///   spriteNormal           – string  Atlas path for intact state sprite
-    ///                            (default "characters/theoCrystal/pedestal")
-    ///   spriteBroken           – string  Atlas path for broken state sprite
-    ///                            (default "characters/theoCrystal/pedestal")
-    ///   startBroken            – bool    Spawn already broken without break effects
-    ///                            and recover after brokenDisableDuration (default false)
-    ///   returnDelay            – float   Seconds after release before teleport back (default 0)
-    ///   instantReturnInBounds  – bool    Teleport immediately when released inside
-    ///                            the pedestal collider (default false)
-    ///   maxDistance            – float   Max range from pedestal for auto-return
-    ///                            (<=0 = infinite, default 0)
-    ///   entityTypes            – string  Comma-separated entity type names and/or
-    ///                            numeric Lönn entity IDs to manage (default "TheoCrystal")
-    ///   breakable              – bool    Allow dashing into pedestal to break it (default false)
-    ///   brokenDisableDuration  – float   Seconds pedestal stays broken (<=0 = forever, default 0)
-    ///   showReturnLine         – bool    Emit particle trail during return countdown (default true)
-    ///   returnParticleColorA   – string  Primary color for blob return particles (default "7fffff")
-    ///   returnParticleColorB   – string  Secondary color for blob return particles (default "ffffff")
-    ///   explodeParticleColorA  – string  Primary color for zappysmoke teleport particles (default "7fffff")
-    ///   explodeParticleColorB  – string  Secondary color for zappysmoke teleport particles (default "ffffff")
-    ///   breakParticleColorA    – string  Primary color for shard break particles (default "ffffff")
-    ///   breakParticleColorB    – string  Secondary color for shard break particles (default "aaaaaa")
-    ///   repairParticleColorA   – string  Primary color for smoke repair particles (default "7fffff")
-    ///   repairParticleColorB   – string  Secondary color for smoke repair particles (default "ffffff")
-    ///   soundTeleport          – string  FMOD event for teleport
-    ///   soundBreak             – string  FMOD event for break
-    ///   soundRepair            – string  FMOD event for repair
     /// </summary>
     [CustomEntity("BalintHelper/CustomPedestal")]
     [Tracked]
@@ -122,6 +93,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private Image spriteNormalImg;
         private Image spriteBrokenImg;
 
+        private SilentFloatingDebris? explosionTrackerDebris; // Reference to tracked debris child
+
         private readonly bool startBroken;
         private bool isBroken = false;
         private float brokenTimer = 0f;
@@ -187,12 +160,25 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         // ── Scene lifecycle ───────────────────────────────────────────────────────
 
+        public override void Added(Scene scene)
+        {
+            base.Added(scene);
+
+            // Align position & scale exactly with this entity's collider dimensions
+            explosionTrackerDebris = new SilentFloatingDebris(Position + Collider.Position, (int)Width, (int)Height);
+            explosionTrackerDebris.OnExploded += OnDebrisExploded;
+            scene.Add(explosionTrackerDebris);
+        }
+
         public override void Awake(Scene scene)
         {
             base.Awake(scene);
 
             if (breakable && startBroken)
                 ApplyBrokenState();
+
+            if (explosionTrackerDebris != null)
+                explosionTrackerDebris.Collidable = !isBroken;
 
             RefreshManagedEntities();
             foreach (var entity in managedEntities)
@@ -204,6 +190,17 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
+        public override void Removed(Scene scene)
+        {
+            if (explosionTrackerDebris != null)
+            {
+                explosionTrackerDebris.OnExploded -= OnDebrisExploded;
+                scene.Remove(explosionTrackerDebris);
+                explosionTrackerDebris = null;
+            }
+            base.Removed(scene);
+        }
+
         // ── Authority check ───────────────────────────────────────────────────────
 
         private SharedReturnState GetSharedReturnState()
@@ -211,11 +208,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 ? detachedReturnState
                 : sharedReturnStates.GetValue(Scene, static _ => new SharedReturnState());
 
-        /// <summary>
-        /// Returns true if this pedestal is the "authority" — the first non-broken
-        /// one in scene order. Only the authority runs entity management logic each
-        /// frame; all others just handle their own broken-repair timer and snap.
-        /// </summary>
         private bool IsAuthority() => GetAuthorityPedestal() == this;
 
         private CustomPedestal? GetAuthorityPedestal()
@@ -243,6 +235,12 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             base.Update();
 
+            // Continuously keep the debris bounds locked to the pedestal bounds
+            if (explosionTrackerDebris != null)
+            {
+                explosionTrackerDebris.Position = Position + Collider.Position;
+            }
+
             TryBreakFromDash();
 
             // ── Broken repair countdown (every pedestal handles its own) ──────────
@@ -253,9 +251,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                     brokenTimer -= Engine.DeltaTime;
                     if (brokenTimer <= 0f) Repair();
                 }
-
-                // Snap logic still runs even when broken: if we recover mid-frame,
-                // claimed entity will be snapped next frame by authority.
                 return;
             }
 
@@ -403,7 +398,18 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        // ── Dash handler ──────────────────────────────────────────────────────────
+        // ── Break & Explosion Handlers ────────────────────────────────────────────
+
+        private void OnDebrisExploded(Vector2 from)
+        {
+            if (!isBroken && breakable)
+            {
+                // Calculate directional push vectors relative to explosion source center
+                Vector2 pushDirection = (Center - from).SafeNormalize(Vector2.UnitY);
+                Break(pushDirection);
+            }
+        }
+
         private void TryBreakFromDash()
         {
             if (!breakable || isBroken || Scene == null)
@@ -421,6 +427,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void Break(Vector2 direction)
         {
             ApplyBrokenState();
+
+            if (explosionTrackerDebris != null)
+                explosionTrackerDebris.Collidable = false;
 
             if (ClaimedEntity != null)
             {
@@ -469,6 +478,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void Repair()
         {
             isBroken = false;
+
+            if (explosionTrackerDebris != null)
+                explosionTrackerDebris.Collidable = true;
 
             spriteNormalImg.Visible = true;
             spriteBrokenImg.Visible = false;
@@ -520,7 +532,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             return null;
         }
 
-        /// <summary>Removes this entity's claim from whichever pedestal holds it.</summary>
         private void ReleaseClaim(Entity entity)
         {
             var ped = FindClaimingPedestal(entity);
@@ -797,7 +808,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static Color ReadColor(EntityData data, string key, string fallbackHex)
             => Calc.HexToColor(data.Attr(key, fallbackHex));
 
-        // Emit one particle every other step (3 points instead of 6) for a lighter trail
         private void EmitReturnLine(Vector2 from, CustomPedestal target)
         {
             var particles = (Scene as Level)?.Particles;
