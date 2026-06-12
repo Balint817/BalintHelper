@@ -15,7 +15,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             Collider = new Hitbox(width, height);
 
-            // Remove the PlayerCollider component so the player doesn't bump it around
+            // Remove the PlayerCollider component
             PlayerCollider playerCollider = Get<PlayerCollider>();
             if (playerCollider != null)
             {
@@ -51,12 +51,12 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         public override void Update()
         {
-            // Leaving this empty to disable all physics/movement
+            // disable physics
         }
 
         public override void Render()
         {
-            // Leaving this empty to disable in-game drawing
+            // disable draw
         }
 
         public void TriggerExplodeEvent(Vector2 from)
