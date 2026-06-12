@@ -1,4 +1,6 @@
 using Celeste.Mod;
+using Celeste.Mod.BalintHelper.Source.Entities;
+using Microsoft.Xna.Framework;
 
 namespace Celeste.Mod.BalintHelper
 {
@@ -13,7 +15,24 @@ namespace Celeste.Mod.BalintHelper
             Instance = this;
         }
 
-        public override void Load() { }
-        public override void Unload() { }
+        public override void Load()
+        {
+            On.Celeste.FloatingDebris.OnExplode += OnFloatingDebrisExplode;
+        }
+        public override void Unload()
+        {
+            On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
+        }
+        private void OnFloatingDebrisExplode(On.Celeste.FloatingDebris.orig_OnExplode orig, FloatingDebris self, Vector2 from)
+        {
+            if (self is SilentFloatingDebris silentDebris)
+            {
+                silentDebris.TriggerExplodeEvent(from);
+            }
+            else
+            {
+                orig(self, from);
+            }
+        }
     }
 }
