@@ -290,6 +290,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                 {
                     if (claimingPedestal.isBroken)
                     {
+                        if (claimingPedestal.ClaimedEntity != null)
+                        {
+                            SetHoldableTimer(claimingPedestal.ClaimedEntity.Get<Holdable>(), 0);
+                        }
                         claimingPedestal.ClaimedEntity = null;
                     }
                     else
@@ -404,8 +408,18 @@ namespace Celeste.Mod.BalintHelper.Entities
             // dunno how this would be null here but just to be safe
             if (!canGrab && holdable != null)
             {
-                HoldableCannotHoldTimer.SetValue(holdable, HoldableCannotHoldDelay.GetValue(holdable));
+                SetHoldableTimer(holdable);
             }
+        }
+
+        private void SetHoldableTimer(Holdable holdable, float delay)
+        {
+            HoldableCannotHoldTimer.SetValue(holdable, delay);
+        }
+
+        private void SetHoldableTimer(Holdable holdable)
+        {
+            SetHoldableTimer(holdable, (float)HoldableCannotHoldDelay.GetValue(holdable)!);
         }
 
         // ── Break & Explosion Handlers ────────────────────────────────────────────
@@ -458,6 +472,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     }
                 }
 
+                SetHoldableTimer(ClaimedEntity.Get<Holdable>(), 0);
                 ClaimedEntity = null;
             }
 
@@ -502,6 +517,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             target.ClaimedEntity = entity;
             entity.Position = SnapPosition(target);
+            SetHoldableTimer(target.Get<Holdable>(), 0);
 
             (entity as Actor)?.ZeroRemainderX();
             (entity as Actor)?.ZeroRemainderY();
@@ -534,8 +550,11 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void ReleaseClaim(Entity entity)
         {
             var ped = FindClaimingPedestal(entity);
-            if (ped != null)
+            if (ped != null && ped.ClaimedEntity != null)
+            {
+                SetHoldableTimer(ped.ClaimedEntity.Get<Holdable>(), 0);
                 ped.ClaimedEntity = null;
+            }
         }
 
         // ── Pedestal selection ────────────────────────────────────────────────────
