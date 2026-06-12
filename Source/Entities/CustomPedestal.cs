@@ -42,7 +42,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly string entityTypesRaw;
         private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> managedEntityIds = new HashSet<int>();
-        private readonly List<Entity> managedEntities = new List<Entity>();
         private readonly Dictionary<Type, FieldInfo?> speedFieldInfos = new Dictionary<Type, FieldInfo?>();
         private readonly bool breakable;
         private readonly float brokenDisableDuration;
@@ -185,12 +184,15 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (explosionTrackerDebris != null)
                 explosionTrackerDebris.Collidable = !isBroken;
 
-            RefreshManagedEntities();
-            foreach (var entity in managedEntities)
+            // Adjust depths for any entities this specific pedestal wants
+            foreach (var entity in scene.Entities)
             {
-                if (entity.Depth <= Depth)
+                if (entity.Get<Holdable>() != null && WantsEntity(entity))
                 {
-                    entity.Depth = Depth + 1;
+                    if (entity.Depth <= Depth)
+                    {
+                        entity.Depth = Depth + 1;
+                    }
                 }
             }
         }
@@ -267,8 +269,31 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             // ── Authority: full entity management ────────────────────────────────
-            RefreshManagedEntities();
-            var candidates = managedEntities;
+            var allPedestals = Scene.Tracker.GetEntities<CustomPedestal>().Cast<CustomPedestal>().ToList();
+            var candidates = new List<Entity>();
+
+            // Gather any holdable that AT LEAST ONE pedestal wants
+            foreach (var e in Scene.Entities)
+            {
+                if (e.Get<Holdable>() == null)
+                    continue;
+
+                bool wanted = false;
+                foreach (var ped in allPedestals)
+                {
+                    if (ped.WantsEntity(e))
+                    {
+                        wanted = true;
+                        ped.EnsureSpeedFieldCached(e.GetType());
+                    }
+                }
+
+                if (wanted)
+                {
+                    candidates.Add(e);
+                }
+            }
+
             var eligibleEntities = new List<Entity>();
 
             foreach (var entity in candidates)
@@ -405,7 +430,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 (ClaimedEntity as Actor)?.ZeroRemainderY();
             }
 
-            // dunno how this would be null here but just to be safe
             if (!canGrab && holdable != null)
             {
                 SetHoldableTimer(holdable);
@@ -430,7 +454,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             if (!isBroken && breakable && canExplode)
             {
-                // Calculate directional push vectors relative to explosion source center
                 Vector2 pushDirection = (SnapPosition(this) - from).SafeNormalize(Vector2.UnitY);
                 Break(pushDirection, 2.0f);
             }
@@ -450,6 +473,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 Break(player.DashDir);
             }
         }
+
         private void Break(Vector2 direction, float multiplier = 1f)
         {
             ApplyBrokenState();
@@ -636,6 +660,10 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (pedestal.isBroken)
                 return false;
 
+            // Ensure this specific pedestal actually wants this specific entity type
+            if (!pedestal.WantsEntity(entity))
+                return false;
+
             if (pedestal.ClaimedEntity != null && pedestal.ClaimedEntity != entity)
                 return false;
 
@@ -713,45 +741,31 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        private void RefreshManagedEntities()
+        public bool WantsEntity(Entity e)
         {
-            managedEntities.Clear();
+            var type = e.GetType();
+            bool byType = managedTypeNames.Contains(e.SourceData?.Name ?? "") || managedTypeNames.Contains(type.Name);
+            bool byId = false;
 
-            if (Scene == null)
-                return;
-
-            foreach (var e in Scene.Entities)
+            if (!byType && managedEntityIds.Count > 0)
             {
-                if (e.Get<Holdable>() == null)
-                    continue;
+                if (e.SourceData?.ID is int eid)
+                    byId = managedEntityIds.Contains(eid);
+            }
 
-                var type = e.GetType();
-                bool byType = managedTypeNames.Contains(e.SourceData?.Name ?? "") || managedTypeNames.Contains(type.Name);
-                bool byId = false;
+            return byType || byId;
+        }
 
-                if (!byType && managedEntityIds.Count > 0)
+        public void EnsureSpeedFieldCached(Type type)
+        {
+            if (!speedFieldInfos.ContainsKey(type))
+            {
+                var fi = type.GetField("Speed", BindingFlags.Instance | BindingFlags.Public);
+                if (fi?.FieldType != typeof(Vector2))
                 {
-                    if (e.SourceData?.ID is int eid)
-                        byId = managedEntityIds.Contains(eid);
+                    fi = null;
                 }
-
-                if (byType || byId)
-                {
-                    if (!speedFieldInfos.TryGetValue(type, out var fi))
-                    {
-                        fi = type.GetField("Speed",
-                            BindingFlags.Instance | BindingFlags.Public);
-                        if (fi?.FieldType != typeof(Vector2))
-                        {
-                            fi = null;
-                        }
-                        speedFieldInfos[type] = fi;
-                    }
-                    if (fi != null)
-                    {
-                        managedEntities.Add(e);
-                    }
-                }
+                speedFieldInfos[type] = fi;
             }
         }
 
