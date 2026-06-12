@@ -13,7 +13,7 @@ customTheoGate.justification = { 0.0, 0.0 }
 
 customTheoGate.placements = {
     {
-        name = "Custom Temple Gate (Any Crystal)",
+        name = "Custom Temple Gate (Any)",
         data = {
             height = 48,
             theoMode = "Any",
@@ -21,10 +21,18 @@ customTheoGate.placements = {
         }
     },
     {
-        name = "Custom Temple Gate (All Crystals)",
+        name = "Custom Temple Gate (All)",
         data = {
             height = 48,
             theoMode = "All",
+            entityTypes = "TheoCrystal"
+        }
+    },
+    {
+        name = "Custom Temple Gate (Each)",
+        data = {
+            height = 48,
+            theoMode = "Each",
             entityTypes = "TheoCrystal"
         }
     }
@@ -32,7 +40,7 @@ customTheoGate.placements = {
 
 customTheoGate.fieldInformation = {
     theoMode = {
-        options = { "Any", "All" },
+        options = { "Any", "All", "Each" },
         editable = false
     },
     height = {

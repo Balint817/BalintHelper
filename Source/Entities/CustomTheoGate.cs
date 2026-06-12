@@ -13,7 +13,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         public enum TheoModes
         {
             Any,
-            All
+            All,
+            Each
         }
 
         private const float HoldingWaitTime = 0.2f;
@@ -27,8 +28,13 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly TheoModes theoMode;
         private readonly Vector2 holdingCheckFrom;
         private readonly string entityTypesRaw;
+
         private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> managedEntityIds = new HashSet<int>();
+
+        // Cached sets to track found entities for TheoModes.Each without causing GC allocations every frame
+        private readonly HashSet<string> foundTypeNames = new HashSet<string>(StringComparer.Ordinal);
+        private readonly HashSet<int> foundEntityIds = new HashSet<int>();
 
         private float drawHeight;
         private float drawHeightMoveSpeed;
@@ -112,6 +118,12 @@ namespace Celeste.Mod.BalintHelper.Entities
             float maxDistanceSq = open ? HoldingCloseDistSq : HoldingOpenDistSq;
             bool foundRelevantHoldable = false;
 
+            if (theoMode == TheoModes.Each)
+            {
+                foundTypeNames.Clear();
+                foundEntityIds.Clear();
+            }
+
             foreach (Entity entity in GetManagedHoldables())
             {
                 if (entity.X > X + 10f)
@@ -129,18 +141,60 @@ namespace Celeste.Mod.BalintHelper.Entities
                         return true;
                     }
                 }
-                else if (!isNearby)
+                else if (theoMode == TheoModes.All)
                 {
-                    return false;
+                    if (!isNearby)
+                    {
+                        return false;
+                    }
+                }
+                else if (theoMode == TheoModes.Each)
+                {
+                    if (isNearby)
+                    {
+                        if (entity.SourceData?.ID is int entityId && managedEntityIds.Contains(entityId))
+                        {
+                            foundEntityIds.Add(entityId);
+                        }
+
+                        string sourceName = entity.SourceData?.Name ?? "";
+                        if (managedTypeNames.Contains(sourceName))
+                        {
+                            foundTypeNames.Add(sourceName);
+                        }
+                        else if (managedTypeNames.Contains(entity.GetType().Name))
+                        {
+                            foundTypeNames.Add(entity.GetType().Name);
+                        }
+
+                        // Early exit optimization if all required types and IDs are found
+                        if (foundTypeNames.Count == managedTypeNames.Count && foundEntityIds.Count == managedEntityIds.Count)
+                        {
+                            return true;
+                        }
+                    }
                 }
             }
 
+            // If no relevant holdables exist in the active area, open the gate (vanilla behavior fallback)
             if (!foundRelevantHoldable)
             {
                 return true;
             }
 
-            return theoMode == TheoModes.All;
+            // If we are checking "All", and we didn't return false in the loop above, all relevant entities are nearby
+            if (theoMode == TheoModes.All)
+            {
+                return true;
+            }
+
+            // If "Each" didn't early exit, do a final evaluation
+            if (theoMode == TheoModes.Each)
+            {
+                return foundTypeNames.Count == managedTypeNames.Count && foundEntityIds.Count == managedEntityIds.Count;
+            }
+
+            return false;
         }
 
         private void SetHeight(int height)
@@ -245,6 +299,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     yield return entity;
             }
         }
+
         public override void Render()
         {
             Vector2 shakeOffset = new Vector2(Math.Sign(shaker.Value.X), 0f);
