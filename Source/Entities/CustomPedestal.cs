@@ -432,7 +432,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 // Calculate directional push vectors relative to explosion source center
                 Vector2 pushDirection = (SnapPosition(this) - from).SafeNormalize(Vector2.UnitY);
-                Break(pushDirection);
+                Break(pushDirection, 2f);
             }
         }
 
@@ -450,7 +450,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 Break(player.DashDir);
             }
         }
-        private void Break(Vector2 direction)
+        private void Break(Vector2 direction, float multiplier = 1f)
         {
             ApplyBrokenState();
 
@@ -459,9 +459,9 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (ClaimedEntity != null)
             {
-                const float baseDirectionMultiplier = 150f;
-                const float verticalSpeedOffset = 0.1f;
-                const float verticalSpeedMultiplier = 150f;
+                float baseDirectionMultiplier = 150f * multiplier;
+                float verticalSpeedOffset = 0.1f;
+                float verticalSpeedMultiplier = 150f * multiplier;
 
                 if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField))
                 {
