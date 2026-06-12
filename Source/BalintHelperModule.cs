@@ -6,9 +6,7 @@ namespace Celeste.Mod.BalintHelper
 {
     public class BalintHelperModule : EverestModule
     {
-#pragma warning disable CS8618
-        public static BalintHelperModule Instance { get; private set; }
-#pragma warning restore CS8618
+        public static BalintHelperModule Instance { get; private set; } = null!;
 
         public BalintHelperModule()
         {
