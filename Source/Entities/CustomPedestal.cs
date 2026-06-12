@@ -106,6 +106,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private Dictionary<Entity, float> returnTimers => GetSharedReturnState().ReturnTimers;
         private Dictionary<Entity, CustomPedestal> returnTargets => GetSharedReturnState().ReturnTargets;
 
+        private readonly bool canDash;
+        private readonly bool canExplode;
+
         // ── Constructor ───────────────────────────────────────────────────────────
         public CustomPedestal(EntityData data, Vector2 offset)
             : base(data.Position + offset, 32f, 32f, safe: false)
@@ -119,6 +122,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             breakable = data.Bool("breakable", false);
             brokenDisableDuration = data.Float("brokenDisableDuration", 5.0f);
             showReturnLine = data.Bool("showReturnLine", true);
+            canDash = data.Bool("canDash", false);
+            canExplode = data.Bool("canExplode", false);
 
             ParseManagedEntityFilters();
 
@@ -402,7 +407,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void OnDebrisExploded(Vector2 from)
         {
-            if (!isBroken && breakable)
+            if (!isBroken && breakable && canExplode)
             {
                 // Calculate directional push vectors relative to explosion source center
                 Vector2 pushDirection = (Center - from).SafeNormalize(Vector2.UnitY);
@@ -412,7 +417,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void TryBreakFromDash()
         {
-            if (!breakable || isBroken || Scene == null)
+            if (!breakable || !canDash || isBroken || Scene == null)
                 return;
 
             Player player = Scene.Tracker.GetEntity<Player>();
