@@ -20,15 +20,6 @@ namespace Celeste.Mod.BalintHelper.Entities
     [Tracked]
     public class CustomPedestal : Solid
     {
-        // ── Reflection: TheoCrystal.OnPedestal, Speed ────────────────────────────
-        private static readonly PropertyInfo TheoCrystalOnPedestalProp =
-            typeof(TheoCrystal).GetProperty("OnPedestal",
-                BindingFlags.Instance | BindingFlags.Public)!;
-
-        private static readonly FieldInfo TheoCrystalSpeedField =
-            typeof(TheoCrystal).GetField("Speed",
-                BindingFlags.Instance | BindingFlags.Public)!;
-
         // ── Particle defaults ─────────────────────────────────────────────────────
         private const string DefaultReturnParticleColorA = "7fffff";
         private const string DefaultReturnParticleColorB = "ffffff";
@@ -109,6 +100,14 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool canDash;
         private readonly bool canExplode;
 
+        private readonly bool canGrab;
+        private static readonly FieldInfo HoldableCannotHoldTimer =
+            typeof(Holdable).GetField("cannotHoldTimer",
+                BindingFlags.Instance | BindingFlags.NonPublic)!;
+        private static readonly FieldInfo HoldableCannotHoldDelay =
+            typeof(Holdable).GetField("cannotHoldDelay",
+                BindingFlags.Instance | BindingFlags.NonPublic)!;
+
         // ── Constructor ───────────────────────────────────────────────────────────
         public CustomPedestal(EntityData data, Vector2 offset)
             : base(data.Position + offset, 32f, 32f, safe: false)
@@ -124,6 +123,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             showReturnLine = data.Bool("showReturnLine", true);
             canDash = data.Bool("canDash", false);
             canExplode = data.Bool("canExplode", false);
+            canGrab = data.Bool("canGrab", true);
 
             ParseManagedEntityFilters();
 
@@ -399,7 +399,12 @@ namespace Celeste.Mod.BalintHelper.Entities
                 ClaimedEntity.Position = SnapPosition(this);
                 (ClaimedEntity as Actor)?.ZeroRemainderX();
                 (ClaimedEntity as Actor)?.ZeroRemainderY();
-                TheoCrystalOnPedestalProp?.SetValue(ClaimedEntity, true);
+            }
+
+            // dunno how this would be null here but just to be safe
+            if (!canGrab && holdable != null)
+            {
+                HoldableCannotHoldTimer.SetValue(holdable, HoldableCannotHoldDelay.GetValue(holdable));
             }
         }
 
@@ -438,18 +443,11 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (ClaimedEntity != null)
             {
-                TheoCrystalOnPedestalProp?.SetValue(ClaimedEntity, false);
-
                 const float baseDirectionMultiplier = 150f;
                 const float verticalSpeedOffset = 0.1f;
                 const float verticalSpeedMultiplier = 150f;
 
-                if (ClaimedEntity is TheoCrystal theo)
-                {
-                    theo.Speed += direction * baseDirectionMultiplier;
-                    theo.Speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
-                }
-                else if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField))
+                if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField))
                 {
                     if (speedField != null && speedField.FieldType == typeof(Vector2))
                     {
@@ -508,14 +506,10 @@ namespace Celeste.Mod.BalintHelper.Entities
             (entity as Actor)?.ZeroRemainderX();
             (entity as Actor)?.ZeroRemainderY();
 
-            TheoCrystalSpeedField?.SetValue(entity, Vector2.Zero);
-
-            if (entity is not TheoCrystal && speedFieldInfos.TryGetValue(entity.GetType(), out var speedField))
+            if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField))
             {
                 speedField?.SetValue(entity, Vector2.Zero);
             }
-
-            TheoCrystalOnPedestalProp?.SetValue(entity, true);
 
             if (playEffects)
             {

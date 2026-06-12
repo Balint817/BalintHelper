@@ -25,6 +25,7 @@ customPedestal.placements = {
             showReturnLine         = true,
             canDash                = false,
             canExplode             = false,
+            canGrab                = true,
             returnParticleColorA   = "7fffff",
             returnParticleColorB   = "ffffff",
             explodeParticleColorA  = "7fffff",
@@ -64,6 +65,7 @@ customPedestal.fieldInformation = {
     showReturnLine		  = { fieldType = "boolean", description = "Whether to show a line of particles returning to the pedestal to show where an entity is being teleported." },
     canDash		          = { fieldType = "boolean", description = "If breakable=true, determines whether it can be triggered by a dash." },
     canExplode 	          = { fieldType = "boolean", description = "If breakable=true, determines whether it can be triggered by an explosion." },
+    canGrab 	          = { fieldType = "boolean", description = "Whether an item can be retrieved without breaking the pedestal." },
 }
 
 customPedestal.fieldOrder = {
@@ -71,7 +73,7 @@ customPedestal.fieldOrder = {
     "returnDelay", "brokenDisableDuration",
     "maxDistance", "entityTypes",
     "breakable", "startBroken", "instantReturnInBounds", "showReturnLine",
-    "canDash", "canExplode",
+    "canDash", "canExplode", "canGrab",
     "spriteNormal", "spriteBroken",
     "soundTeleport", "soundBreak", "soundRepair",
     "returnParticleColorA", "returnParticleColorB",
