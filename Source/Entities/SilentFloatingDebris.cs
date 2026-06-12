@@ -6,7 +6,7 @@ using System;
 namespace Celeste.Mod.BalintHelper.Entities
 {
     [CustomEntity("BalintHelper/SilentFloatingDebris")]
-    [Tracked(false)]
+    [TrackedAs(typeof(FloatingDebris))]
     public class SilentFloatingDebris : FloatingDebris
     {
         public event Action<Vector2>? OnExploded;
@@ -29,26 +29,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
         }
 
-        public override void Added(Scene scene)
-        {
-            base.Added(scene);
-
-            // Forcefully inject this subclass instance into the vanilla FloatingDebris tracker list so Puffer can find it.
-            if (scene.Tracker.Entities.TryGetValue(typeof(FloatingDebris), out var list))
-            {
-                list.Add(this);
-            }
-        }
-
-        public override void Removed(Scene scene)
-        {
-            if (scene.Tracker.Entities.TryGetValue(typeof(FloatingDebris), out var list))
-            {
-                list.Remove(this);
-            }
-            base.Removed(scene);
-        }
-
         public override void Update()
         {
             // disable physics
@@ -56,7 +36,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         public override void Render()
         {
-            // disable draw
+            // dont draw
         }
 
         public void TriggerExplodeEvent(Vector2 from)
