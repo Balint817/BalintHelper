@@ -37,11 +37,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 list.Add(this);
             }
-
-            OnExploded += (from) =>
-            {
-                Logger.Log(LogLevel.Error, "BalintHelper", $"SilentFloatingDebris exploded at {from}");
-            };
         }
 
         public override void Removed(Scene scene)
