@@ -412,13 +412,15 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        private void SetHoldableTimer(Holdable holdable, float delay)
+        private void SetHoldableTimer(Holdable? holdable, float delay)
         {
+            if (holdable == null) return;
             HoldableCannotHoldTimer.SetValue(holdable, delay);
         }
 
-        private void SetHoldableTimer(Holdable holdable)
+        private void SetHoldableTimer(Holdable? holdable)
         {
+            if (holdable == null) return;
             SetHoldableTimer(holdable, (float)HoldableCannotHoldDelay.GetValue(holdable)!);
         }
 
