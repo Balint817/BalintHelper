@@ -646,15 +646,15 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private bool HasHigherPriority(Entity contender, Entity incumbent, CustomPedestal pedestal)
         {
-            float contenderTimer = GetPriorityTimer(contender, pedestal);
-            float incumbentTimer = GetPriorityTimer(incumbent, pedestal);
-            if (Math.Abs(contenderTimer - incumbentTimer) > 0.01f)
-                return contenderTimer < incumbentTimer;
-
             float contenderDistance = Vector2.DistanceSquared(contender.Center, SnapPosition(pedestal));
             float incumbentDistance = Vector2.DistanceSquared(incumbent.Center, SnapPosition(pedestal));
             if (Math.Abs(contenderDistance - incumbentDistance) > 1f)
                 return contenderDistance < incumbentDistance;
+
+            float contenderTimer = GetPriorityTimer(contender, pedestal);
+            float incumbentTimer = GetPriorityTimer(incumbent, pedestal);
+            if (Math.Abs(contenderTimer - incumbentTimer) > 0.01f)
+                return contenderTimer < incumbentTimer;
 
             return GetStableId(contender) < GetStableId(incumbent);
         }
