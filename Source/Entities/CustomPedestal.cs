@@ -462,7 +462,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             (Scene as Level)?.Flash(Color.White * 0.25f);
             Celeste.Freeze(0.05f);
             Input.Rumble(RumbleStrength.Medium, RumbleLength.Short);
-            Audio.Play(soundBreak, Position);
+            Audio.Play(soundBreak, Center);
         }
 
         private void ApplyBrokenState()
@@ -486,7 +486,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             spriteBrokenImg.Visible = false;
 
             EmitParticleFamilyBurst(PtRepair, RepairParticleAtlases, 20);
-            Audio.Play(soundRepair, Position);
+            Audio.Play(soundRepair, Center);
         }
 
         // ── Teleport ──────────────────────────────────────────────────────────────
@@ -515,7 +515,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (playEffects)
             {
                 target.EmitParticleFamilyBurst(PtExplode, ExplodeParticleAtlases, 15);
-                Audio.Play(soundTeleport, entity.Position);
+                Audio.Play(soundTeleport, entity.Center);
             }
         }
 
@@ -606,7 +606,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 .GetEntities<CustomPedestal>()
                 .Cast<CustomPedestal>()
                 .Where(p => CanTargetPedestal(entity, p))
-                .OrderBy(p => Vector2.DistanceSquared(entity.Position, p.Position))
+                .OrderBy(p => Vector2.DistanceSquared(entity.Center, p.Center)) // Updated to use .Center
                 .ThenBy(GetStableId)
                 .ToList();
         }
@@ -620,7 +620,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return false;
 
             if (pedestal.maxDistance > 0f
-                && Vector2.Distance(entity.Position, pedestal.Position) > pedestal.maxDistance)
+                && Vector2.Distance(entity.Center, pedestal.Center) > pedestal.maxDistance) // Updated to use .Center
                 return false;
 
             return true;
@@ -633,8 +633,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (Math.Abs(contenderTimer - incumbentTimer) > 0.01f)
                 return contenderTimer < incumbentTimer;
 
-            float contenderDistance = Vector2.DistanceSquared(contender.Position, pedestal.Position);
-            float incumbentDistance = Vector2.DistanceSquared(incumbent.Position, pedestal.Position);
+            float contenderDistance = Vector2.DistanceSquared(contender.Center, pedestal.Center); // Updated to use .Center
+            float incumbentDistance = Vector2.DistanceSquared(incumbent.Center, pedestal.Center); // Updated to use .Center
             if (Math.Abs(contenderDistance - incumbentDistance) > 1f)
                 return contenderDistance < incumbentDistance;
 
