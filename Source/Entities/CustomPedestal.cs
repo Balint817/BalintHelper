@@ -431,7 +431,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (!isBroken && breakable && canExplode)
             {
                 // Calculate directional push vectors relative to explosion source center
-                Vector2 pushDirection = (Center - from).SafeNormalize(Vector2.UnitY);
+                Vector2 pushDirection = (SnapPosition(this) - from).SafeNormalize(Vector2.UnitY);
                 Break(pushDirection);
             }
         }
