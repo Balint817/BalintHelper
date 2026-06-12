@@ -9,7 +9,7 @@ namespace Celeste.Mod.BalintHelper.Entities
     [Tracked(false)]
     public class SilentFloatingDebris : FloatingDebris
     {
-        public event Action<Vector2> OnExploded;
+        public event Action<Vector2>? OnExploded;
 
         public SilentFloatingDebris(Vector2 position, int width, int height) : base(position)
         {
