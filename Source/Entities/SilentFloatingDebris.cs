@@ -19,6 +19,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             PlayerCollider playerCollider = Get<PlayerCollider>();
             if (playerCollider != null)
             {
+                playerCollider.OnCollide = null;
                 Remove(playerCollider);
             }
         }
