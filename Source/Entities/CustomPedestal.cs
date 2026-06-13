@@ -98,6 +98,8 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly bool canDash;
         private readonly bool canExplode;
+        private readonly int dashRefillCount;
+        private readonly bool refillStamina;
 
         private readonly bool canGrab;
         private static readonly FieldInfo HoldableCannotHoldTimer =
@@ -123,6 +125,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             canDash = data.Bool("canDash", false);
             canExplode = data.Bool("canExplode", false);
             canGrab = data.Bool("canGrab", true);
+            dashRefillCount = data.Int("dashRefillCount", 0);
+            refillStamina = data.Bool("refillStamina", false);
 
             ParseManagedEntityFilters();
 
@@ -471,6 +475,11 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (player.DashAttacking && player.DashDir != Vector2.Zero && CollideCheck(player))
             {
                 Break(player.DashDir);
+                if (refillStamina)
+                {
+                    player.RefillStamina();
+                }
+                player.Dashes = Math.Max(dashRefillCount, player.Dashes);
             }
         }
 
