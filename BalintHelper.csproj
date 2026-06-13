@@ -18,6 +18,7 @@
 	<Reference Include="$(CelestePrefix)/Celeste.dll" Private="false" />
 	<Reference Include="$(CelestePrefix)/MMHOOK_Celeste.dll" Private="false" />
 	<Reference Include="$(CelestePrefix)/FNA.dll" Private="false" />
+	<Reference Include="$(CelestePrefix)/MonoMod.Utils.dll" Private="false" />
   </ItemGroup>
 
   <Target Name="CopyFiles" AfterTargets="Build" Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb" Outputs="bin\$(AssemblyName).dll;bin\$(AssemblyName).pdb">
