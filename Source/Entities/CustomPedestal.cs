@@ -29,6 +29,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private const string DefaultBreakParticleColorB = "aaaaaa";
         private const string DefaultRepairParticleColorA = "7fffff";
         private const string DefaultRepairParticleColorB = "ffffff";
+        private const string DefaultGlowColor = "7fffff";
 
         private static readonly string[] RepairParticleAtlases = { "particles/smoke0", "particles/smoke1", "particles/smoke2", "particles/smoke3" };
         private static readonly string[] ExplodeParticleAtlases = { "particles/zappysmoke00", "particles/zappysmoke01", "particles/zappysmoke02", "particles/zappysmoke03" };
@@ -55,6 +56,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly Color breakParticleColorB;
         private readonly Color repairParticleColorA;
         private readonly Color repairParticleColorB;
+        private readonly Color glowColor;
 
         private readonly string soundTeleport;
         private readonly string soundBreak;
@@ -138,6 +140,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             breakParticleColorB = ReadColor(data, "breakParticleColorB", DefaultBreakParticleColorB);
             repairParticleColorA = ReadColor(data, "repairParticleColorA", DefaultRepairParticleColorA);
             repairParticleColorB = ReadColor(data, "repairParticleColorB", DefaultRepairParticleColorB);
+            glowColor = ReadColor(data, "glowColor", DefaultGlowColor);
 
             soundTeleport = data.Attr("soundTeleport", "event:/game/01_forsaken_city/birdbros_thrust");
             soundBreak = data.Attr("soundBreak", "event:/game/05_mirror_temple/crystaltheo_break_free");
@@ -552,7 +555,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             target.ClaimedEntity = entity;
             entity.Position = SnapPosition(target);
-            SetHoldableTimer(target.Get<Holdable>(), 0);
+            SetHoldableTimer(entity.Get<Holdable>(), 0);
 
             (entity as Actor)?.ZeroRemainderX();
             (entity as Actor)?.ZeroRemainderY();
@@ -870,6 +873,45 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void EmitParticleBurst(ParticleType type, Vector2 pos, int count)
         {
             (Scene as Level)?.Particles.Emit(type, count, pos, Vector2.One * 4f);
+        }
+
+        public override void Render()
+        {
+            RenderNormalGlow();
+            base.Render();
+        }
+
+        private static readonly Vector2[] GlowOffsets;
+        static CustomPedestal()
+        {
+            const int glowSteps = 8;
+            const float radius = 3f;
+            GlowOffsets = new Vector2[glowSteps];
+            for (int i = 0; i < glowSteps; i++)
+            {
+                float angle = (float)i / glowSteps * MathHelper.TwoPi;
+                GlowOffsets[i] = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * radius;
+            }
+        }
+        private void RenderNormalGlow()
+        {
+            if (!spriteNormalImg.Visible)
+                return;
+
+            // if not breakable with dash, or if breaking does nothing, don't glow
+            if (!breakable || !canDash || (!refillStamina && dashRefillCount <= 0))
+                return;
+
+            MTexture texture = GFX.Game[spriteNormalPath];
+            Vector2 renderPos = Position - spriteNormalImg.Origin;
+
+            float strength = (spriteNormalImg.Color.A / 255f) * 0.14f;
+            Color glowColorDimmed = glowColor * strength;
+
+            foreach (Vector2 offset in GlowOffsets)
+            {
+                texture.Draw(renderPos + offset, Vector2.Zero, glowColorDimmed, 1f);
+            }
         }
 
         private void EmitParticleFamilyBurst(ParticleType type, IReadOnlyList<string> atlases, int count)
