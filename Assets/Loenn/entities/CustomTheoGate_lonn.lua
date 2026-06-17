@@ -70,7 +70,7 @@ customTheoGate.resizable = { false, true }
 function customTheoGate.sprite(room, entity)
     local sprites = {}
 
-    local height = math.max(entity.height or 48, 16)
+    local height = math.max(entity.height or 48, 48)
 
     -- Base gate sprite
     local sprite = drawableSprite.fromTexture(texture, entity)
