@@ -87,7 +87,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
             float current = GetDashCooldown(player);
 
-            // Optional optimization: don't reapply same value
+            // don't reapply same value
             if (current == value)
                 return;
 
