@@ -17,7 +17,8 @@ customTheoGate.placements = {
         data = {
             height = 48,
             theoMode = "Any",
-            entityTypes = "TheoCrystal"
+            entityTypes = "TheoCrystal",
+            needsPlayer = false
         }
     },
     {
@@ -25,7 +26,8 @@ customTheoGate.placements = {
         data = {
             height = 48,
             theoMode = "All",
-            entityTypes = "TheoCrystal"
+            entityTypes = "TheoCrystal",
+            needsPlayer = false
         }
     },
     {
@@ -33,7 +35,8 @@ customTheoGate.placements = {
         data = {
             height = 48,
             theoMode = "Each",
-            entityTypes = "TheoCrystal"
+            entityTypes = "TheoCrystal",
+            needsPlayer = false
         }
     }
 }
@@ -50,6 +53,9 @@ customTheoGate.fieldInformation = {
     entityTypes = {
         fieldType = "string"
     }
+    needsPlayer = {
+        fieldType = "boolean"
+    }
 }
 
 customTheoGate.fieldOrder = {
@@ -57,7 +63,8 @@ customTheoGate.fieldOrder = {
     "y",
     "height",
     "theoMode",
-    "entityTypes"
+    "entityTypes",
+    "needsPlayer"
 }
 
 customTheoGate.ignoredFields = {

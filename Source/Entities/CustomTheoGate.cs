@@ -42,12 +42,15 @@ namespace Celeste.Mod.BalintHelper.Entities
         private float holdingWaitTimer = HoldingWaitTime;
         private bool lockState;
 
+        private readonly bool needsPlayer;
+
         public CustomTheoGate(EntityData data, Vector2 offset)
             : base(data.Position + offset, 8f, data.Height, safe: true)
         {
             closedHeight = data.Height;
             theoMode = data.Enum("theoMode", TheoModes.Any);
             entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
+            needsPlayer = data.Bool("needsPlayer", false);
             ParseManagedEntityFilters();
 
             Add(sprite = GFX.SpriteBank.Create("templegate_theo"));
@@ -116,6 +119,16 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             float maxDistanceSq = open ? HoldingCloseDistSq : HoldingOpenDistSq;
+
+            if (needsPlayer)
+            {
+                var player = Scene.Tracker.GetEntity<Player>();
+                if (Vector2.DistanceSquared(holdingCheckFrom, player.Center) >= maxDistanceSq)
+                {
+                    return false;
+                }
+            }
+
             bool foundRelevantHoldable = false;
 
             if (theoMode == TheoModes.Each)
