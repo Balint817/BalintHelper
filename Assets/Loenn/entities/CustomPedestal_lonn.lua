@@ -28,6 +28,7 @@ customPedestal.placements = {
             canGrab                = true,
             refillStamina          = false,
             dashRefillCount        = 0,
+            dashHitboxExtension    = 0.5,
             returnParticleColorA   = "7fffff",
             returnParticleColorB   = "ffffff",
             explodeParticleColorA  = "7fffff",
@@ -70,6 +71,7 @@ customPedestal.fieldInformation = {
     canGrab 	          = { fieldType = "boolean", description = "Whether an item can be retrieved without breaking the pedestal." },
     refillStamina          = { fieldType = "boolean", description = "Whether to refill stamina when breaking the pedestal." },
     dashRefillCount        = { fieldType = "number", minimumValue = 0, description = "Number of dashes to refill when breaking the pedestal, 0 to disable" },
+    dashHitboxExtension    = { fieldType = "number", minimumValue = 0.0, description = "Multiplier (>=0) to extend the dash detection hitbox downwards. Defaults to 0.5 (+50%)." },
 }
 
 customPedestal.fieldOrder = {
@@ -78,7 +80,7 @@ customPedestal.fieldOrder = {
     "maxDistance", "entityTypes",
     "breakable", "startBroken", "instantReturnInBounds", "showReturnLine",
     "canDash", "canExplode", "canGrab",
-    "refillStamina", "dashRefillCount",
+    "refillStamina", "dashRefillCount", "dashHitboxExtension",
     "spriteNormal", "spriteBroken",
     "soundTeleport", "soundBreak", "soundRepair",
     "returnParticleColorA", "returnParticleColorB",

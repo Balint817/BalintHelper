@@ -102,6 +102,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool canExplode;
         private readonly int dashRefillCount;
         private readonly bool refillStamina;
+        private readonly float dashHitboxExtension;
+        private readonly Hitbox dashCollider;
 
         private readonly bool canGrab;
         private static readonly FieldInfo HoldableCannotHoldTimer =
@@ -129,6 +131,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             canGrab = data.Bool("canGrab", true);
             dashRefillCount = data.Int("dashRefillCount", 0);
             refillStamina = data.Bool("refillStamina", false);
+            dashHitboxExtension = Math.Min(Math.Max(0f, data.Float("dashHitboxExtension", 0.5f)), 1f);
 
             ParseManagedEntityFilters();
 
@@ -165,6 +168,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             Collider.Position = new Vector2(-16f, -64f);
             Collidable = false;
             AllowStaticMovers = false;
+
+            // Initialize the dash-specific collider with the downward extension 
+            dashCollider = new Hitbox(32f, 32f * (1f + dashHitboxExtension), -16f, -64f);
 
             Tag = Tags.TransitionUpdate;
         }
@@ -475,14 +481,23 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (player == null)
                 return;
 
-            if (player.DashAttacking && player.DashDir != Vector2.Zero && CollideCheck(player))
+            if (player.DashAttacking && player.DashDir != Vector2.Zero)
             {
-                Break(player.DashDir);
-                if (refillStamina)
+                // Temporarily swap to the extended dash collider for the check
+                var origCollider = Collider;
+                Collider = dashCollider;
+                bool hasCollided = CollideCheck(player);
+                Collider = origCollider;
+
+                if (hasCollided)
                 {
-                    player.RefillStamina();
+                    Break(player.DashDir);
+                    if (refillStamina)
+                    {
+                        player.RefillStamina();
+                    }
+                    player.Dashes = Math.Max(dashRefillCount, player.Dashes);
                 }
-                player.Dashes = Math.Max(dashRefillCount, player.Dashes);
             }
         }
 
@@ -879,6 +894,21 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             RenderNormalGlow();
             base.Render();
+        }
+
+        public override void DebugRender(Camera camera)
+        {
+            base.DebugRender(camera);
+
+            if (breakable && canDash && !isBroken)
+            {
+                Collider origCollider = Collider;
+                Collider = dashCollider;
+
+                dashCollider.Render(camera, Color.Goldenrod);
+
+                Collider = origCollider;
+            }
         }
 
         private static readonly Vector2[] GlowOffsets;
