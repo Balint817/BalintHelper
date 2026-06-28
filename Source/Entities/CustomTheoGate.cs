@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
@@ -17,50 +17,147 @@ namespace Celeste.Mod.BalintHelper.Entities
             Each
         }
 
+        public enum GateDirection
+        {
+            Down,
+            Up,
+            Left,
+            Right
+        }
+
         private const float HoldingWaitTime = 0.2f;
         private const float HoldingOpenDistSq = 4096f;
         private const float HoldingCloseDistSq = 6400f;
-        private const int MinDrawHeight = 4;
+        private const int MinDrawLength = 4;
+        private const int GateThickness = 16;
+        private const int OpenThickness = 2;
 
-        private readonly int closedHeight;
+        private readonly int closedLength;
         private readonly Sprite sprite;
         private readonly Shaker shaker;
         private readonly TheoModes theoMode;
         private readonly string entityTypesRaw;
+        private readonly GateDirection direction;
+        private readonly bool needsPlayer;
+
+        // The world position at which this entity was placed. Never changes.
+        private readonly Vector2 basePosition;
+
+        // Pre-computed center of the fully-closed gate used for all proximity checks.
+        // Cached here because entity.Center moves as the collider shrinks/grows on open/close.
+        private readonly Vector2 closedCenter;
 
         private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> managedEntityIds = new HashSet<int>();
-
         private readonly HashSet<string> foundTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> foundEntityIds = new HashSet<int>();
 
-        private float drawHeight;
-        private float drawHeightMoveSpeed;
+        private float drawLength;
+        private float drawLengthMoveSpeed;
         private bool open;
         private float holdingWaitTimer = HoldingWaitTime;
         private bool lockState;
 
-        private readonly bool needsPlayer;
+        // ─── constructor ──────────────────────────────────────────────────────────
 
         public CustomTheoGate(EntityData data, Vector2 offset)
-            : base(data.Position + offset, 8f, data.Height, safe: true)
+            : base(
+                data.Position + offset,
+                IsHorizontalDir(data.Enum("direction", GateDirection.Down))
+                    ? Math.Max(data.Height, GateThickness)
+                    : GateThickness,
+                IsHorizontalDir(data.Enum("direction", GateDirection.Down))
+                    ? GateThickness
+                    : Math.Max(data.Height, GateThickness),
+                safe: true)
         {
-            closedHeight = data.Height;
+            basePosition = data.Position + offset;
+            direction = data.Enum("direction", GateDirection.Down);
+            closedLength = Math.Max(data.Height, GateThickness);
             theoMode = data.Enum("theoMode", TheoModes.Any);
             entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
             needsPlayer = data.Bool("needsPlayer", false);
+            closedCenter = CalcClosedCenter(basePosition, closedLength, direction);
+
             ParseManagedEntityFilters();
 
             Add(sprite = GFX.SpriteBank.Create("templegate_theo"));
-            sprite.X = Collider.Width / 2f;
             sprite.Play("idle");
+            ConfigureSpriteForDirection();
 
             Add(shaker = new Shaker(on: false));
 
             Depth = -9000;
+            drawLength = closedLength;
         }
 
-        private Vector2 GateCenter => Center;
+        // ─── helpers ─────────────────────────────────────────────────────────────
+
+        private static bool IsHorizontalDir(GateDirection d) =>
+            d == GateDirection.Left || d == GateDirection.Right;
+
+        private bool IsHorizontal => IsHorizontalDir(direction);
+
+        private int CurrentGateLength =>
+            IsHorizontal ? (int)Collider.Width : (int)Collider.Height;
+
+        private Vector2 GateCenter => closedCenter;
+
+        private static Vector2 CalcClosedCenter(Vector2 pos, int len, GateDirection dir)
+        {
+            return IsHorizontalDir(dir)
+                ? pos + new Vector2(len * 0.5f, GateThickness * 0.5f)
+                : pos + new Vector2(GateThickness * 0.5f, len * 0.5f);
+        }
+
+        // ─── sprite configuration ─────────────────────────────────────────────────
+        //
+        // The templegate_theo sprite is authored vertically (tall/narrow).
+        // Its default Justify places the draw-pivot at the center-top of the texture.
+        // sprite.Position is relative to entity.Position (= basePosition when closed).
+        //
+        // We place the pivot so that the sprite HEAD (texture top = door cap) always
+        // sits at the "closed" end of the gate, and the tail grows away from it.
+        //
+        //   DOWN : pivot at (center-of-thickness, 0)              → head at entity top
+        //   UP   : pivot at (center-of-thickness, closedLength)   → head at entity bottom  (rot PI)
+        //   RIGHT: pivot at (0,  center-of-thickness)             → head at entity left     (rot -PI/2)
+        //   LEFT : pivot at (closedLength, center-of-thickness)   → head at entity right    (rot +PI/2)
+
+        private void ConfigureSpriteForDirection()
+        {
+            // Keep the SpriteBank's own Justify — don't override it.
+            // The original code used sprite.X = Collider.Width / 2 with the 8px collider,
+            // which equals 4px = half of the 8px-wide texture (default justify 0.5 horizontally).
+            // For the new 16px collider we want the sprite centered in the thickness axis:
+            // thickness center = GateThickness / 2 = 8.
+            sprite.Rotation = 0f;
+
+            switch (direction)
+            {
+                case GateDirection.Down:
+                default:
+                    sprite.Position = new Vector2(GateThickness / 2f, 0f);
+                    break;
+
+                case GateDirection.Up:
+                    sprite.Rotation = MathHelper.Pi;
+                    sprite.Position = new Vector2(GateThickness / 2f, closedLength);
+                    break;
+
+                case GateDirection.Right:
+                    sprite.Rotation = -MathHelper.PiOver2;
+                    sprite.Position = new Vector2(0f, GateThickness / 2f);
+                    break;
+
+                case GateDirection.Left:
+                    sprite.Rotation = MathHelper.PiOver2;
+                    sprite.Position = new Vector2(closedLength, GateThickness / 2f);
+                    break;
+            }
+        }
+
+        // ─── awake ───────────────────────────────────────────────────────────────
 
         public override void Awake(Scene scene)
         {
@@ -70,31 +167,33 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 StartOpen();
             }
-
-            if (Collider is Hitbox hitbox)
+            else
             {
-                hitbox.Width = 16f;
+                ApplyClosedCollider();
+                drawLength = closedLength;
+                open = false;
             }
-
-            drawHeight = Math.Max(MinDrawHeight, Height);
         }
+
+        // ─── open / close ─────────────────────────────────────────────────────────
 
         public void Open()
         {
             Audio.Play("event:/game/05_mirror_temple/gate_theo_open", Position);
             holdingWaitTimer = HoldingWaitTime;
-            drawHeightMoveSpeed = 200f;
-            drawHeight = Height;
+            drawLengthMoveSpeed = 200f;
+            drawLength = closedLength;
             shaker.ShakeFor(0.2f, removeOnFinish: false);
-            SetHeight(0);
+            ApplyOpenCollider();
             sprite.Play("open");
             open = true;
         }
 
         public void StartOpen()
         {
-            SetHeight(0);
-            drawHeight = MinDrawHeight;
+            ApplyOpenCollider();
+            drawLength = MinDrawLength;
+            sprite.Play("open");
             open = true;
         }
 
@@ -102,24 +201,81 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             Audio.Play("event:/game/05_mirror_temple/gate_theo_close", Position);
             holdingWaitTimer = HoldingWaitTime;
-            drawHeightMoveSpeed = 300f;
-            drawHeight = Math.Max(MinDrawHeight, Height);
+            drawLengthMoveSpeed = 300f;
+            drawLength = Math.Max(MinDrawLength, CurrentGateLength);
             shaker.ShakeFor(0.2f, removeOnFinish: false);
-            SetHeight(closedHeight);
+            ApplyClosedCollider();
             sprite.Play("hit");
             open = false;
         }
 
+        // ─── collider placement ───────────────────────────────────────────────────
+        //
+        // The 2-pixel open lip always sits on the BLACK CAP side of the gate.
+        //
+        //   DOWN : cap at TOP  → lip stays at basePosition.Y  (entity.Y unchanged)
+        //   UP   : cap at BOTTOM → lip starts at basePosition.Y + closedLength - OpenThickness
+        //   RIGHT: cap at LEFT → lip stays at basePosition.X  (entity.X unchanged)
+        //   LEFT : cap at RIGHT → lip starts at basePosition.X + closedLength - OpenThickness
+
+        private void ApplyClosedCollider()
+        {
+            Position = basePosition;
+            if (IsHorizontal)
+            {
+                Collider.Width = closedLength;
+                Collider.Height = GateThickness;
+            }
+            else
+            {
+                Collider.Width = GateThickness;
+                Collider.Height = closedLength;
+            }
+        }
+
+        private void ApplyOpenCollider()
+        {
+            switch (direction)
+            {
+                case GateDirection.Down:
+                default:
+                    Position = basePosition;
+                    Collider.Width = GateThickness;
+                    Collider.Height = OpenThickness;
+                    break;
+
+                case GateDirection.Up:
+                    Position = basePosition + new Vector2(0f, closedLength - OpenThickness);
+                    Collider.Width = GateThickness;
+                    Collider.Height = OpenThickness;
+                    break;
+
+                case GateDirection.Right:
+                    Position = basePosition;
+                    Collider.Width = OpenThickness;
+                    Collider.Height = GateThickness;
+                    break;
+
+                case GateDirection.Left:
+                    Position = basePosition + new Vector2(closedLength - OpenThickness, 0f);
+                    Collider.Width = OpenThickness;
+                    Collider.Height = GateThickness;
+                    break;
+            }
+        }
+
+        // ─── proximity ───────────────────────────────────────────────────────────
+
         private bool IsEntityWithinGateRange(Entity entity, float maxDistanceSq)
         {
-            Vector2 gateCenter = GateCenter;
-            Vector2 entityCenter = entity.Center;
-            Vector2 delta = entityCenter - gateCenter;
+            Vector2 delta = entity.Center - GateCenter;
 
-            float horizontalLimit = (float)Math.Sqrt(maxDistanceSq);
+            float longAxisLimit = (float)Math.Sqrt(maxDistanceSq);
+            float shortAxisLimit = Math.Max(closedLength * 0.6f, 8f);
 
-            // Scales linearly with gate height, with a small floor so short gates aren't too strict.
-            float verticalLimit = Math.Max(closedHeight * 0.6f, 8f);
+            // For a vertical gate the long axis is Y; for horizontal it is X.
+            float horizontalLimit = IsHorizontal ? shortAxisLimit : longAxisLimit;
+            float verticalLimit = IsHorizontal ? longAxisLimit : shortAxisLimit;
 
             return Math.Abs(delta.X) <= horizontalLimit
                 && Math.Abs(delta.Y) <= verticalLimit;
@@ -128,24 +284,15 @@ namespace Celeste.Mod.BalintHelper.Entities
         public bool TheoIsNearby()
         {
             if (Scene == null)
-            {
                 return true;
-            }
 
             float maxDistanceSq = open ? HoldingCloseDistSq : HoldingOpenDistSq;
 
             if (needsPlayer)
             {
                 Player player = Scene.Tracker.GetEntity<Player>();
-                if (player == null)
-                {
+                if (player == null || !IsEntityWithinGateRange(player, maxDistanceSq))
                     return false;
-                }
-
-                if (!IsEntityWithinGateRange(player, maxDistanceSq))
-                {
-                    return false;
-                }
             }
 
             bool foundRelevantHoldable = false;
@@ -163,63 +310,49 @@ namespace Celeste.Mod.BalintHelper.Entities
 
                 if (theoMode == TheoModes.Any)
                 {
-                    if (isNearby)
-                    {
-                        return true;
-                    }
+                    if (isNearby) return true;
                 }
                 else if (theoMode == TheoModes.All)
                 {
-                    if (!isNearby)
-                    {
-                        return false;
-                    }
+                    if (!isNearby) return false;
                 }
-                else if (theoMode == TheoModes.Each)
+                else // Each
                 {
                     if (isNearby)
                     {
                         if (entity.SourceData?.ID is int entityId && managedEntityIds.Contains(entityId))
-                        {
                             foundEntityIds.Add(entityId);
-                        }
 
                         string sourceName = entity.SourceData?.Name ?? "";
                         if (managedTypeNames.Contains(sourceName))
-                        {
                             foundTypeNames.Add(sourceName);
-                        }
                         else if (managedTypeNames.Contains(entity.GetType().Name))
-                        {
                             foundTypeNames.Add(entity.GetType().Name);
-                        }
 
                         if (foundTypeNames.Count == managedTypeNames.Count &&
                             foundEntityIds.Count == managedEntityIds.Count)
-                        {
                             return true;
-                        }
                     }
                 }
             }
 
-            if (!foundRelevantHoldable)
-            {
-                return true;
-            }
-
-            if (theoMode == TheoModes.All)
-            {
-                return true;
-            }
-
+            if (!foundRelevantHoldable) return true;
+            if (theoMode == TheoModes.All) return true;
             if (theoMode == TheoModes.Each)
             {
                 return foundTypeNames.Count == managedTypeNames.Count &&
                        foundEntityIds.Count == managedEntityIds.Count;
             }
-
             return false;
+        }
+
+        // ─── size helpers (replicates vanilla gate SetHeight / SetWidth) ──────────
+
+        private void SetGateSize(int size)
+        {
+            size = Math.Max(0, size);
+            if (IsHorizontal) SetWidth(size);
+            else SetHeight(size);
         }
 
         private void SetHeight(int height)
@@ -232,6 +365,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             float y = Y;
             int currentHeight = (int)Collider.Height;
+
             if (Collider.Height < 64f)
             {
                 Y -= 64f - Collider.Height;
@@ -243,6 +377,49 @@ namespace Celeste.Mod.BalintHelper.Entities
             Collider.Height = height;
         }
 
+        private void SetWidth(int width)
+        {
+            if (width < Collider.Width)
+            {
+                Collider.Width = width;
+                return;
+            }
+
+            float x = X;
+            int currentWidth = (int)Collider.Width;
+
+            if (Collider.Width < 64f)
+            {
+                X -= 64f - Collider.Width;
+                Collider.Width = 64f;
+            }
+
+            MoveHExact(width - currentWidth);
+            X = x;
+            Collider.Width = width;
+        }
+
+        // ─── player kill ──────────────────────────────────────────────────────────
+
+        private void KillPlayerOnClose()
+        {
+            Player player = Scene?.Tracker.GetEntity<Player>();
+            if (player == null || !CollideCheck(player))
+                return;
+
+            Vector2 killDir = direction switch
+            {
+                GateDirection.Up => -Vector2.UnitY,
+                GateDirection.Left => -Vector2.UnitX,
+                GateDirection.Right => Vector2.UnitX,
+                _ => Vector2.Zero,
+            };
+
+            player.Die(killDir);
+        }
+
+        // ─── update ───────────────────────────────────────────────────────────────
+
         public override void Update()
         {
             base.Update();
@@ -253,22 +430,23 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             else if (!lockState)
             {
-                if (open && !TheoIsNearby())
+                bool nearby = TheoIsNearby();
+                if (open && !nearby)
                 {
                     Close();
-                    CollideFirst<Player>(Position + new Vector2(8f, 0f))?.Die(Vector2.Zero);
+                    KillPlayerOnClose();
                 }
-                else if (!open && TheoIsNearby())
+                else if (!open && nearby)
                 {
                     Open();
                 }
             }
 
-            float targetDrawHeight = Math.Max(MinDrawHeight, Height);
-            if (drawHeight != targetDrawHeight)
+            float targetDrawLength = open ? MinDrawLength : closedLength;
+            if (drawLength != targetDrawLength)
             {
                 lockState = true;
-                drawHeight = Calc.Approach(drawHeight, targetDrawHeight, drawHeightMoveSpeed * Engine.DeltaTime);
+                drawLength = Calc.Approach(drawLength, targetDrawLength, drawLengthMoveSpeed * Engine.DeltaTime);
             }
             else
             {
@@ -276,18 +454,17 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
+        // ─── managed entity helpers ───────────────────────────────────────────────
+
         private void ParseManagedEntityFilters()
         {
             managedTypeNames.Clear();
             managedEntityIds.Clear();
 
-            var tokens = entityTypesRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var raw in tokens)
+            foreach (string raw in entityTypesRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
-                var token = raw.Trim();
-                if (token.Length == 0)
-                    continue;
+                string token = raw.Trim();
+                if (token.Length == 0) continue;
 
                 if (int.TryParse(token, out int entityId))
                     managedEntityIds.Add(entityId);
@@ -298,10 +475,10 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private bool IsManagedEntity(Entity entity)
         {
-            var type = entity.GetType();
-            bool byType = managedTypeNames.Contains(entity.SourceData?.Name ?? "") || managedTypeNames.Contains(type.Name);
-            if (byType)
-                return true;
+            Type type = entity.GetType();
+            bool byType = managedTypeNames.Contains(entity.SourceData?.Name ?? "")
+                       || managedTypeNames.Contains(type.Name);
+            if (byType) return true;
 
             if (managedEntityIds.Count > 0 && entity.SourceData?.ID is int entityId)
                 return managedEntityIds.Contains(entityId);
@@ -311,47 +488,107 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private IEnumerable<Entity> GetManagedHoldables()
         {
-            if (Scene == null)
-                yield break;
-
+            if (Scene == null) yield break;
             foreach (Entity entity in Scene.Entities)
             {
-                if (entity.Get<Holdable>() == null)
-                    continue;
-
-                if (IsManagedEntity(entity))
+                if (entity.Get<Holdable>() != null && IsManagedEntity(entity))
                     yield return entity;
+            }
+        }
+
+        // ─── render ───────────────────────────────────────────────────────────────
+        //
+        // Sprite drawing strategy
+        // ──────────────────────────────────────────────────────────────────────────
+        // The sprite texture is authored vertically. texture-top = door cap (head).
+        // sprite.Rotation maps texture-Y to the gate's length direction in world space.
+        //
+        // We ALWAYS want to show texture-top (head) and clip/scale the tail.
+        // The subrect that achieves this for any rotation is:
+        //
+        //   Rectangle(0, sprite.Height - drawLength, sprite.Width, drawLength)
+        //
+        // This keeps the head at the texture top and removes pixels from the bottom,
+        // which – after the sprite's rotation is applied – removes pixels from the
+        // TAIL end in world space regardless of direction.
+        //
+        // When drawLength > sprite.Height we fall back to Scale.Y stretching.
+        // Because Scale.Y always stretches along the texture-Y axis, and the sprite
+        // is rotated so texture-Y == world-length axis, no position correction is
+        // needed for any direction.
+        //
+        // The black cap rect is drawn at basePosition to stay anchored even while
+        // the collider/entity position shifts during the open state.
+
+        private void RenderCapRect()
+        {
+            // The cap rect is 10px deep (8px into wall + 2px overlap with gate face)
+            // and exactly GateThickness (16px) wide to match the full collider face.
+            switch (direction)
+            {
+                case GateDirection.Down:
+                default:
+                    // Cap above the gate top, full width
+                    Draw.Rect(basePosition.X, basePosition.Y - 8f, GateThickness, 10f, Color.Black);
+                    break;
+
+                case GateDirection.Up:
+                    // Cap below the gate bottom, full width
+                    Draw.Rect(basePosition.X, basePosition.Y + closedLength - 2f, GateThickness, 10f, Color.Black);
+                    break;
+
+                case GateDirection.Right:
+                    // Cap left of the gate left edge, full height
+                    Draw.Rect(basePosition.X - 8f, basePosition.Y, 10f, GateThickness, Color.Black);
+                    break;
+
+                case GateDirection.Left:
+                    // Cap right of the gate right edge, full height
+                    Draw.Rect(basePosition.X + closedLength - 2f, basePosition.Y, 10f, GateThickness, Color.Black);
+                    break;
             }
         }
 
         public override void Render()
         {
+            RenderCapRect();
+
+            // sprite.RenderPosition = entity.Position + sprite.Position
+            // entity.Position may have shifted (open lip moved). Restore it to basePosition
+            // so the sprite stays anchored to the closed position at all times.
+            Vector2 savedEntityPos = Position;
+            Position = basePosition;
+
             Vector2 shakeOffset = new Vector2(Math.Sign(shaker.Value.X), 0f);
 
-            Draw.Rect(X - 2f, Y - 8f, 14f, 10f, Color.Black);
-
-            if (drawHeight <= sprite.Height)
+            if (drawLength <= sprite.Height)
             {
+                // Clip from the tail (bottom of texture), keep the head (top of texture).
                 sprite.DrawSubrect(
                     shakeOffset,
                     new Rectangle(
                         0,
-                        (int)(sprite.Height - drawHeight),
+                        (int)(sprite.Height - drawLength),
                         (int)sprite.Width,
-                        (int)drawHeight
+                        (int)drawLength
                     )
                 );
             }
             else
             {
+                // Scale along texture-Y (= world length axis due to rotation).
                 float oldScaleY = sprite.Scale.Y;
+                Vector2 oldRenderPos = sprite.RenderPosition;
 
-                sprite.Scale.Y = drawHeight / sprite.Height;
+                sprite.Scale.Y = drawLength / sprite.Height;
                 sprite.RenderPosition += shakeOffset;
                 sprite.Render();
 
+                sprite.RenderPosition = oldRenderPos;
                 sprite.Scale.Y = oldScaleY;
             }
+
+            Position = savedEntityPos;
         }
     }
 }
