@@ -26,13 +26,11 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly Sprite sprite;
         private readonly Shaker shaker;
         private readonly TheoModes theoMode;
-        private readonly Vector2 holdingCheckFrom;
         private readonly string entityTypesRaw;
 
         private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> managedEntityIds = new HashSet<int>();
 
-        // Cached sets to track found entities for TheoModes.Each without causing GC allocations every frame
         private readonly HashSet<string> foundTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> foundEntityIds = new HashSet<int>();
 
@@ -60,8 +58,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             Add(shaker = new Shaker(on: false));
 
             Depth = -9000;
-            holdingCheckFrom = Position + new Vector2(Width / 2f, closedHeight / 2f);
         }
+
+        private Vector2 GateCenter => Center;
 
         public override void Awake(Scene scene)
         {
@@ -111,6 +110,21 @@ namespace Celeste.Mod.BalintHelper.Entities
             open = false;
         }
 
+        private bool IsEntityWithinGateRange(Entity entity, float maxDistanceSq)
+        {
+            Vector2 gateCenter = GateCenter;
+            Vector2 entityCenter = entity.Center;
+            Vector2 delta = entityCenter - gateCenter;
+
+            float horizontalLimit = (float)Math.Sqrt(maxDistanceSq);
+
+            // Scales linearly with gate height, with a small floor so short gates aren't too strict.
+            float verticalLimit = Math.Max(closedHeight * 0.6f, 8f);
+
+            return Math.Abs(delta.X) <= horizontalLimit
+                && Math.Abs(delta.Y) <= verticalLimit;
+        }
+
         public bool TheoIsNearby()
         {
             if (Scene == null)
@@ -122,8 +136,13 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (needsPlayer)
             {
-                var player = Scene.Tracker.GetEntity<Player>();
-                if (Vector2.DistanceSquared(holdingCheckFrom, player.Center) >= maxDistanceSq)
+                Player player = Scene.Tracker.GetEntity<Player>();
+                if (player == null)
+                {
+                    return false;
+                }
+
+                if (!IsEntityWithinGateRange(player, maxDistanceSq))
                 {
                     return false;
                 }
@@ -139,13 +158,8 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             foreach (Entity entity in GetManagedHoldables())
             {
-                if (entity.X > X + 10f)
-                {
-                    continue;
-                }
-
                 foundRelevantHoldable = true;
-                bool isNearby = Vector2.DistanceSquared(holdingCheckFrom, entity.Center) < maxDistanceSq;
+                bool isNearby = IsEntityWithinGateRange(entity, maxDistanceSq);
 
                 if (theoMode == TheoModes.Any)
                 {
@@ -180,8 +194,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                             foundTypeNames.Add(entity.GetType().Name);
                         }
 
-                        // Early exit optimization if all required types and IDs are found
-                        if (foundTypeNames.Count == managedTypeNames.Count && foundEntityIds.Count == managedEntityIds.Count)
+                        if (foundTypeNames.Count == managedTypeNames.Count &&
+                            foundEntityIds.Count == managedEntityIds.Count)
                         {
                             return true;
                         }
@@ -189,22 +203,20 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
 
-            // If no relevant holdables exist in the active area, open the gate (vanilla behavior fallback)
             if (!foundRelevantHoldable)
             {
                 return true;
             }
 
-            // If we are checking "All", and we didn't return false in the loop above, all relevant entities are nearby
             if (theoMode == TheoModes.All)
             {
                 return true;
             }
 
-            // If "Each" didn't early exit, do a final evaluation
             if (theoMode == TheoModes.Each)
             {
-                return foundTypeNames.Count == managedTypeNames.Count && foundEntityIds.Count == managedEntityIds.Count;
+                return foundTypeNames.Count == managedTypeNames.Count &&
+                       foundEntityIds.Count == managedEntityIds.Count;
             }
 
             return false;
@@ -269,8 +281,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             managedTypeNames.Clear();
             managedEntityIds.Clear();
 
-            var tokens = entityTypesRaw
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            var tokens = entityTypesRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
 
             foreach (var raw in tokens)
             {
