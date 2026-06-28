@@ -17,7 +17,7 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "Any",
             entityTypes = "TheoCrystal",
-            needsPlayer = false
+            playerMode = "Ignored"
         }
     },
     {
@@ -27,7 +27,7 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "All",
             entityTypes = "TheoCrystal",
-            needsPlayer = false
+            playerMode = "Ignored"
         }
     },
     {
@@ -37,7 +37,17 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "Each",
             entityTypes = "TheoCrystal",
-            needsPlayer = false
+            playerMode = "Ignored"
+        }
+    },
+    {
+        name = "Custom Temple Gate (None)",
+        data = {
+            height = 48,
+            direction = "Down",
+            theoMode = "None",
+            entityTypes = "TheoCrystal",
+            playerMode = "Ignored"
         }
     }
 }
@@ -48,7 +58,11 @@ customTheoGate.fieldInformation = {
         editable = false
     },
     theoMode = {
-        options = { "Any", "All", "Each" },
+        options = { "Any", "All", "Each", "None" },
+        editable = false
+    },
+    playerMode = {
+        options = { "Ignored", "Required", "Repels" },
         editable = false
     },
     height = {
@@ -57,9 +71,6 @@ customTheoGate.fieldInformation = {
     },
     entityTypes = {
         fieldType = "string"
-    },
-    needsPlayer = {
-        fieldType = "boolean"
     }
 }
 
@@ -70,7 +81,7 @@ customTheoGate.fieldOrder = {
     "direction",
     "theoMode",
     "entityTypes",
-    "needsPlayer"
+    "playerMode"
 }
 
 -- Prevent standard width handles from cluttering the UI
@@ -78,14 +89,13 @@ customTheoGate.ignoredFields = {
     "width"
 }
 
--- FIX: Changed default minimum height to 48 so the editor initializes it correctly
 customTheoGate.minimumSize = { 16, 48 }
 customTheoGate.resizable = { false, true }
 
 function customTheoGate.sprite(room, entity)
     local sprites = {}
 
-    -- Treat "height" as the total extension of the gate in any direction    
+    -- Treat "height" as the total extension of the gate in any direction
     local ext = math.max(entity.height or 48, 16)
     local direction = entity.direction or "Down"
 
@@ -94,7 +104,7 @@ function customTheoGate.sprite(room, entity)
     if sprite then
         sprite:setJustification(0.25, 0.0)
 
-        -- Since the texture is natively vertical, scaleY always controls its length        
+        -- Since the texture is natively vertical, scaleY always controls its length
         sprite.scaleY = ext / sprite.meta.height
 
         if direction == "Up" then
@@ -103,7 +113,6 @@ function customTheoGate.sprite(room, entity)
             sprite.y = sprite.y + ext
         elseif direction == "Right" then
             sprite.rotation = -math.pi / 2
-            -- FIX: Adjusted X and Y to counteract the -90 degree pivot offset
             sprite.x = sprite.x + 0
             sprite.y = sprite.y + 16
         elseif direction == "Left" then
@@ -121,7 +130,7 @@ function customTheoGate.selection(room, entity)
     local ext = math.max(entity.height or 48, 16)
     local direction = entity.direction or "Down"
 
-    -- Swap the bounding box dimensions based on rotation    
+    -- Swap the bounding box dimensions based on rotation
     if direction == "Left" or direction == "Right" then
         return utils.rectangle(entity.x, entity.y, ext, 16)
     end

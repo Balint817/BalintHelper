@@ -14,7 +14,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             Any,
             All,
-            Each
+            Each,
+            None
         }
 
         public enum GateDirection
@@ -25,9 +26,19 @@ namespace Celeste.Mod.BalintHelper.Entities
             Right
         }
 
+        public enum PlayerMode
+        {
+            // Gate behaviour is independent of player proximity.
+            Ignored,
+            // Gate can only open if a player is within range (original needsPlayer = true).
+            Required,
+            // Gate closes (and stays closed) if a player is within range.
+            Repels
+        }
+
         private const float HoldingWaitTime = 0.2f;
         private const float HoldingOpenDistSq = 4096f;
-        private const float HoldingCloseDistSq = 6400f;
+        private const float HoldingCloseDistSq = 4096f;
         private const int MinDrawLength = 4;
         private const int GateThickness = 16;
         private const int OpenThickness = 2;
@@ -38,7 +49,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly TheoModes theoMode;
         private readonly string entityTypesRaw;
         private readonly GateDirection direction;
-        private readonly bool needsPlayer;
+        private readonly PlayerMode playerMode;
 
         // The world position at which this entity was placed. Never changes.
         private readonly Vector2 basePosition;
@@ -76,7 +87,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             closedLength = Math.Max(data.Height, GateThickness);
             theoMode = data.Enum("theoMode", TheoModes.Any);
             entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
-            needsPlayer = data.Bool("needsPlayer", false);
+            playerMode = data.Enum("playerMode", PlayerMode.Ignored);
             closedCenter = CalcClosedCenter(basePosition, closedLength, direction);
 
             ParseManagedEntityFilters();
@@ -288,10 +299,18 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             float maxDistanceSq = open ? HoldingCloseDistSq : HoldingOpenDistSq;
 
-            if (needsPlayer)
+            Player playerEntity = Scene.Tracker.GetEntity<Player>();
+
+            if (playerMode == PlayerMode.Required)
             {
-                Player player = Scene.Tracker.GetEntity<Player>();
-                if (player == null || !IsEntityWithinGateRange(player, maxDistanceSq))
+                // Gate cannot open unless a player is within range.
+                if (playerEntity == null || !IsEntityWithinGateRange(playerEntity, maxDistanceSq))
+                    return false;
+            }
+            else if (playerMode == PlayerMode.Repels)
+            {
+                // Gate closes (returns false) if a player is within range.
+                if (playerEntity != null && IsEntityWithinGateRange(playerEntity, maxDistanceSq))
                     return false;
             }
 
@@ -308,7 +327,12 @@ namespace Celeste.Mod.BalintHelper.Entities
                 foundRelevantHoldable = true;
                 bool isNearby = IsEntityWithinGateRange(entity, maxDistanceSq);
 
-                if (theoMode == TheoModes.Any)
+                if (theoMode == TheoModes.None)
+                {
+                    // Any entity nearby means we should NOT open.
+                    if (isNearby) return false;
+                }
+                else if (theoMode == TheoModes.Any)
                 {
                     if (isNearby) return true;
                 }
@@ -337,6 +361,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             if (!foundRelevantHoldable) return true;
+            if (theoMode == TheoModes.None) return true;  // No managed entity was nearby → open
             if (theoMode == TheoModes.All) return true;
             if (theoMode == TheoModes.Each)
             {
