@@ -224,7 +224,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                     OnEnable = () =>
                     {
                         Visible = true;
-                        Collidable = true;
                         if (explosionTrackerDebris != null)
                             explosionTrackerDebris.Collidable = !isBroken;
                     },
@@ -232,7 +231,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                     {
                         EjectClaimedWithLiftSpeed();
                         Visible = false;
-                        Collidable = false;
                         if (explosionTrackerDebris != null)
                             explosionTrackerDebris.Collidable = false;
                     },
@@ -624,17 +622,17 @@ namespace Celeste.Mod.BalintHelper.Entities
                 float verticalSpeedOffset = 0.1f;
                 float verticalSpeedMultiplier = 150f * multiplier;
 
-                if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField))
+                EnsureSpeedFieldCached(ClaimedEntity.GetType());
+                if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField)
+                    && speedField != null
+                    && speedField.FieldType == typeof(Vector2))
                 {
-                    if (speedField != null && speedField.FieldType == typeof(Vector2))
-                    {
-                        Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity)!;
-                        speed += direction * baseDirectionMultiplier;
-                        speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
-                        if (applyLiftSpeed)
-                            speed += _storedLiftSpeed;
-                        speedField.SetValue(ClaimedEntity, speed);
-                    }
+                    Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity)!;
+                    speed += direction * baseDirectionMultiplier;
+                    speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
+                    if (applyLiftSpeed)
+                        speed += _storedLiftSpeed;
+                    speedField.SetValue(ClaimedEntity, speed);
                 }
 
                 SetHoldableTimer(ClaimedEntity.Get<Holdable>(), 0);
