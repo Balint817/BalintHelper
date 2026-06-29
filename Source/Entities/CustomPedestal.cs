@@ -91,6 +91,14 @@ namespace Celeste.Mod.BalintHelper.Entities
         private bool isBroken = false;
         private float brokenTimer = 0f;
 
+        // ── Attach-to-solid / lift-speed ──────────────────────────────────────────
+        private readonly bool attachToSolid;
+        private readonly bool applyLiftSpeed;
+        private StaticMover? _staticMover;
+        private Vector2 _storedLiftSpeed = Vector2.Zero;
+        private float _liftSpeedTimer = 0f;
+        private const float LiftSpeedGraceDuration = 10f / 60f; // ~0.1667s ≈ 10 frames @ 60fps
+
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity? ClaimedEntity { get; private set; } = null;
 
@@ -104,6 +112,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool refillStamina;
         private readonly float dashHitboxExtension;
         private readonly Hitbox dashCollider;
+        private readonly Hitbox attachCheckCollider;
 
         private readonly bool canGrab;
         private static readonly FieldInfo HoldableCannotHoldTimer =
@@ -150,6 +159,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             soundRepair = data.Attr("soundRepair", "event:/game/09_core/iceblock_reappear");
 
             startBroken = data.Bool("startBroken", false);
+            attachToSolid = data.Bool("attachToSolid", false);
+            applyLiftSpeed = data.Bool("applyLiftSpeed", true);
 
             var visibilityFlag = startBroken && breakable;
 
@@ -169,6 +180,71 @@ namespace Celeste.Mod.BalintHelper.Entities
             Collidable = false;
             AllowStaticMovers = false;
 
+            // Build an attach-check collider that matches the sprite footprint,
+            // sitting flush at the visual bottom of the pedestal (Y = 0 = Position)
+            // with a 1px downward nudge to actually overlap the solid below.
+            float spriteW = spriteNormalImg.Width;
+            float spriteH = spriteNormalImg.Height;
+            attachCheckCollider = new Hitbox(
+                spriteW,                  // same width as sprite
+                2f,                       // just 2px tall — we only care about the bottom edge
+                -spriteW / 2f,            // centered horizontally (sprite is origin-justified at 0.5, 1)
+                1f                        // 1px below Position, which is the sprite's bottom
+            );
+
+            void MoveAll(Vector2 amount)
+            {
+                Position += amount;
+                ClaimedEntity?.Position += amount;
+                explosionTrackerDebris?.Position += amount;
+            }
+
+            if (attachToSolid)
+            {
+                _staticMover = new StaticMover
+                {
+                    SolidChecker = solid =>
+                    {
+                        var orig = Collider;
+                        Collider = attachCheckCollider;
+                        bool result = CollideCheck(solid);
+                        Collider = orig;
+                        return result;
+                    },
+                    OnMove = amount =>
+                    {
+                        MoveAll(amount);
+                        if (amount != Vector2.Zero && Engine.DeltaTime > 0f)
+                        {
+                            _storedLiftSpeed = amount / Engine.DeltaTime;
+                            _liftSpeedTimer = LiftSpeedGraceDuration;
+                        }
+                    },
+                    OnShake = MoveAll,
+                    OnEnable = () =>
+                    {
+                        Visible = true;
+                        Collidable = true;
+                        if (explosionTrackerDebris != null)
+                            explosionTrackerDebris.Collidable = !isBroken;
+                    },
+                    OnDisable = () =>
+                    {
+                        EjectClaimedWithLiftSpeed();
+                        Visible = false;
+                        Collidable = false;
+                        if (explosionTrackerDebris != null)
+                            explosionTrackerDebris.Collidable = false;
+                    },
+                    OnDestroy = () =>
+                    {
+                        EjectClaimedWithLiftSpeed();
+                        RemoveSelf();
+                    }
+                };
+                Add(_staticMover);
+            }
+
             // Initialize the dash-specific collider with the downward extension 
             dashCollider = new Hitbox(32f, 32f * (1f + dashHitboxExtension), -16f, -64f);
 
@@ -176,7 +252,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         }
 
         // ── Scene lifecycle ───────────────────────────────────────────────────────
-
         public override void Added(Scene scene)
         {
             base.Added(scene);
@@ -254,6 +329,14 @@ namespace Celeste.Mod.BalintHelper.Entities
         public override void Update()
         {
             base.Update();
+
+            // Tick lift-speed grace window
+            if (_liftSpeedTimer > 0f)
+            {
+                _liftSpeedTimer -= Engine.DeltaTime;
+                if (_liftSpeedTimer <= 0f)
+                    _storedLiftSpeed = Vector2.Zero;
+            }
 
             // Continuously keep the debris bounds locked to the pedestal bounds
             if (explosionTrackerDebris != null)
@@ -501,6 +584,33 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
+        // ── Lift-speed eject ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Releases the claimed entity and, if applyLiftSpeed is enabled,
+        /// adds the stored carrier lift-speed onto the entity's Speed field.
+        /// </summary>
+        private void EjectClaimedWithLiftSpeed()
+        {
+            if (ClaimedEntity == null)
+                return;
+
+            var entity = ClaimedEntity;
+            ClaimedEntity = null;
+
+            SetHoldableTimer(entity.Get<Holdable>(), 0);
+
+            if (applyLiftSpeed && _storedLiftSpeed != Vector2.Zero)
+            {
+                EnsureSpeedFieldCached(entity.GetType());
+                if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField) && speedField != null)
+                {
+                    var currentSpeed = (Vector2)speedField.GetValue(entity)!;
+                    speedField.SetValue(entity, currentSpeed + _storedLiftSpeed);
+                }
+            }
+        }
+
         private void Break(Vector2 direction, float multiplier = 1f)
         {
             ApplyBrokenState();
@@ -521,6 +631,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                         Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity)!;
                         speed += direction * baseDirectionMultiplier;
                         speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
+                        if (applyLiftSpeed)
+                            speed += _storedLiftSpeed;
                         speedField.SetValue(ClaimedEntity, speed);
                     }
                 }
