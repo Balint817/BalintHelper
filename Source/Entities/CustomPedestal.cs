@@ -187,10 +187,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             float spriteW = spriteNormalImg.Width;
             float spriteH = spriteNormalImg.Height;
             attachCheckCollider = new Hitbox(
-                spriteW,                  // same width as sprite
-                2f,                       // just 2px tall — we only care about the bottom edge
-                -spriteW / 2f,            // centered horizontally (sprite is origin-justified at 0.5, 1)
-                1f                        // 1px below Position, which is the sprite's bottom
+                32f,                  // same width as sprite
+                2f                       // just 2px tall — we only care about the bottom edge
             );
 
             void MoveAll(Vector2 amount)
