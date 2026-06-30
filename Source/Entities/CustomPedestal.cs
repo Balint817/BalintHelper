@@ -1017,12 +1017,21 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             base.DebugRender(camera);
 
-            if (breakable && canDash && !isBroken)
+            if (breakable && canDash)
             {
                 Collider origCollider = Collider;
                 Collider = dashCollider;
 
                 dashCollider.Render(camera, Color.Goldenrod);
+
+                Collider = origCollider;
+            }
+            if (attachToSolid)
+            {
+                Collider origCollider = Collider;
+                Collider = attachCheckCollider;
+
+                attachCheckCollider.Render(camera, Color.Aqua);
 
                 Collider = origCollider;
             }
