@@ -558,7 +558,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void OnDebrisExploded(Vector2 from)
         {
-            if (!isBroken && breakable && canExplode)
+            if (!isBroken && isEnabled && breakable && canExplode)
             {
                 Vector2 pushDirection = (SnapPosition(this) - from).SafeNormalize(Vector2.UnitY);
                 Break(pushDirection, 2.0f);
