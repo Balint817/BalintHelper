@@ -315,7 +315,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
 
                 fallback ??= pedestal;
-                if (!pedestal.isBroken)
+                if (!pedestal.isBroken && pedestal.Active)
                     return pedestal;
             }
 
@@ -801,7 +801,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private bool CanTargetPedestal(Entity entity, CustomPedestal pedestal)
         {
-            if (pedestal.isBroken)
+            if (pedestal.isBroken || !pedestal.Active)
                 return false;
 
             // Ensure this specific pedestal actually wants this specific entity type
