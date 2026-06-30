@@ -96,9 +96,22 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool attachToSolid;
         private readonly bool applyLiftSpeed;
         private StaticMover? _staticMover;
-        private Vector2 _storedLiftSpeed = Vector2.Zero;
-        private float _liftSpeedTimer = 0f;
         private const float LiftSpeedGraceDuration = 10f / 60f; // ~0.1667s ≈ 10 frames @ 60fps
+
+        private List<KeyValuePair<float, Vector2>> _storedLiftSpeeds = new();
+        private Vector2 AggregatedLiftSpeed
+        {
+            get
+            {
+                if (_storedLiftSpeeds.Count == 0)
+                {
+                    return Vector2.Zero;
+                }
+                var d = _storedLiftSpeeds.GroupBy(x => x.Key, x => x.Value).Select(x => x.Aggregate((acc, y) => acc + y)).ToArray();
+
+                return d.Aggregate((acc, y) => acc + y) / d.Length;
+            }
+        }
 
         /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity? ClaimedEntity { get; private set; } = null;
@@ -210,10 +223,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                     OnMove = amount =>
                     {
                         MoveAll(amount);
-                        if (amount != Vector2.Zero && Engine.DeltaTime > 0f)
+
+                        if (Engine.DeltaTime > 0f)
                         {
-                            _storedLiftSpeed = amount / Engine.DeltaTime;
-                            _liftSpeedTimer = LiftSpeedGraceDuration;
+                            _storedLiftSpeeds.Add(new KeyValuePair<float, Vector2>(Engine.Scene.TimeActive, amount / Engine.DeltaTime));
                         }
                     },
                     OnShake = MoveAll,
@@ -328,12 +341,15 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             base.Update();
 
-            // Tick lift-speed grace window
-            if (_liftSpeedTimer > 0f)
+            while (_storedLiftSpeeds.Count != 0 && _storedLiftSpeeds[0].Key < Engine.Scene.TimeActive - LiftSpeedGraceDuration)
             {
-                _liftSpeedTimer -= Engine.DeltaTime;
-                if (_liftSpeedTimer <= 0f)
-                    _storedLiftSpeed = Vector2.Zero;
+                _storedLiftSpeeds.RemoveAt(0);
+            }
+
+            // Tick lift-speed grace window
+            if (_storedLiftSpeeds.Count > 0)
+            {
+                _storedLiftSpeeds.RemoveAll(x => Engine.Scene.TimeActive - x.Key > LiftSpeedGraceDuration);
             }
 
             // Continuously keep the debris bounds locked to the pedestal bounds
@@ -618,13 +634,24 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             SetHoldableTimer(entity.Get<Holdable>(), 0);
 
-            if (applyLiftSpeed && _storedLiftSpeed != Vector2.Zero)
+            if (applyLiftSpeed)
+            {
+                var liftSpeed = AggregatedLiftSpeed;
+                if (liftSpeed != Vector2.Zero)
+                {
+                    EnsureSpeedFieldCached(entity.GetType());
+                    if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField) && speedField != null)
+                    {
+                        speedField.SetValue(entity, liftSpeed);
+                    }
+                }
+            }
+            else
             {
                 EnsureSpeedFieldCached(entity.GetType());
                 if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField) && speedField != null)
                 {
-                    var currentSpeed = (Vector2)speedField.GetValue(entity)!;
-                    speedField.SetValue(entity, currentSpeed + _storedLiftSpeed);
+                    speedField.SetValue(entity, Vector2.Zero);
                 }
             }
         }
@@ -647,11 +674,11 @@ namespace Celeste.Mod.BalintHelper.Entities
                     && speedField != null
                     && speedField.FieldType == typeof(Vector2))
                 {
-                    Vector2 speed = (Vector2)speedField.GetValue(ClaimedEntity)!;
+                    Vector2 speed = Vector2.Zero;
                     speed += direction * baseDirectionMultiplier;
                     speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
                     if (applyLiftSpeed)
-                        speed += _storedLiftSpeed;
+                        speed += AggregatedLiftSpeed;
                     speedField.SetValue(ClaimedEntity, speed);
                 }
 
