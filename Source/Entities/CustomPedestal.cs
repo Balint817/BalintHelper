@@ -343,6 +343,11 @@ namespace Celeste.Mod.BalintHelper.Entities
                 explosionTrackerDebris.Position = Position + Collider.Position;
             }
 
+            if (!Active)
+            {
+                return;
+            }
+
             // ── Broken repair countdown (every pedestal handles its own) ──────────
             if (isBroken)
             {
