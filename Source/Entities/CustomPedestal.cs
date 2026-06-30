@@ -181,14 +181,11 @@ namespace Celeste.Mod.BalintHelper.Entities
             Collidable = false;
             AllowStaticMovers = false;
 
-            // Build an attach-check collider that matches the sprite footprint,
-            // sitting flush at the visual bottom of the pedestal (Y = 0 = Position)
-            // with a 1px downward nudge to actually overlap the solid below.
-            float spriteW = spriteNormalImg.Width;
-            float spriteH = spriteNormalImg.Height;
             attachCheckCollider = new Hitbox(
-                32f,                  // same width as sprite
-                2f                       // just 2px tall — we only care about the bottom edge
+                32f,
+                32+2,
+                -16f,
+                -32
             );
 
             void MoveAll(Vector2 amount)
