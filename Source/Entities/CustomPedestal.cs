@@ -588,6 +588,17 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
         }
+        private void ResetReturnTimersForThisPedestal()
+        {
+            foreach (var entity in returnTargets.Keys.ToList())
+            {
+                if (returnTargets[entity] == this)
+                {
+                    returnTargets.Remove(entity);
+                    returnTimers.Remove(entity);
+                }
+            }
+        }
 
         // ── Lift-speed eject ─────────────────────────────────────────────────────
 
@@ -597,6 +608,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         /// </summary>
         private void EjectClaimedWithLiftSpeed()
         {
+            ResetReturnTimersForThisPedestal();
+
             if (ClaimedEntity == null)
                 return;
 
