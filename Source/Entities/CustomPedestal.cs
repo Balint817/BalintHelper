@@ -89,6 +89,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly bool startBroken;
         private bool isBroken = false;
+        private bool isEnabled = false;
         private float brokenTimer = 0f;
 
         // ── Attach-to-solid / lift-speed ──────────────────────────────────────────
@@ -224,6 +225,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     OnEnable = () =>
                     {
                         Visible = true;
+                        isEnabled = true;
                         if (explosionTrackerDebris != null)
                             explosionTrackerDebris.Collidable = !isBroken;
                     },
@@ -231,12 +233,15 @@ namespace Celeste.Mod.BalintHelper.Entities
                     {
                         EjectClaimedWithLiftSpeed();
                         Visible = false;
+                        isEnabled = false;
                         if (explosionTrackerDebris != null)
                             explosionTrackerDebris.Collidable = false;
                     },
                     OnDestroy = () =>
                     {
                         EjectClaimedWithLiftSpeed();
+                        isEnabled = false;
+                        Visible = false;
                         RemoveSelf();
                     }
                 };
@@ -315,7 +320,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
 
                 fallback ??= pedestal;
-                if (!pedestal.isBroken && pedestal.Active)
+                if (!pedestal.isBroken && pedestal.isEnabled)
                     return pedestal;
             }
 
@@ -342,7 +347,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 explosionTrackerDebris.Position = Position + Collider.Position;
             }
 
-            if (!Active)
+            if (!isEnabled)
             {
                 return;
             }
@@ -414,7 +419,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 var claimingPedestal = FindClaimingPedestal(entity);
                 if (claimingPedestal != null)
                 {
-                    if (claimingPedestal.isBroken)
+                    if (claimingPedestal.isBroken || !claimingPedestal.isEnabled)
                     {
                         if (claimingPedestal.ClaimedEntity != null)
                         {
@@ -801,7 +806,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private bool CanTargetPedestal(Entity entity, CustomPedestal pedestal)
         {
-            if (pedestal.isBroken || !pedestal.Active)
+            if (pedestal.isBroken || !pedestal.isEnabled)
                 return false;
 
             // Ensure this specific pedestal actually wants this specific entity type
