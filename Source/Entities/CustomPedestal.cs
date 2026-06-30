@@ -89,7 +89,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly bool startBroken;
         private bool isBroken = false;
-        private bool isEnabled = false;
+        private bool isEnabled = true;
         private float brokenTimer = 0f;
 
         // ── Attach-to-solid / lift-speed ──────────────────────────────────────────
