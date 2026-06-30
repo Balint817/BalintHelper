@@ -1,4 +1,5 @@
-﻿using MonoMod.Utils;
+﻿using Monocle;
+using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -10,6 +11,10 @@ namespace Celeste.Mod.BalintHelper
 {
     internal static class Extensions
     {
+        public static bool IsGone(this Entity? entity, Scene scene)
+        {
+            return entity == null || entity.Scene != scene;
+        }
         public static bool TryGetSafe<T>(this DynamicData data, string fieldName, [MaybeNullWhen(false)] out T? value)
         {
             return data.TryGetSafeExtended(fieldName, out value) ?? false;

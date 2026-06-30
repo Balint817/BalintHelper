@@ -387,6 +387,16 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             // ── Authority: full entity management ────────────────────────────────
             var allPedestals = Scene.Tracker.GetEntities<CustomPedestal>().Cast<CustomPedestal>().ToList();
+
+            // 1) Scrub stale references
+            foreach (var ped in allPedestals)
+            {
+                if (ped.ClaimedEntity.IsGone(Scene))
+                {
+                    ped.ClaimedEntity = null;
+                }
+            }
+
             var candidates = new List<Entity>();
 
             // Gather any holdable that AT LEAST ONE pedestal wants
@@ -452,7 +462,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             var eligibleSet = new HashSet<Entity>(eligibleEntities);
             foreach (var entity in returnTimers.Keys.ToList())
             {
-                if (!eligibleSet.Contains(entity))
+                if (!eligibleSet.Contains(entity) || entity.IsGone(Scene))
                 {
                     returnTimers.Remove(entity);
                     returnTargets.Remove(entity);
@@ -536,6 +546,12 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void SnapClaimed()
         {
             if (ClaimedEntity == null || isBroken) return;
+
+            if (ClaimedEntity.IsGone(Scene))
+            {
+                ClaimedEntity = null;
+                return;
+            }
 
             var holdable = ClaimedEntity.Get<Holdable>();
             bool isHeld = holdable?.Holder != null;
