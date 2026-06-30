@@ -398,7 +398,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             var candidates = new List<Entity>();
-
+            
             // Gather any holdable that AT LEAST ONE pedestal wants
             foreach (var e in Scene.Entities)
             {
@@ -940,20 +940,21 @@ namespace Celeste.Mod.BalintHelper.Entities
                     managedTypeNames.Add(token);
             }
         }
-
         public bool WantsEntity(Entity e)
         {
             var type = e.GetType();
-            bool byType = managedTypeNames.Contains(e.SourceData?.Name ?? "") || managedTypeNames.Contains(type.Name);
+            bool byTypeOrSid = managedTypeNames.Contains(e.SourceData?.Name ?? "")
+                || managedTypeNames.Contains(type.Name)
+                || BalintHelperModule.Instance.GetKnownSidsFromType(type).Any(sid => managedTypeNames.Contains(sid));
             bool byId = false;
 
-            if (!byType && managedEntityIds.Count > 0)
+            if (!byTypeOrSid && managedEntityIds.Count > 0)
             {
                 if (e.SourceData?.ID is int eid)
                     byId = managedEntityIds.Contains(eid);
             }
 
-            return byType || byId;
+            return byTypeOrSid || byId;
         }
 
         public void EnsureSpeedFieldCached(Type type)
