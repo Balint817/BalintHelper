@@ -567,7 +567,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void TryBreakFromDash()
         {
-            if (!breakable || !canDash || isBroken || Scene == null)
+            if (!breakable || !canDash || isBroken || !isEnabled || Scene == null)
                 return;
 
             Player player = Scene.Tracker.GetEntity<Player>();
