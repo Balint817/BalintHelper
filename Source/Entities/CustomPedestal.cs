@@ -89,6 +89,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly bool startBroken;
         private bool isBroken = false;
+        private bool isDisabled = false;
         private float brokenTimer = 0f;
 
         // ── Attach-to-solid / lift-speed ──────────────────────────────────────────
@@ -342,8 +343,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 explosionTrackerDebris.Position = Position + Collider.Position;
             }
 
-            TryBreakFromDash();
-
             // ── Broken repair countdown (every pedestal handles its own) ──────────
             if (isBroken)
             {
@@ -353,6 +352,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                     if (brokenTimer <= 0f) Repair();
                 }
                 return;
+            }
+            else
+            {
+                TryBreakFromDash();
             }
 
             // ── Non-authority pedestals: only snap their own claimed entity ───────
