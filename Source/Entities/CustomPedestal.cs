@@ -9,18 +9,10 @@ using Monocle;
 
 namespace Celeste.Mod.BalintHelper.Entities
 {
-    /// <summary>
-    /// BalintHelper/CustomPedestal
-    ///
-    /// A fully-customisable replacement for TheoCrystalPedestal that supports
-    /// multiple pedestals per map, configurable return timers, breakability,
-    /// particle trails, and any Holdable entity type.
-    /// </summary>
     [CustomEntity("BalintHelper/CustomPedestal")]
     [Tracked]
     public class CustomPedestal : Solid
     {
-        // ── Particle defaults ─────────────────────────────────────────────────────
         private const string DefaultReturnParticleColorA = "7fffff";
         private const string DefaultReturnParticleColorB = "ffffff";
         private const string DefaultExplodeParticleColorA = "7fffff";
@@ -34,7 +26,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static readonly string[] RepairParticleAtlases = { "particles/smoke0", "particles/smoke1", "particles/smoke2", "particles/smoke3" };
         private static readonly string[] ExplodeParticleAtlases = { "particles/zappysmoke00", "particles/zappysmoke01", "particles/zappysmoke02", "particles/zappysmoke03" };
 
-        // ── Configuration ─────────────────────────────────────────────────────────
         private readonly string spriteNormalPath;
         private readonly string spriteBrokenPath;
         private readonly float returnDelay;
@@ -62,7 +53,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly string soundBreak;
         private readonly string soundRepair;
 
-        // Lazily resolved particle types
         private ParticleType? _ptReturnLine;
         private ParticleType? _ptExplode;
         private ParticleType? _ptBreak;
@@ -73,7 +63,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private ParticleType PtBreak => _ptBreak ??= CreateBreakParticleType();
         private ParticleType PtRepair => _ptRepair ??= CreateRepairParticleType();
 
-        // ── Runtime state ─────────────────────────────────────────────────────────
         private sealed class SharedReturnState
         {
             public readonly Dictionary<Entity, float> ReturnTimers = new Dictionary<Entity, float>();
@@ -85,14 +74,13 @@ namespace Celeste.Mod.BalintHelper.Entities
         private Image spriteNormalImg;
         private Image spriteBrokenImg;
 
-        private SilentFloatingDebris? explosionTrackerDebris; // Reference to tracked debris child
+        private SilentFloatingDebris? explosionTrackerDebris;
 
         private readonly bool startBroken;
         private bool isBroken = false;
         private bool isEnabled = true;
         private float brokenTimer = 0f;
 
-        // ── Attach-to-solid / lift-speed ──────────────────────────────────────────
         private readonly bool attachToSolid;
         private readonly bool applyLiftSpeed;
         private StaticMover? _staticMover;
@@ -113,7 +101,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        /// <summary>The entity this pedestal currently owns while resting on it.</summary>
         public Entity? ClaimedEntity { get; private set; } = null;
 
         private readonly SharedReturnState detachedReturnState = new SharedReturnState();
@@ -136,7 +123,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             typeof(Holdable).GetField("cannotHoldDelay",
                 BindingFlags.Instance | BindingFlags.NonPublic)!;
 
-        // ── Constructor ───────────────────────────────────────────────────────────
         public CustomPedestal(EntityData data, Vector2 offset)
             : base(data.Position + offset, 32f, 32f, safe: false)
         {
@@ -256,18 +242,14 @@ namespace Celeste.Mod.BalintHelper.Entities
                 Add(_staticMover);
             }
 
-            // Initialize the dash-specific collider with the downward extension 
             dashCollider = new Hitbox(32f, 32f * (1f + dashHitboxExtension), -16f, -64f);
 
             Tag = Tags.TransitionUpdate;
         }
-
-        // ── Scene lifecycle ───────────────────────────────────────────────────────
         public override void Added(Scene scene)
         {
             base.Added(scene);
 
-            // Align position & scale exactly with this entity's collider dimensions
             explosionTrackerDebris = new SilentFloatingDebris(Position + Collider.Position, (int)Width, (int)Height);
             explosionTrackerDebris.OnExploded += OnDebrisExploded;
             scene.Add(explosionTrackerDebris);
@@ -283,7 +265,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (explosionTrackerDebris != null)
                 explosionTrackerDebris.Collidable = !isBroken;
 
-            // Adjust depths for any entities this specific pedestal wants
             foreach (var entity in scene.Entities)
             {
                 if (entity.Get<Holdable>() != null && WantsEntity(entity))
@@ -306,8 +287,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             base.Removed(scene);
         }
-
-        // ── Authority check ───────────────────────────────────────────────────────
 
         private SharedReturnState GetSharedReturnState()
             => Scene == null
@@ -346,13 +325,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 _storedLiftSpeeds.RemoveAt(0);
             }
 
-            // Tick lift-speed grace window
-            if (_storedLiftSpeeds.Count > 0)
-            {
-                _storedLiftSpeeds.RemoveAll(x => Engine.Scene.TimeActive - x.Key > LiftSpeedGraceDuration);
-            }
-
-            // Continuously keep the debris bounds locked to the pedestal bounds
             if (explosionTrackerDebris != null)
             {
                 explosionTrackerDebris.Position = Position + Collider.Position;
@@ -363,7 +335,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return;
             }
 
-            // ── Broken repair countdown (every pedestal handles its own) ──────────
             if (isBroken)
             {
                 if (brokenDisableDuration > 0f)
@@ -378,17 +349,15 @@ namespace Celeste.Mod.BalintHelper.Entities
                 TryBreakFromDash();
             }
 
-            // ── Non-authority pedestals: only snap their own claimed entity ───────
             if (!IsAuthority())
             {
                 SnapClaimed();
                 return;
             }
 
-            // ── Authority: full entity management ────────────────────────────────
             var allPedestals = Scene.Tracker.GetEntities<CustomPedestal>().Cast<CustomPedestal>().ToList();
 
-            // 1) Scrub stale references
+            // Scrub stale references
             foreach (var ped in allPedestals)
             {
                 if (ped.ClaimedEntity.IsGone(Scene))
@@ -537,11 +506,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                 returnTargets.Remove(entity);
             }
 
-            // ── Snap this pedestal's own claimed entity ───────────────────────────
             SnapClaimed();
         }
-
-        // ── Snap helper ───────────────────────────────────────────────────────────
 
         private void SnapClaimed()
         {
@@ -580,8 +546,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (holdable == null) return;
             SetHoldableTimer(holdable, (float)HoldableCannotHoldDelay.GetValue(holdable)!);
         }
-
-        // ── Break & Explosion Handlers ────────────────────────────────────────────
 
         private void OnDebrisExploded(Vector2 from)
         {
@@ -631,13 +595,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
         }
-
-        // ── Lift-speed eject ─────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Releases the claimed entity and, if applyLiftSpeed is enabled,
-        /// adds the stored carrier lift-speed onto the entity's Speed field.
-        /// </summary>
         private void EjectClaimedWithLiftSpeed()
         {
             ResetReturnTimersForThisPedestal();
@@ -733,8 +690,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             Audio.Play(soundRepair, SnapPosition(this));
         }
 
-        // ── Teleport ──────────────────────────────────────────────────────────────
-
         private void TeleportEntityTo(Entity entity, CustomPedestal target, bool playEffects = true)
         {
             returnTimers.Remove(entity);
@@ -782,8 +737,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 ped.ClaimedEntity = null;
             }
         }
-
-        // ── Pedestal selection ────────────────────────────────────────────────────
 
         private Dictionary<Entity, CustomPedestal> AssignTargets(IEnumerable<Entity> entities)
         {
@@ -918,8 +871,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static int GetStableId(Entity entity)
             => entity.SourceData?.ID ?? RuntimeHelpers.GetHashCode(entity);
 
-        // ── Entity collection ─────────────────────────────────────────────────────
-
         private void ParseManagedEntityFilters()
         {
             managedTypeNames.Clear();
@@ -969,8 +920,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 speedFieldInfos[type] = fi;
             }
         }
-
-        // ── Visual helpers ────────────────────────────────────────────────────────
 
         private static Vector2 SnapPosition(CustomPedestal pedestal)
             => pedestal.Position + new Vector2(0f, -32f);
