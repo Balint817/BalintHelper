@@ -51,11 +51,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly GateDirection direction;
         private readonly PlayerMode playerMode;
 
-        // The world position at which this entity was placed. Never changes.
         private readonly Vector2 basePosition;
 
-        // Pre-computed center of the fully-closed gate used for all proximity checks.
-        // Cached here because entity.Center moves as the collider shrinks/grows on open/close.
         private readonly Vector2 closedCenter;
 
         private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
@@ -68,8 +65,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private bool open;
         private float holdingWaitTimer = HoldingWaitTime;
         private bool lockState;
-
-        // ─── constructor ──────────────────────────────────────────────────────────
 
         public CustomTheoGate(EntityData data, Vector2 offset)
             : base(
@@ -102,8 +97,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             drawLength = closedLength;
         }
 
-        // ─── helpers ─────────────────────────────────────────────────────────────
-
         private static bool IsHorizontalDir(GateDirection d) =>
             d == GateDirection.Left || d == GateDirection.Right;
 
@@ -121,27 +114,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                 : pos + new Vector2(GateThickness * 0.5f, len * 0.5f);
         }
 
-        // ─── sprite configuration ─────────────────────────────────────────────────
-        //
-        // The templegate_theo sprite is authored vertically (tall/narrow).
-        // Its default Justify places the draw-pivot at the center-top of the texture.
-        // sprite.Position is relative to entity.Position (= basePosition when closed).
-        //
-        // We place the pivot so that the sprite HEAD (texture top = door cap) always
-        // sits at the "closed" end of the gate, and the tail grows away from it.
-        //
-        //   DOWN : pivot at (center-of-thickness, 0)              → head at entity top
-        //   UP   : pivot at (center-of-thickness, closedLength)   → head at entity bottom  (rot PI)
-        //   RIGHT: pivot at (0,  center-of-thickness)             → head at entity left     (rot -PI/2)
-        //   LEFT : pivot at (closedLength, center-of-thickness)   → head at entity right    (rot +PI/2)
-
         private void ConfigureSpriteForDirection()
         {
-            // Keep the SpriteBank's own Justify — don't override it.
-            // The original code used sprite.X = Collider.Width / 2 with the 8px collider,
-            // which equals 4px = half of the 8px-wide texture (default justify 0.5 horizontally).
-            // For the new 16px collider we want the sprite centered in the thickness axis:
-            // thickness center = GateThickness / 2 = 8.
             sprite.Rotation = 0f;
 
             switch (direction)
@@ -168,8 +142,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        // ─── awake ───────────────────────────────────────────────────────────────
-
         public override void Awake(Scene scene)
         {
             base.Awake(scene);
@@ -185,8 +157,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 open = false;
             }
         }
-
-        // ─── open / close ─────────────────────────────────────────────────────────
 
         public void Open()
         {
@@ -219,15 +189,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             sprite.Play("hit");
             open = false;
         }
-
-        // ─── collider placement ───────────────────────────────────────────────────
-        //
-        // The 2-pixel open lip always sits on the BLACK CAP side of the gate.
-        //
-        //   DOWN : cap at TOP  → lip stays at basePosition.Y  (entity.Y unchanged)
-        //   UP   : cap at BOTTOM → lip starts at basePosition.Y + closedLength - OpenThickness
-        //   RIGHT: cap at LEFT → lip stays at basePosition.X  (entity.X unchanged)
-        //   LEFT : cap at RIGHT → lip starts at basePosition.X + closedLength - OpenThickness
 
         private void ApplyClosedCollider()
         {
@@ -274,8 +235,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                     break;
             }
         }
-
-        // ─── proximity ───────────────────────────────────────────────────────────
 
         private bool IsEntityWithinGateRange(Entity entity, float maxDistanceSq)
         {
@@ -361,7 +320,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             if (!foundRelevantHoldable) return true;
-            if (theoMode == TheoModes.None) return true;  // No managed entity was nearby → open
+            if (theoMode == TheoModes.None) return true;  // No managed entity was nearby -> open
             if (theoMode == TheoModes.All) return true;
             if (theoMode == TheoModes.Each)
             {
@@ -370,8 +329,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             return false;
         }
-
-        // ─── size helpers (replicates vanilla gate SetHeight / SetWidth) ──────────
 
         private void SetGateSize(int size)
         {
@@ -424,8 +381,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             Collider.Width = width;
         }
 
-        // ─── player kill ──────────────────────────────────────────────────────────
-
         private void KillPlayerOnClose()
         {
             Player player = Scene?.Tracker.GetEntity<Player>();
@@ -442,8 +397,6 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             player.Die(killDir);
         }
-
-        // ─── update ───────────────────────────────────────────────────────────────
 
         public override void Update()
         {
@@ -478,8 +431,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                 lockState = false;
             }
         }
-
-        // ─── managed entity helpers ───────────────────────────────────────────────
 
         private void ParseManagedEntityFilters()
         {
@@ -521,34 +472,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        // ─── render ───────────────────────────────────────────────────────────────
-        //
-        // Sprite drawing strategy
-        // ──────────────────────────────────────────────────────────────────────────
-        // The sprite texture is authored vertically. texture-top = door cap (head).
-        // sprite.Rotation maps texture-Y to the gate's length direction in world space.
-        //
-        // We ALWAYS want to show texture-top (head) and clip/scale the tail.
-        // The subrect that achieves this for any rotation is:
-        //
-        //   Rectangle(0, sprite.Height - drawLength, sprite.Width, drawLength)
-        //
-        // This keeps the head at the texture top and removes pixels from the bottom,
-        // which – after the sprite's rotation is applied – removes pixels from the
-        // TAIL end in world space regardless of direction.
-        //
-        // When drawLength > sprite.Height we fall back to Scale.Y stretching.
-        // Because Scale.Y always stretches along the texture-Y axis, and the sprite
-        // is rotated so texture-Y == world-length axis, no position correction is
-        // needed for any direction.
-        //
-        // The black cap rect is drawn at basePosition to stay anchored even while
-        // the collider/entity position shifts during the open state.
-
         private void RenderCapRect()
         {
-            // The cap rect is 10px deep (8px into wall + 2px overlap with gate face)
-            // and exactly GateThickness (16px) wide to match the full collider face.
             switch (direction)
             {
                 case GateDirection.Down:
@@ -578,9 +503,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             RenderCapRect();
 
-            // sprite.RenderPosition = entity.Position + sprite.Position
-            // entity.Position may have shifted (open lip moved). Restore it to basePosition
-            // so the sprite stays anchored to the closed position at all times.
             Vector2 savedEntityPos = Position;
             Position = basePosition;
 

@@ -7,19 +7,6 @@ using Monocle;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
-    /// <summary>
-    /// BalintHelper/HoldableTimerSetTrigger
-    ///
-    /// Sets the 'cannotHoldTimer' of targeted Holdable entities to an arbitrary number.
-    /// 
-    /// Properties (set in Lönn):
-    ///   value             - float  (default 0f) Value to set the cannotHoldTimer to.
-    ///   entityTypes       - string (default "TheoCrystal") Comma-separated type names or entity IDs.
-    ///   playerTriggerMode - string (Never, OnEntry, OnLeave, EntryOrLeave, Stay)
-    ///   entityTriggerMode - string (Never, OnEntry, OnLeave, EntryOrLeave, Stay)
-    ///   targetingMode     - string (Inside, Outside, Everywhere)
-    ///   global            - bool   (default false) If true, ignores triggers and applies every frame.
-    /// </summary>
     [CustomEntity("BalintHelper/HoldableTimerSetTrigger")]
     public class HoldableTimerSetTrigger : Trigger
     {

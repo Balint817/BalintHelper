@@ -6,31 +6,15 @@ using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
-    /// <summary>
-    /// BalintHelper/DashCooldownSetTrigger
-    ///
-    /// Sets the player's internal dash cooldown timer (dashCooldownTimer)
-    /// to a configured value when any of the configured events occurs.
-    ///
-    /// Properties (set in Lönn):
-    ///   value         – float (default 0f)   Value to set dash cooldown timer to
-    ///   resetOnEnter  – bool  (default true) Reset when player enters the trigger area
-    ///   resetOnStay   – bool  (default false) Reset every frame the player is inside
-    ///   resetOnLeave  – bool  (default false) Reset when player exits the trigger area
-    ///   maxUses       – int   (default 0)    Maximum number of times the trigger can fire
-    ///                                        (0 = unlimited, non-persistent: resets on room revisit or respawn)
-    /// </summary>
     [CustomEntity("BalintHelper/DashCooldownSetTrigger")]
     public class DashCooldownSetTrigger : Trigger
     {
-        // ── Reflection cache ──────────────────────────────────────────────────────
         private static readonly FieldInfo DashCooldownTimerField =
             typeof(Player).GetField(
                 "dashCooldownTimer",
                 BindingFlags.Instance | BindingFlags.NonPublic
             )!;
 
-        // ── Per-instance config ───────────────────────────────────────────────────
         private readonly float value;
         private readonly bool resetOnEnter;
         private readonly bool resetOnStay;
@@ -40,7 +24,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private int uses = 0;
         private bool canActivate => maxUses <= 0 || uses < maxUses;
 
-        // ── Constructor ───────────────────────────────────────────────────────────
         public DashCooldownSetTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
         {
@@ -55,7 +38,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
             maxUses = data.Int("maxUses", defaultValue: 0);
         }
 
-        // ── Event hooks ───────────────────────────────────────────────────────────
 
         public override void OnEnter(Player player)
         {
@@ -78,7 +60,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 TrySet(player);
         }
 
-        // ── Core logic ────────────────────────────────────────────────────────────
 
         private void TrySet(Player player)
         {
@@ -94,8 +75,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
             SetDashCooldown(player, value);
             uses++;
         }
-
-        // ── Reflection helpers ────────────────────────────────────────────────────
 
         private static float GetDashCooldown(Player player)
         {
