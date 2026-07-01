@@ -1,11 +1,12 @@
-﻿using System;
+﻿using Celeste.Mod.Entities;
+using Microsoft.Xna.Framework;
+using Monocle;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using Celeste.Mod.Entities;
-using Microsoft.Xna.Framework;
-using Monocle;
+using static Celeste.GaussianBlur;
 
 namespace Celeste.Mod.BalintHelper.Entities
 {
@@ -75,6 +76,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private Image spriteBrokenImg;
 
         private SilentFloatingDebris? explosionTrackerDebris;
+        private bool hasPendingExplosionBreak;
+        private Vector2 pendingExplosionFrom;
 
         private readonly bool startBroken;
         private bool isBroken = false;
@@ -226,6 +229,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     OnDisable = () =>
                     {
                         EjectClaimedWithLiftSpeed();
+                        hasPendingExplosionBreak = false;
                         Visible = false;
                         isEnabled = false;
                         if (explosionTrackerDebris != null)
@@ -234,6 +238,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     OnDestroy = () =>
                     {
                         EjectClaimedWithLiftSpeed();
+                        hasPendingExplosionBreak = false;
                         isEnabled = false;
                         Visible = false;
                         RemoveSelf();
@@ -285,6 +290,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 scene.Remove(explosionTrackerDebris);
                 explosionTrackerDebris = null;
             }
+            hasPendingExplosionBreak = false;
             base.Removed(scene);
         }
 
@@ -314,8 +320,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             return fallback;
         }
 
-        // ── Update ────────────────────────────────────────────────────────────────
-
         public override void Update()
         {
             base.Update();
@@ -333,6 +337,13 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (!isEnabled)
             {
                 return;
+            }
+
+            if (hasPendingExplosionBreak && !isBroken && breakable && canExplode)
+            {
+                hasPendingExplosionBreak = false;
+                Vector2 pushDirection = (SnapPosition(this) - pendingExplosionFrom).SafeNormalize(Vector2.UnitY);
+                Break(pushDirection, 2.0f);
             }
 
             if (isBroken)
@@ -551,8 +562,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             if (!isBroken && isEnabled && breakable && canExplode)
             {
-                Vector2 pushDirection = (SnapPosition(this) - from).SafeNormalize(Vector2.UnitY);
-                Break(pushDirection, 2.0f);
+                hasPendingExplosionBreak = true;
+                pendingExplosionFrom = from;
             }
         }
 
@@ -607,19 +618,27 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             SetHoldableTimer(entity.Get<Holdable>(), 0);
 
+            var speed = Vector2.Zero;
+
+            if (hasPendingExplosionBreak)
+            {
+                const float multiplier = 2;
+                float baseDirectionMultiplier = 150f * multiplier;
+                float verticalSpeedOffset = 0.1f;
+                float verticalSpeedMultiplier = 150f * multiplier;
+
+                var direction = pendingExplosionFrom;
+
+                speed += direction * baseDirectionMultiplier;
+                speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
+            }
+
             if (applyLiftSpeed)
             {
-                var liftSpeed = AggregatedLiftSpeed;
-                if (liftSpeed != Vector2.Zero)
-                {
-                    EnsureSpeedFieldCached(entity.GetType());
-                    if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField) && speedField != null)
-                    {
-                        speedField.SetValue(entity, liftSpeed);
-                    }
-                }
+                speed += AggregatedLiftSpeed;
             }
-            else
+
+            if (speed != Vector2.Zero)
             {
                 EnsureSpeedFieldCached(entity.GetType());
                 if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField) && speedField != null)
