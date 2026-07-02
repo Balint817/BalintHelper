@@ -383,7 +383,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void KillPlayerOnClose()
         {
-            Player player = Scene?.Tracker.GetEntity<Player>();
+            var player = Scene?.Tracker.GetEntity<Player>();
             if (player == null || !CollideCheck(player))
                 return;
 

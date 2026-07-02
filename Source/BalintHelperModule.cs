@@ -22,13 +22,13 @@ namespace Celeste.Mod.BalintHelper
         {
             On.Celeste.FloatingDebris.OnExplode += OnFloatingDebrisExplode;
 
-            var entityRegistryType = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetTypes().FirstOrDefault(x => x.FullName == "Celeste.Mod.Registry.EntityRegistry")).Where(x => x != null).First();
+            var entityRegistryType = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetTypes().FirstOrDefault(x => x.FullName == "Celeste.Mod.Registry.EntityRegistry")).Where(x => x != null).First()!;
 
-            var methodInfo = entityRegistryType.GetMethod("GetKnownTypesFromSid", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            var methodInfo = entityRegistryType.GetMethod("GetKnownTypesFromSid", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
 
             knownTypesFromSid = methodInfo.CreateDelegate<Func<string, IReadOnlySet<Type>>>();
 
-            methodInfo = entityRegistryType.GetMethod("GetKnownSidsFromType", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            methodInfo = entityRegistryType.GetMethod("GetKnownSidsFromType", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
 
             knownSidsFromType = methodInfo.CreateDelegate<Func<Type, IReadOnlySet<string>>>();
         }
