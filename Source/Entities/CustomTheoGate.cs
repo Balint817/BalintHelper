@@ -241,7 +241,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             Vector2 delta = entity.Center - GateCenter;
 
             float longAxisLimit = (float)Math.Sqrt(maxDistanceSq);
-            float shortAxisLimit = Math.Max(closedLength * 0.6f, 8f);
+            float shortAxisLimit = Math.Max(closedLength * 1f, 8f);
 
             // For a vertical gate the long axis is Y; for horizontal it is X.
             float horizontalLimit = IsHorizontal ? shortAxisLimit : longAxisLimit;
