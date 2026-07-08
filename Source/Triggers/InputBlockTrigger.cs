@@ -18,31 +18,32 @@ namespace Celeste.Mod.BalintHelper.Triggers
             var buttonType = typeof(VirtualButton);
             var joystickType = typeof(VirtualJoystick);
             var axisType = typeof(VirtualIntegerAxis);
+            var types = new[] { buttonType, joystickType, axisType };
 
             var fields = inputType
                 .GetFields(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)
-                .Where(f => f.FieldType == buttonType || f.FieldType == joystickType || f.FieldType == axisType)
-                .ToArray();
+                .Where(f => types.Contains(f.FieldType))
+                .GroupBy(f => f.FieldType)
+                .ToDictionary(x => x.Key, x => x.ToArray());
 
-            var buttonFields = fields.Where(f => f.FieldType == buttonType).ToArray();
-            var joystickFields = fields.Where(f => f.FieldType == joystickType).ToArray();
-            var axisFields = fields.Where(f => f.FieldType == axisType).ToArray();
+            var consumePressMethod = buttonType.GetMethod(
+                nameof(VirtualButton.ConsumePress),
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!;
 
-            var consumePress = buttonType.GetMethod(
-                "ConsumePress",
-                BindingFlags.Instance | BindingFlags.Public)!;
+            var joystickField = joystickType.GetField(
+                nameof(VirtualJoystick.value),
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!;
+            var joystickPropSetter = joystickType.GetProperty(
+                nameof(VirtualJoystick.Value),
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!.SetMethod!;
 
-            var joystickSetter = joystickType.GetProperty(
-                "Value",
-                BindingFlags.Instance | BindingFlags.Public)!.SetMethod!;
+            var axisField = axisType.GetField(
+                nameof(VirtualIntegerAxis.Value),
+                BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic)!;
 
-            var axisSetter = axisType.GetProperty(
-                "Value",
-                BindingFlags.Instance | BindingFlags.Public)!.SetMethod!;
-
-            var vector2Zero = typeof(Vector2).GetField(
+            var vector2Zero = typeof(Vector2).GetProperty(
                 nameof(Vector2.Zero),
-                BindingFlags.Public | BindingFlags.Static)!;
+                BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)!.GetMethod!;
 
             var dm = new DynamicMethod(
                 "InputBlockTrigger_BlockerMethod",
@@ -53,37 +54,50 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
             var il = dm.GetILGenerator();
 
-            foreach (var field in buttonFields)
+            foreach (var field in fields[buttonType])
             {
                 il.Emit(OpCodes.Ldsfld, field);
                 il.Emit(OpCodes.Dup);
                 var skip = il.DefineLabel();
                 il.Emit(OpCodes.Brfalse_S, skip);
-                il.Emit(OpCodes.Callvirt, consumePress);
+
+                il.Emit(OpCodes.Dup);
+                il.Emit(OpCodes.Callvirt, consumePressMethod);
+
                 il.MarkLabel(skip);
                 il.Emit(OpCodes.Pop);
             }
 
-            foreach (var field in joystickFields)
+            foreach (var field in fields[joystickType])
             {
                 il.Emit(OpCodes.Ldsfld, field);
                 il.Emit(OpCodes.Dup);
                 var skip = il.DefineLabel();
-                il.Emit(OpCodes.Brfalse_S, skip);
-                il.Emit(OpCodes.Ldsfld, vector2Zero);
-                il.Emit(OpCodes.Callvirt, joystickSetter);
+                il.Emit(OpCodes.Brfalse_S, skip); // removes one instance of the field
+
+                il.Emit(OpCodes.Dup); // dup again to have the field on the stack twice
+                il.Emit(OpCodes.Call, vector2Zero); // get Vector2.Zero
+                il.Emit(OpCodes.Callvirt, joystickPropSetter); // set the field, pops one field reference of the two and the Vector2.Zero
+
+                il.Emit(OpCodes.Dup); // dup again to have the field on the stack twice
+                il.Emit(OpCodes.Call, vector2Zero); // get Vector2.Zero again
+                il.Emit(OpCodes.Stfld, joystickField); // set the value field, pops the other field reference and the Vector2.Zero
+
                 il.MarkLabel(skip);
                 il.Emit(OpCodes.Pop);
             }
 
-            foreach (var field in axisFields)
+            foreach (var field in fields[axisType])
             {
                 il.Emit(OpCodes.Ldsfld, field);
                 il.Emit(OpCodes.Dup);
                 var skip = il.DefineLabel();
                 il.Emit(OpCodes.Brfalse_S, skip);
+
+                il.Emit(OpCodes.Dup);
                 il.Emit(OpCodes.Ldc_I4_0);
-                il.Emit(OpCodes.Callvirt, axisSetter);
+                il.Emit(OpCodes.Stfld, axisField);
+
                 il.MarkLabel(skip);
                 il.Emit(OpCodes.Pop);
             }
