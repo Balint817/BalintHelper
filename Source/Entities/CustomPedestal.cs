@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using static Celeste.GaussianBlur;
+using Celeste.Mod.BalintHelper.Utils;
 
 namespace Celeste.Mod.BalintHelper.Entities
 {
@@ -32,9 +33,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly float returnDelay;
         private readonly bool instantReturnInBounds;
         private readonly float maxDistance;
-        private readonly string entityTypesRaw;
-        private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
-        private readonly HashSet<int> managedEntityIds = new HashSet<int>();
+        private readonly EntityTypeFilter managedEntities;
         private readonly Dictionary<Type, FieldInfo?> speedFieldInfos = new Dictionary<Type, FieldInfo?>();
         private readonly bool breakable;
         private readonly float brokenDisableDuration;
@@ -134,7 +133,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             returnDelay = Math.Max(0f, data.Float("returnDelay", 2.0f));
             instantReturnInBounds = data.Bool("instantReturnInBounds", true);
             maxDistance = data.Float("maxDistance", 0f);
-            entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
+            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal"));
             breakable = data.Bool("breakable", false);
             brokenDisableDuration = data.Float("brokenDisableDuration", 5.0f);
             showReturnLine = data.Bool("showReturnLine", true);
@@ -144,8 +143,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             dashRefillCount = data.Int("dashRefillCount", 0);
             refillStamina = data.Bool("refillStamina", false);
             dashHitboxExtension = Math.Min(Math.Max(0f, data.Float("dashHitboxExtension", 0.5f)), 1f);
-
-            ParseManagedEntityFilters();
 
             returnParticleColorA = ReadColor(data, "returnParticleColorA", DefaultReturnParticleColorA);
             returnParticleColorB = ReadColor(data, "returnParticleColorB", DefaultReturnParticleColorB);
@@ -185,7 +182,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             attachCheckCollider = new Hitbox(
                 32f,
-                32+2,
+                32 + 2,
                 -16f,
                 -32
             );
@@ -378,7 +375,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             var candidates = new List<Entity>();
-            
+
             // Gather any holdable that AT LEAST ONE pedestal wants
             foreach (var e in Scene.Entities)
             {
@@ -890,41 +887,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static int GetStableId(Entity entity)
             => entity.SourceData?.ID ?? RuntimeHelpers.GetHashCode(entity);
 
-        private void ParseManagedEntityFilters()
-        {
-            managedTypeNames.Clear();
-            managedEntityIds.Clear();
-
-            var tokens = entityTypesRaw
-                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var raw in tokens)
-            {
-                var token = raw.Trim();
-                if (token.Length == 0)
-                    continue;
-
-                if (int.TryParse(token, out int entityId))
-                    managedEntityIds.Add(entityId);
-                else
-                    managedTypeNames.Add(token);
-            }
-        }
         public bool WantsEntity(Entity e)
         {
-            var type = e.GetType();
-            bool byTypeOrSid = managedTypeNames.Contains(e.SourceData?.Name ?? "")
-                || managedTypeNames.Contains(type.Name)
-                || BalintHelperModule.Instance.GetKnownSidsFromType(type).Any(sid => managedTypeNames.Contains(sid));
-            bool byId = false;
-
-            if (!byTypeOrSid && managedEntityIds.Count > 0)
-            {
-                if (e.SourceData?.ID is int eid)
-                    byId = managedEntityIds.Contains(eid);
-            }
-
-            return byTypeOrSid || byId;
+            return managedEntities.Matches(e);
         }
 
         public void EnsureSpeedFieldCached(Type type)

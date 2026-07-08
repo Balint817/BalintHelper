@@ -28,9 +28,7 @@
 		<Reference Include="$(CelestePrefix)\FNA.dll" Private="false" />
 	</ItemGroup>
 
-	<Target Name="CopyFiles" AfterTargets="Build"
-			Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb"
-			Outputs="bin\$(AssemblyName).dll;bin\$(AssemblyName).pdb">
+	<Target Name="CopyFiles" AfterTargets="Build" Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb" Outputs="bin\$(AssemblyName).dll;bin\$(AssemblyName).pdb">
 		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll" DestinationFolder="bin" />
 		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).pdb" DestinationFolder="bin" />
 	</Target>

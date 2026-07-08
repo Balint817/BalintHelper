@@ -4,6 +4,7 @@ using System.Reflection;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using Celeste.Mod.BalintHelper.Utils;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
@@ -33,29 +34,25 @@ namespace Celeste.Mod.BalintHelper.Triggers
             )!;
 
         private readonly float timerValue;
-        private readonly string entityTypesRaw;
 
         private readonly TriggerModes playerTriggerMode;
         private readonly TriggerModes entityTriggerMode;
         private readonly TargetingModes targetingMode;
         private readonly bool isGlobal;
 
-        private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
-        private readonly HashSet<int> managedEntityIds = new HashSet<int>();
+        private readonly EntityTypeFilter managedEntities;
 
         private HashSet<Entity> insideLastFrame = new HashSet<Entity>();
         public HoldableTimerSetTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
         {
             timerValue = data.Float("value", 0f);
-            entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
+            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal"));
 
             playerTriggerMode = data.Enum("playerTriggerMode", TriggerModes.Never);
             entityTriggerMode = data.Enum("entityTriggerMode", TriggerModes.Never);
             targetingMode = data.Enum("targetingMode", TargetingModes.Inside);
             isGlobal = data.Bool("global", false);
-
-            ParseManagedEntityFilters();
         }
 
         public override void OnEnter(Player player)
@@ -171,34 +168,9 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 }
             }
         }
-        private void ParseManagedEntityFilters()
-        {
-            managedTypeNames.Clear();
-            managedEntityIds.Clear();
-
-            var tokens = entityTypesRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (var raw in tokens)
-            {
-                var token = raw.Trim();
-                if (token.Length == 0) continue;
-
-                if (int.TryParse(token, out int entityId))
-                    managedEntityIds.Add(entityId);
-                else
-                    managedTypeNames.Add(token);
-            }
-        }
         private bool IsManagedEntity(Entity entity)
         {
-            var type = entity.GetType();
-            bool byType = managedTypeNames.Contains(entity.SourceData?.Name ?? "") || managedTypeNames.Contains(type.Name);
-            if (byType) return true;
-
-            if (managedEntityIds.Count > 0 && entity.SourceData?.ID is int entityId)
-                return managedEntityIds.Contains(entityId);
-
-            return false;
+            return managedEntities.Matches(entity);
         }
 
         private IEnumerable<Entity> GetManagedHoldables()

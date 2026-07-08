@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using Celeste.Mod.BalintHelper.Utils;
 
 namespace Celeste.Mod.BalintHelper.Entities
 {
@@ -47,7 +48,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly Sprite sprite;
         private readonly Shaker shaker;
         private readonly TheoModes theoMode;
-        private readonly string entityTypesRaw;
         private readonly GateDirection direction;
         private readonly PlayerMode playerMode;
 
@@ -55,8 +55,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly Vector2 closedCenter;
 
-        private readonly HashSet<string> managedTypeNames = new HashSet<string>(StringComparer.Ordinal);
-        private readonly HashSet<int> managedEntityIds = new HashSet<int>();
+        private readonly EntityTypeFilter managedEntities;
         private readonly HashSet<string> foundTypeNames = new HashSet<string>(StringComparer.Ordinal);
         private readonly HashSet<int> foundEntityIds = new HashSet<int>();
 
@@ -81,11 +80,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             direction = data.Enum("direction", GateDirection.Down);
             closedLength = Math.Max(data.Height, GateThickness);
             theoMode = data.Enum("theoMode", TheoModes.Any);
-            entityTypesRaw = data.Attr("entityTypes", "TheoCrystal");
+            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal"));
             playerMode = data.Enum("playerMode", PlayerMode.Ignored);
             closedCenter = CalcClosedCenter(basePosition, closedLength, direction);
-
-            ParseManagedEntityFilters();
 
             Add(sprite = GFX.SpriteBank.Create("templegate_theo"));
             sprite.Play("idle");
@@ -301,19 +298,16 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
                 else // Each
                 {
-                    if (isNearby)
+                    if (isNearby && managedEntities.Matches(entity, out string? matchedTypeOrSid, out int? matchedEntityId))
                     {
-                        if (entity.SourceData?.ID is int entityId && managedEntityIds.Contains(entityId))
-                            foundEntityIds.Add(entityId);
+                        if (matchedTypeOrSid != null)
+                            foundTypeNames.Add(matchedTypeOrSid);
 
-                        string sourceName = entity.SourceData?.Name ?? "";
-                        if (managedTypeNames.Contains(sourceName))
-                            foundTypeNames.Add(sourceName);
-                        else if (managedTypeNames.Contains(entity.GetType().Name))
-                            foundTypeNames.Add(entity.GetType().Name);
+                        if (matchedEntityId.HasValue)
+                            foundEntityIds.Add(matchedEntityId.Value);
 
-                        if (foundTypeNames.Count == managedTypeNames.Count &&
-                            foundEntityIds.Count == managedEntityIds.Count)
+                        if (foundTypeNames.Count == managedEntities.TypeNames.Count &&
+                            foundEntityIds.Count == managedEntities.EntityIds.Count)
                             return true;
                     }
                 }
@@ -324,8 +318,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (theoMode == TheoModes.All) return true;
             if (theoMode == TheoModes.Each)
             {
-                return foundTypeNames.Count == managedTypeNames.Count &&
-                       foundEntityIds.Count == managedEntityIds.Count;
+                return foundTypeNames.Count == managedEntities.TypeNames.Count &&
+                       foundEntityIds.Count == managedEntities.EntityIds.Count;
             }
             return false;
         }
@@ -432,34 +426,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        private void ParseManagedEntityFilters()
-        {
-            managedTypeNames.Clear();
-            managedEntityIds.Clear();
-
-            foreach (string raw in entityTypesRaw.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
-            {
-                string token = raw.Trim();
-                if (token.Length == 0) continue;
-
-                if (int.TryParse(token, out int entityId))
-                    managedEntityIds.Add(entityId);
-                else
-                    managedTypeNames.Add(token);
-            }
-        }
-
         private bool IsManagedEntity(Entity entity)
         {
-            Type type = entity.GetType();
-            bool byType = managedTypeNames.Contains(entity.SourceData?.Name ?? "")
-                       || managedTypeNames.Contains(type.Name);
-            if (byType) return true;
-
-            if (managedEntityIds.Count > 0 && entity.SourceData?.ID is int entityId)
-                return managedEntityIds.Contains(entityId);
-
-            return false;
+            return managedEntities.Matches(entity);
         }
 
         private IEnumerable<Entity> GetManagedHoldables()
