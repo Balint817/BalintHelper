@@ -37,7 +37,7 @@ namespace Celeste.Mod.BalintHelper
         {
             On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
         }
-        private void OnFloatingDebrisExplode(On.Celeste.FloatingDebris.orig_OnExplode orig, FloatingDebris self, Vector2 from)
+        private static void OnFloatingDebrisExplode(On.Celeste.FloatingDebris.orig_OnExplode orig, FloatingDebris self, Vector2 from)
         {
             if (self is SilentFloatingDebris silentDebris)
             {
