@@ -1,11 +1,6 @@
 ﻿using Monocle;
 using MonoMod.Utils;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Celeste.Mod.BalintHelper
 {
@@ -19,7 +14,7 @@ namespace Celeste.Mod.BalintHelper
         {
             return data.TryGetSafeExtended(fieldName, out value) ?? false;
         }
-        public static bool? TryGetSafeExtended<T>(this DynamicData data, string fieldName, [MaybeNullWhen(false)]out T? value)
+        public static bool? TryGetSafeExtended<T>(this DynamicData data, string fieldName, [MaybeNullWhen(false)] out T? value)
         {
             value = default(T);
             if (data.TryGet(fieldName, out object? boxedValue))

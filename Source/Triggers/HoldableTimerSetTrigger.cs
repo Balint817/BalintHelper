@@ -1,10 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Reflection;
+﻿using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using Celeste.Mod.BalintHelper.Utils;
+using System.Collections.Generic;
+using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
@@ -113,12 +112,16 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 if (!insideLastFrame.Contains(entity))
                 {
                     if (entityTriggerMode == TriggerModes.OnEntry || entityTriggerMode == TriggerModes.EntryOrLeave)
+                    {
                         shouldFire = true;
+                    }
                 }
                 else
                 {
                     if (entityTriggerMode == TriggerModes.Stay)
+                    {
                         shouldFire = true;
+                    }
                 }
             }
 
@@ -127,7 +130,9 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 if (!insideThisFrame.Contains(entity))
                 {
                     if (entityTriggerMode == TriggerModes.OnLeave || entityTriggerMode == TriggerModes.EntryOrLeave)
+                    {
                         shouldFire = true;
+                    }
                 }
             }
 
@@ -175,15 +180,22 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         private IEnumerable<Entity> GetManagedHoldables()
         {
-            if (Scene == null) yield break;
+            if (Scene == null)
+            {
+                yield break;
+            }
 
             foreach (Entity entity in Scene.Entities)
             {
                 if (entity.Get<Holdable>() == null)
+                {
                     continue;
+                }
 
                 if (IsManagedEntity(entity))
+                {
                     yield return entity;
+                }
             }
         }
     }

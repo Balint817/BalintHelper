@@ -1,7 +1,5 @@
-using Celeste;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
-using Monocle;
 using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Triggers
@@ -43,34 +41,44 @@ namespace Celeste.Mod.BalintHelper.Triggers
         {
             base.OnEnter(player);
             if (resetOnEnter)
+            {
                 TrySet(player);
+            }
         }
 
         public override void OnStay(Player player)
         {
             base.OnStay(player);
             if (resetOnStay)
+            {
                 TrySet(player);
+            }
         }
 
         public override void OnLeave(Player player)
         {
             base.OnLeave(player);
             if (resetOnLeave)
+            {
                 TrySet(player);
+            }
         }
 
 
         private void TrySet(Player player)
         {
             if (!canActivate)
+            {
                 return;
+            }
 
             float current = GetDashCooldown(player);
 
             // don't reapply same value
             if (current == value)
+            {
                 return;
+            }
 
             SetDashCooldown(player, value);
             uses++;
@@ -78,7 +86,11 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         private static float GetDashCooldown(Player player)
         {
-            if (DashCooldownTimerField == null) return 0f;
+            if (DashCooldownTimerField == null)
+            {
+                return 0f;
+            }
+
             return (float)DashCooldownTimerField.GetValue(player)!;
         }
 

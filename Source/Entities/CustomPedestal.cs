@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.Entities;
+﻿using Celeste.Mod.BalintHelper.Utils;
+using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
@@ -6,8 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
-using static Celeste.GaussianBlur;
-using Celeste.Mod.BalintHelper.Utils;
 
 namespace Celeste.Mod.BalintHelper.Entities
 {
@@ -221,7 +220,9 @@ namespace Celeste.Mod.BalintHelper.Entities
                         Visible = true;
                         isEnabled = true;
                         if (explosionTrackerDebris != null)
+                        {
                             explosionTrackerDebris.Collidable = !isBroken;
+                        }
                     },
                     OnDisable = () =>
                     {
@@ -230,7 +231,9 @@ namespace Celeste.Mod.BalintHelper.Entities
                         Visible = false;
                         isEnabled = false;
                         if (explosionTrackerDebris != null)
+                        {
                             explosionTrackerDebris.Collidable = false;
+                        }
                     },
                     OnDestroy = () =>
                     {
@@ -262,10 +265,14 @@ namespace Celeste.Mod.BalintHelper.Entities
             base.Awake(scene);
 
             if (breakable && startBroken)
+            {
                 ApplyBrokenState();
+            }
 
             if (explosionTrackerDebris != null)
+            {
                 explosionTrackerDebris.Collidable = !isBroken;
+            }
 
             foreach (var entity in scene.Entities)
             {
@@ -301,17 +308,23 @@ namespace Celeste.Mod.BalintHelper.Entities
         private CustomPedestal? GetAuthorityPedestal()
         {
             if (Scene == null)
+            {
                 return null;
+            }
 
             CustomPedestal? fallback = null;
             foreach (var entity in Scene.Tracker.GetEntities<CustomPedestal>())
             {
                 if (entity is not CustomPedestal pedestal)
+                {
                     continue;
+                }
 
                 fallback ??= pedestal;
                 if (!pedestal.isBroken && pedestal.isEnabled)
+                {
                     return pedestal;
+                }
             }
 
             return fallback;
@@ -348,7 +361,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                 if (brokenDisableDuration > 0f)
                 {
                     brokenTimer -= Engine.DeltaTime;
-                    if (brokenTimer <= 0f) Repair();
+                    if (brokenTimer <= 0f)
+                    {
+                        Repair();
+                    }
                 }
                 return;
             }
@@ -380,7 +396,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             foreach (var e in Scene.Entities)
             {
                 if (e.Get<Holdable>() == null)
+                {
                     continue;
+                }
 
                 bool wanted = false;
                 foreach (var ped in allPedestals)
@@ -404,7 +422,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 var holdable = entity.Get<Holdable>();
                 if (holdable == null)
+                {
                     continue;
+                }
 
                 if (holdable.Holder != null)
                 {
@@ -494,7 +514,9 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
 
                 if (timedTarget.showReturnLine)
+                {
                     EmitReturnLine(entity.Center, timedTarget);
+                }
 
                 float remaining = kvp.Value - Engine.DeltaTime;
                 if (remaining <= 0f)
@@ -519,7 +541,10 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void SnapClaimed()
         {
-            if (ClaimedEntity == null || isBroken) return;
+            if (ClaimedEntity == null || isBroken)
+            {
+                return;
+            }
 
             if (ClaimedEntity.IsGone(Scene))
             {
@@ -545,13 +570,21 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void SetHoldableTimer(Holdable? holdable, float delay)
         {
-            if (holdable == null) return;
+            if (holdable == null)
+            {
+                return;
+            }
+
             HoldableCannotHoldTimer.SetValue(holdable, delay);
         }
 
         private void SetHoldableTimer(Holdable? holdable)
         {
-            if (holdable == null) return;
+            if (holdable == null)
+            {
+                return;
+            }
+
             SetHoldableTimer(holdable, (float)HoldableCannotHoldDelay.GetValue(holdable)!);
         }
 
@@ -567,11 +600,15 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void TryBreakFromDash()
         {
             if (!breakable || !canDash || isBroken || !isEnabled || Scene == null)
+            {
                 return;
+            }
 
             Player player = Scene.Tracker.GetEntity<Player>();
             if (player == null)
+            {
                 return;
+            }
 
             if (player.DashAttacking && player.DashDir != Vector2.Zero)
             {
@@ -608,7 +645,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             ResetReturnTimersForThisPedestal();
 
             if (ClaimedEntity == null)
+            {
                 return;
+            }
 
             var entity = ClaimedEntity;
             ClaimedEntity = null;
@@ -650,7 +689,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             ApplyBrokenState();
 
             if (explosionTrackerDebris != null)
+            {
                 explosionTrackerDebris.Collidable = false;
+            }
 
             if (ClaimedEntity != null)
             {
@@ -667,7 +708,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                     speed += direction * baseDirectionMultiplier;
                     speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
                     if (applyLiftSpeed)
+                    {
                         speed += AggregatedLiftSpeed;
+                    }
+
                     speedField.SetValue(ClaimedEntity, speed);
                 }
 
@@ -697,7 +741,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             isBroken = false;
 
             if (explosionTrackerDebris != null)
+            {
                 explosionTrackerDebris.Collidable = true;
+            }
 
             spriteNormalImg.Visible = true;
             spriteBrokenImg.Visible = false;
@@ -738,7 +784,9 @@ namespace Celeste.Mod.BalintHelper.Entities
                          .Cast<CustomPedestal>())
             {
                 if (ped.ClaimedEntity == entity)
+                {
                     return ped;
+                }
             }
 
             return null;
@@ -776,7 +824,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             foreach (var pedestal in GetCandidatePedestals(entity))
             {
                 if (excluded.Contains(pedestal))
+                {
                     continue;
+                }
 
                 if (!pedestalOwners.TryGetValue(pedestal, out var currentOwner))
                 {
@@ -792,7 +842,9 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
 
                 if (!HasHigherPriority(entity, currentOwner, pedestal))
+                {
                     continue;
+                }
 
                 pedestalOwners[pedestal] = entity;
                 assignments[entity] = pedestal;
@@ -813,7 +865,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         private IEnumerable<CustomPedestal> GetCandidatePedestals(Entity entity)
         {
             if (Scene == null)
+            {
                 return Enumerable.Empty<CustomPedestal>();
+            }
 
             return Scene.Tracker
                 .GetEntities<CustomPedestal>()
@@ -827,18 +881,26 @@ namespace Celeste.Mod.BalintHelper.Entities
         private bool CanTargetPedestal(Entity entity, CustomPedestal pedestal)
         {
             if (pedestal.isBroken || !pedestal.isEnabled)
+            {
                 return false;
+            }
 
             // Ensure this specific pedestal actually wants this specific entity type
             if (!pedestal.WantsEntity(entity))
+            {
                 return false;
+            }
 
             if (pedestal.ClaimedEntity != null && pedestal.ClaimedEntity != entity)
+            {
                 return false;
+            }
 
             if (pedestal.maxDistance > 0f
                 && Vector2.Distance(entity.Center, SnapPosition(pedestal)) > pedestal.maxDistance)
+            {
                 return false;
+            }
 
             return true;
         }
@@ -848,12 +910,16 @@ namespace Celeste.Mod.BalintHelper.Entities
             float contenderDistance = Vector2.DistanceSquared(contender.Center, SnapPosition(pedestal));
             float incumbentDistance = Vector2.DistanceSquared(incumbent.Center, SnapPosition(pedestal));
             if (Math.Abs(contenderDistance - incumbentDistance) > 1f)
+            {
                 return contenderDistance < incumbentDistance;
+            }
 
             float contenderTimer = GetPriorityTimer(contender, pedestal);
             float incumbentTimer = GetPriorityTimer(incumbent, pedestal);
             if (Math.Abs(contenderTimer - incumbentTimer) > 0.01f)
+            {
                 return contenderTimer < incumbentTimer;
+            }
 
             return GetStableId(contender) < GetStableId(incumbent);
         }
@@ -979,7 +1045,10 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void EmitReturnLine(Vector2 from, CustomPedestal target)
         {
             var particles = (Scene as Level)?.Particles;
-            if (particles == null) return;
+            if (particles == null)
+            {
+                return;
+            }
 
             var to = SnapPosition(target);
             var length = (to - from).Abs().Length();
@@ -1042,11 +1111,15 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void RenderNormalGlow()
         {
             if (!spriteNormalImg.Visible)
+            {
                 return;
+            }
 
             // if not breakable with dash, or if breaking does nothing, don't glow
             if (!breakable || !canDash || (!refillStamina && dashRefillCount <= 0))
+            {
                 return;
+            }
 
             MTexture texture = GFX.Game[spriteNormalPath];
             Vector2 renderPos = Position - spriteNormalImg.Origin;
@@ -1064,7 +1137,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             var particles = (Scene as Level)?.Particles;
             if (particles == null || atlases.Count == 0)
+            {
                 return;
+            }
 
             var sprite = spriteBrokenImg.Visible ? spriteBrokenImg : spriteNormalImg;
 

@@ -1,6 +1,6 @@
-﻿using System;
+﻿using Monocle;
+using System;
 using System.Collections.Generic;
-using Monocle;
 
 namespace Celeste.Mod.BalintHelper.Utils
 {
@@ -17,18 +17,26 @@ namespace Celeste.Mod.BalintHelper.Utils
         public EntityTypeFilter(string raw)
         {
             if (string.IsNullOrWhiteSpace(raw))
+            {
                 return;
+            }
 
             foreach (string piece in raw.Split(separator, StringSplitOptions.RemoveEmptyEntries))
             {
                 string token = piece.Trim();
                 if (token.Length == 0)
+                {
                     continue;
+                }
 
                 if (int.TryParse(token, out int entityId))
+                {
                     entityIds.Add(entityId);
+                }
                 else
+                {
                     typeNames.Add(token);
+                }
             }
         }
 
@@ -43,7 +51,9 @@ namespace Celeste.Mod.BalintHelper.Utils
             matchedEntityId = null;
 
             if (entity == null)
+            {
                 return false;
+            }
 
             Type type = entity.GetType();
             string sourceName = entity.SourceData?.Name ?? string.Empty;

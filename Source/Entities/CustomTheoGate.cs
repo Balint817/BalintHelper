@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using Celeste.Mod.BalintHelper.Utils;
+using System;
+using System.Collections.Generic;
 
 namespace Celeste.Mod.BalintHelper.Entities
 {
@@ -251,7 +251,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         public bool TheoIsNearby()
         {
             if (Scene == null)
+            {
                 return true;
+            }
 
             float maxDistanceSq = open ? HoldingCloseDistSq : HoldingOpenDistSq;
 
@@ -261,13 +263,17 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 // Gate cannot open unless a player is within range.
                 if (playerEntity == null || !IsEntityWithinGateRange(playerEntity, maxDistanceSq))
+                {
                     return false;
+                }
             }
             else if (playerMode == PlayerMode.Repels)
             {
                 // Gate closes (returns false) if a player is within range.
                 if (playerEntity != null && IsEntityWithinGateRange(playerEntity, maxDistanceSq))
+                {
                     return false;
+                }
             }
 
             bool foundRelevantHoldable = false;
@@ -286,36 +292,63 @@ namespace Celeste.Mod.BalintHelper.Entities
                 if (theoMode == TheoModes.None)
                 {
                     // Any entity nearby means we should NOT open.
-                    if (isNearby) return false;
+                    if (isNearby)
+                    {
+                        return false;
+                    }
                 }
                 else if (theoMode == TheoModes.Any)
                 {
-                    if (isNearby) return true;
+                    if (isNearby)
+                    {
+                        return true;
+                    }
                 }
                 else if (theoMode == TheoModes.All)
                 {
-                    if (!isNearby) return false;
+                    if (!isNearby)
+                    {
+                        return false;
+                    }
                 }
                 else // Each
                 {
                     if (isNearby && managedEntities.Matches(entity, out string? matchedTypeOrSid, out int? matchedEntityId))
                     {
                         if (matchedTypeOrSid != null)
+                        {
                             foundTypeNames.Add(matchedTypeOrSid);
+                        }
 
                         if (matchedEntityId.HasValue)
+                        {
                             foundEntityIds.Add(matchedEntityId.Value);
+                        }
 
                         if (foundTypeNames.Count == managedEntities.TypeNames.Count &&
                             foundEntityIds.Count == managedEntities.EntityIds.Count)
+                        {
                             return true;
+                        }
                     }
                 }
             }
 
-            if (!foundRelevantHoldable) return true;
-            if (theoMode == TheoModes.None) return true;  // No managed entity was nearby -> open
-            if (theoMode == TheoModes.All) return true;
+            if (!foundRelevantHoldable)
+            {
+                return true;
+            }
+
+            if (theoMode == TheoModes.None)
+            {
+                return true;  // No managed entity was nearby -> open
+            }
+
+            if (theoMode == TheoModes.All)
+            {
+                return true;
+            }
+
             if (theoMode == TheoModes.Each)
             {
                 return foundTypeNames.Count == managedEntities.TypeNames.Count &&
@@ -327,8 +360,14 @@ namespace Celeste.Mod.BalintHelper.Entities
         private void SetGateSize(int size)
         {
             size = Math.Max(0, size);
-            if (IsHorizontal) SetWidth(size);
-            else SetHeight(size);
+            if (IsHorizontal)
+            {
+                SetWidth(size);
+            }
+            else
+            {
+                SetHeight(size);
+            }
         }
 
         private void SetHeight(int height)
@@ -379,7 +418,9 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             var player = Scene?.Tracker.GetEntity<Player>();
             if (player == null || !CollideCheck(player))
+            {
                 return;
+            }
 
             Vector2 killDir = direction switch
             {
@@ -433,11 +474,17 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private IEnumerable<Entity> GetManagedHoldables()
         {
-            if (Scene == null) yield break;
+            if (Scene == null)
+            {
+                yield break;
+            }
+
             foreach (Entity entity in Scene.Entities)
             {
                 if (entity.Get<Holdable>() != null && IsManagedEntity(entity))
+                {
                     yield return entity;
+                }
             }
         }
 

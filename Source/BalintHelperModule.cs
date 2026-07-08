@@ -1,4 +1,3 @@
-using Celeste.Mod;
 using Celeste.Mod.BalintHelper.Entities;
 using Microsoft.Xna.Framework;
 using System;
