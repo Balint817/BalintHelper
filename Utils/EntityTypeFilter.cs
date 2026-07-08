@@ -55,34 +55,45 @@ namespace Celeste.Mod.BalintHelper.Utils
                 return false;
             }
 
-            Type type = entity.GetType();
-            string sourceName = entity.SourceData?.Name ?? string.Empty;
-
-            if (typeNames.Contains(sourceName))
+            if (entity.SourceData?.ID is int entityId && entityIds.Contains(entityId))
             {
-                matchedTypeOrSid = sourceName;
+                matchedEntityId = entityId;
                 return true;
             }
 
+            var type = entity.GetType();
             if (typeNames.Contains(type.Name))
             {
                 matchedTypeOrSid = type.Name;
                 return true;
             }
 
-            foreach (string sid in BalintHelperModule.Instance.GetKnownSidsFromType(type))
+            var sourceName = entity.SourceData?.Name;
+            if (!string.IsNullOrEmpty(sourceName))
             {
-                if (typeNames.Contains(sid))
+                if (typeNames.Contains(sourceName))
                 {
-                    matchedTypeOrSid = sid;
+                    matchedTypeOrSid = sourceName;
                     return true;
+                }
+
+                foreach (var typeFromSid in BalintHelperModule.Instance.GetKnownTypesFromSid(sourceName))
+                {
+                    if (typeNames.Contains(typeFromSid.Name))
+                    {
+                        matchedTypeOrSid = typeFromSid.Name;
+                        return true;
+                    }
                 }
             }
 
-            if (entity.SourceData?.ID is int entityId && entityIds.Contains(entityId))
+            foreach (string sidFromType in BalintHelperModule.Instance.GetKnownSidsFromType(type))
             {
-                matchedEntityId = entityId;
-                return true;
+                if (typeNames.Contains(sidFromType))
+                {
+                    matchedTypeOrSid = sidFromType;
+                    return true;
+                }
             }
 
             return false;
