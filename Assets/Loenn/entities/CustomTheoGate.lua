@@ -19,7 +19,7 @@ customTheoGate.placements = {
             entityTypes = "TheoCrystal",
             playerMode = "Ignored",
             closeOnNone = false,
-            killDream = true,
+            killDream = true
         }
     },
     {
@@ -31,7 +31,7 @@ customTheoGate.placements = {
             entityTypes = "TheoCrystal",
             playerMode = "Ignored",
             closeOnNone = false,
-            killDream = true,
+            killDream = true
         }
     },
     {
@@ -43,7 +43,7 @@ customTheoGate.placements = {
             entityTypes = "TheoCrystal",
             playerMode = "Ignored",
             closeOnNone = false,
-            killDream = true,
+            killDream = true
         }
     },
     {
@@ -55,7 +55,7 @@ customTheoGate.placements = {
             entityTypes = "TheoCrystal",
             playerMode = "Ignored",
             closeOnNone = false,
-            killDream = true,
+            killDream = true
         }
     }
 }
@@ -95,9 +95,9 @@ customTheoGate.fieldOrder = {
     "direction",
     "theoMode",
     "entityTypes",
-    "playerMode",
     "closeOnNone",
     "killDream",
+    "playerMode"
 }
 
 -- Prevent standard width handles from cluttering the UI
