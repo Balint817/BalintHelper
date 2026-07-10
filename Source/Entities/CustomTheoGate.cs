@@ -31,15 +31,15 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             // Gate behaviour is independent of player proximity.
             Ignored,
-            // Gate can only open if a player is within range (original needsPlayer = true).
+            // Gate can only open if a player is within range
             Required,
             // Gate closes (and stays closed) if a player is within range.
             Repels
         }
 
         private const float HoldingWaitTime = 0.2f;
-        private const float HoldingOpenDistSq = 4096f;
-        private const float HoldingCloseDistSq = 4096f;
+        private const float HoldingOpenDistSq = 80*80f;
+        private const float HoldingCloseDistSq = 80*80f;
         private const int MinDrawLength = 4;
         private const int GateThickness = 16;
         private const int OpenThickness = 2;
