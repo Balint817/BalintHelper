@@ -413,16 +413,19 @@ namespace Celeste.Mod.BalintHelper.Entities
                     Close();
                     KillPlayerOnClose();
                 }
-                else if (!open && nearby)
+                else if (!open)
                 {
-                    Open();
-                }
-            }
-            else
-            {
-                if (killDream && Scene is { } scene && scene.Tracker.GetEntity<Player>() is { } player && killStates.Contains(player.StateMachine.State) && CollideCheck(player))
-                {
-                    Kill(player);
+                    if (nearby)
+                    {
+                        Open();
+                    }
+                    else
+                    {
+                        if (killDream && Scene is { } scene && scene.Tracker.GetEntity<Player>() is { } player && killStates.Contains(player.StateMachine.State) && CollideCheck(player))
+                        {
+                            Kill(player);
+                        }
+                    }
                 }
             }
 
