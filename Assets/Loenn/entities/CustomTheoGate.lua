@@ -50,7 +50,8 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "None",
             entityTypes = "TheoCrystal",
-            playerMode = "Ignored"
+            playerMode = "Ignored",
+            closeOnNone = false
         }
     }
 }
