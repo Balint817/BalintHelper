@@ -348,7 +348,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (!foundRelevantHoldable)
             {
-                return closeOnNone;
+                return !closeOnNone;
             }
 
             if (theoMode == TheoModes.None)
