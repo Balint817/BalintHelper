@@ -56,14 +56,17 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly Vector2 closedCenter;
 
         private readonly EntityTypeFilter managedEntities;
-        private readonly HashSet<string> foundTypeNames = new HashSet<string>(StringComparer.Ordinal);
-        private readonly HashSet<int> foundEntityIds = new HashSet<int>();
+        private readonly HashSet<string> foundTypeNames = new(StringComparer.Ordinal);
+        private readonly HashSet<int> foundEntityIds = new();
 
         private float drawLength;
         private float drawLengthMoveSpeed;
         private bool open;
         private float holdingWaitTimer = HoldingWaitTime;
         private bool lockState;
+
+
+        private readonly bool closeOnNone;
 
         public CustomTheoGate(EntityData data, Vector2 offset)
             : base(
@@ -82,6 +85,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             theoMode = data.Enum("theoMode", TheoModes.Any);
             managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal"));
             playerMode = data.Enum("playerMode", PlayerMode.Ignored);
+            closeOnNone = data.Bool("closeOnNone", false);
             closedCenter = CalcClosedCenter(basePosition, closedLength, direction);
 
             Add(sprite = GFX.SpriteBank.Create("templegate_theo"));
@@ -336,7 +340,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (!foundRelevantHoldable)
             {
-                return true;
+                return closeOnNone;
             }
 
             if (theoMode == TheoModes.None)
