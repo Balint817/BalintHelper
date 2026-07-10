@@ -67,6 +67,13 @@ namespace Celeste.Mod.BalintHelper.Entities
 
 
         private readonly bool closeOnNone;
+        private readonly bool killDream;
+
+        private static readonly HashSet<int> killStates = new()
+        {
+            Player.StDreamDash,
+            Player.StSummitLaunch
+        };
 
         public CustomTheoGate(EntityData data, Vector2 offset)
             : base(
@@ -86,6 +93,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal"));
             playerMode = data.Enum("playerMode", PlayerMode.Ignored);
             closeOnNone = data.Bool("closeOnNone", false);
+            killDream = data.Bool("killDream", true);
             closedCenter = CalcClosedCenter(basePosition, closedLength, direction);
 
             Add(sprite = GFX.SpriteBank.Create("templegate_theo"));
@@ -360,64 +368,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             return false;
         }
-
-        private void SetGateSize(int size)
-        {
-            size = Math.Max(0, size);
-            if (IsHorizontal)
-            {
-                SetWidth(size);
-            }
-            else
-            {
-                SetHeight(size);
-            }
-        }
-
-        private void SetHeight(int height)
-        {
-            if (height < Collider.Height)
-            {
-                Collider.Height = height;
-                return;
-            }
-
-            float y = Y;
-            int currentHeight = (int)Collider.Height;
-
-            if (Collider.Height < 64f)
-            {
-                Y -= 64f - Collider.Height;
-                Collider.Height = 64f;
-            }
-
-            MoveVExact(height - currentHeight);
-            Y = y;
-            Collider.Height = height;
-        }
-
-        private void SetWidth(int width)
-        {
-            if (width < Collider.Width)
-            {
-                Collider.Width = width;
-                return;
-            }
-
-            float x = X;
-            int currentWidth = (int)Collider.Width;
-
-            if (Collider.Width < 64f)
-            {
-                X -= 64f - Collider.Width;
-                Collider.Width = 64f;
-            }
-
-            MoveHExact(width - currentWidth);
-            X = x;
-            Collider.Width = width;
-        }
-
         private void KillPlayerOnClose()
         {
             var player = Scene?.Tracker.GetEntity<Player>();
@@ -426,6 +376,16 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return;
             }
 
+            Kill(player);
+        }
+
+        private void Kill(Player? player = null)
+        {
+            player ??= Scene?.Tracker.GetEntity<Player>();
+            if (player == null)
+            {
+                return;
+            }
             Vector2 killDir = direction switch
             {
                 GateDirection.Up => -Vector2.UnitY,
@@ -456,6 +416,13 @@ namespace Celeste.Mod.BalintHelper.Entities
                 else if (!open && nearby)
                 {
                     Open();
+                }
+            }
+            else
+            {
+                if (killDream && Scene is { } scene && scene.Tracker.GetEntity<Player>() is { } player && killStates.Contains(player.StateMachine.State) && CollideCheck(player))
+                {
+                    Kill(player);
                 }
             }
 
