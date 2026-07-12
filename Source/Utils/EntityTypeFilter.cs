@@ -1,6 +1,8 @@
-﻿using Monocle;
+﻿using Celeste.Mod.Registry;
+using Monocle;
 using System;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Celeste.Mod.BalintHelper.Utils
 {
@@ -13,7 +15,7 @@ namespace Celeste.Mod.BalintHelper.Utils
         public IReadOnlyCollection<int> EntityIds => entityIds;
 
         private static readonly char[] separator = new[] { ',' };
-
+        public bool Any => typeNames.Count != 0 || entityIds.Count != 0;
         public EntityTypeFilter(string raw)
         {
             if (string.IsNullOrWhiteSpace(raw))
@@ -38,6 +40,24 @@ namespace Celeste.Mod.BalintHelper.Utils
                     typeNames.Add(token);
                 }
             }
+        }
+
+        public override string ToString()
+        {
+            var sb = new StringBuilder();
+            if (typeNames.Count != 0)
+            {
+                sb.Append(string.Join(",", typeNames));
+            }
+            if (entityIds.Count != 0)
+            {
+                if (sb.Length != 0)
+                {
+                    sb.Append(',');
+                }
+                sb.Append(string.Join(",", entityIds));
+            }
+            return sb.ToString();
         }
 
         public bool Matches(Entity entity)
@@ -77,7 +97,7 @@ namespace Celeste.Mod.BalintHelper.Utils
                     return true;
                 }
 
-                foreach (var typeFromSid in BalintHelperModule.Instance.GetKnownTypesFromSid(sourceName))
+                foreach (var typeFromSid in EntityRegistry.GetKnownTypesFromSid(sourceName))
                 {
                     if (typeNames.Contains(typeFromSid.Name))
                     {
@@ -87,7 +107,7 @@ namespace Celeste.Mod.BalintHelper.Utils
                 }
             }
 
-            foreach (string sidFromType in BalintHelperModule.Instance.GetKnownSidsFromType(type))
+            foreach (string sidFromType in EntityRegistry.GetKnownSidsFromType(type))
             {
                 if (typeNames.Contains(sidFromType))
                 {

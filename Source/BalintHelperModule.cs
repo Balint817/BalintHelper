@@ -1,7 +1,9 @@
 using Celeste.Mod.BalintHelper.Entities;
+using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 
@@ -10,8 +12,6 @@ namespace Celeste.Mod.BalintHelper
     public class BalintHelperModule : EverestModule
     {
         public static BalintHelperModule Instance { get; private set; } = null!;
-        private Func<string, IReadOnlySet<Type>> knownTypesFromSid = null!;
-        private Func<Type, IReadOnlySet<string>> knownSidsFromType = null!;
         public BalintHelperModule()
         {
             Instance = this;
@@ -21,18 +21,12 @@ namespace Celeste.Mod.BalintHelper
         {
             On.Celeste.FloatingDebris.OnExplode += OnFloatingDebrisExplode;
 
-            var entityRegistryType = AppDomain.CurrentDomain.GetAssemblies().Select(x => x.GetTypes().FirstOrDefault(x => x.FullName == "Celeste.Mod.Registry.EntityRegistry")).Where(x => x != null).First()!;
+            EntityRegistry_SidToTypes = new((Dictionary<string, HashSet<Type>>)typeof(EntityRegistry).GetField("SidToTypes", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!);
 
-            var methodInfo = entityRegistryType.GetMethod("GetKnownTypesFromSid", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
-
-            knownTypesFromSid = methodInfo.CreateDelegate<Func<string, IReadOnlySet<Type>>>();
-
-            methodInfo = entityRegistryType.GetMethod("GetKnownSidsFromType", BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)!;
-
-            knownSidsFromType = methodInfo.CreateDelegate<Func<Type, IReadOnlySet<string>>>();
+            EntityRegistry_TypeToSids = new((Dictionary<Type, HashSet<string>>)typeof(EntityRegistry).GetField("TypeToSids", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!);
         }
-        public IReadOnlySet<Type> GetKnownTypesFromSid(string sid) => knownTypesFromSid(sid);
-        public IReadOnlySet<string> GetKnownSidsFromType(Type type) => knownSidsFromType(type);
+        public ReadOnlyDictionary<string, HashSet<Type>> EntityRegistry_SidToTypes { get; private set; } = null!;
+        public ReadOnlyDictionary<Type, HashSet<string>> EntityRegistry_TypeToSids { get; private set; } = null!;
         public override void Unload()
         {
             On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
