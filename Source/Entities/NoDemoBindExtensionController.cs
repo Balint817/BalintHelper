@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 namespace Celeste.Mod.BalintHelper.Source.Entities
 {
 
-    [CustomEntity("BalintHelper/SilentFloatingDebris")]
+    [CustomEntity("BalintHelper/NoDemoBindExtensionController")]
     public class NoDemoBindExtensionController: Entity
     {
         public NoDemoBindExtensionController(EntityData data, Vector2 offset)
