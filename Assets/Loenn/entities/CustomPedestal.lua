@@ -29,6 +29,7 @@ customPedestal.placements = {
             refillStamina          = false,
             attachToSolid          = false,
             applyLiftSpeed         = false,
+            cancelDash             = false,
             dashRefillCount        = 0,
             dashHitboxExtension    = 0.5,
             returnParticleColorA   = "7fffff",
@@ -76,6 +77,7 @@ customPedestal.fieldInformation = {
     applyLiftSpeed        = { fieldType = "boolean", description = "Whether to apply lift speed to holdables when the pedestal is attached to a solid." },
     dashRefillCount       = { fieldType = "number", minimumValue = 0, description = "Number of dashes to refill when breaking the pedestal, 0 to disable" },
     dashHitboxExtension   = { fieldType = "number", minimumValue = 0.0, description = "Multiplier (>=0) to extend the dash detection hitbox downwards. Defaults to 0.5 (+50%)." },
+    cancelDash            = { fieldType = "boolean", description = "Whether to cancel the dash when breaking the pedestal with a dash." },
 }
 
 customPedestal.fieldOrder = {
@@ -84,7 +86,7 @@ customPedestal.fieldOrder = {
     "maxDistance", "entityTypes",
     "breakable", "startBroken", "instantReturnInBounds", "showReturnLine",
     "canDash", "canExplode", "canGrab", "refillStamina",
-    "attachToSolid", "applyLiftSpeed",
+    "attachToSolid", "applyLiftSpeed", "cancelDash",
     "dashRefillCount", "dashHitboxExtension",
     "spriteNormal", "spriteBroken",
     "soundTeleport", "soundBreak", "soundRepair",

@@ -115,6 +115,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly float dashHitboxExtension;
         private readonly Hitbox dashCollider;
         private readonly Hitbox attachCheckCollider;
+        private readonly bool cancelDash;
 
         private readonly bool canGrab;
         private static readonly FieldInfo HoldableCannotHoldTimer =
@@ -142,6 +143,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             dashRefillCount = data.Int("dashRefillCount", 0);
             refillStamina = data.Bool("refillStamina", false);
             dashHitboxExtension = Math.Min(Math.Max(0f, data.Float("dashHitboxExtension", 0.5f)), 1f);
+            cancelDash = data.Bool("cancelDash", false);
 
             returnParticleColorA = ReadColor(data, "returnParticleColorA", DefaultReturnParticleColorA);
             returnParticleColorB = ReadColor(data, "returnParticleColorB", DefaultReturnParticleColorB);
@@ -626,6 +628,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                         player.RefillStamina();
                     }
                     player.Dashes = Math.Max(dashRefillCount, player.Dashes);
+                    if (cancelDash)
+                    {
+                        player.CancelDash();
+                    }
                 }
             }
         }

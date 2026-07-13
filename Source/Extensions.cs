@@ -30,5 +30,14 @@ namespace Celeste.Mod.BalintHelper
             }
             return false;
         }
+
+        public static void CancelDash(this Player player)
+        {
+            if (player is null)
+            {
+                return;
+            }
+            player.StateMachine.State = Player.StNormal;
+        }
     }
 }
