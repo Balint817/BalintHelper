@@ -1,7 +1,10 @@
 using Celeste.Mod.BalintHelper.Entities;
+using Celeste.Mod.BalintHelper.Triggers;
 using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
+using Mono.Cecil.Cil;
 using Monocle;
+using MonoMod.Cil;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -27,11 +30,17 @@ namespace Celeste.Mod.BalintHelper
             EntityRegistry_TypeToSids = new((Dictionary<Type, HashSet<string>>)typeof(EntityRegistry).GetField("TypeToSids", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!);
 
             On.Celeste.OuiOptions.Update += OuiOptions_Update;
+
+            IL.Celeste.Player.OnCollideV += PatchOnCollideV;
+            IL.Celeste.Player.OnCollideH += PatchOnCollideH;
         }
         public override void Unload()
         {
             On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
             On.Celeste.OuiOptions.Update -= OuiOptions_Update;
+
+            IL.Celeste.Player.OnCollideV -= PatchOnCollideV;
+            IL.Celeste.Player.OnCollideH -= PatchOnCollideH;
         }
         private void OuiOptions_Update(On.Celeste.OuiOptions.orig_Update orig, OuiOptions self)
         {
@@ -41,6 +50,64 @@ namespace Celeste.Mod.BalintHelper
             //var keyboardKeys = Settings.Instance.Dash.Keyboard.Intersect(Settings.Instance.Down.Keyboard.Concat(Settings.Instance.DownMoveOnly.Keyboard)).ToHashSet();
             //var controllerKeys = Settings.Instance.Dash.Controller.Intersect(Settings.Instance.Down.Controller.Concat(Settings.Instance.DownMoveOnly.Controller)).ToHashSet();
             //var mouseKeys = Settings.Instance.Dash.Mouse.Intersect(Settings.Instance.Down.Mouse.Concat(Settings.Instance.DownMoveOnly.Mouse)).ToHashSet();
+        }
+
+        private void PatchOnCollideV(ILContext il) => PatchCanCurveDashAssignment(il);
+        private void PatchOnCollideH(ILContext il) => PatchCanCurveDashAssignment(il);
+        private void PatchCanCurveDashAssignment(ILContext il)
+        {
+            // Starting point:
+            // ```
+            // this.canCurveDash = false;
+            // ```
+            var cursor = new ILCursor(il);
+
+            if (!cursor.TryGotoNext(
+                MoveType.Before,
+                i => i.MatchLdarg(0),
+                i => i.MatchLdcI4(0),
+                i => i.MatchStfld<Player>("canCurveDash")
+            ))
+            {
+                throw new Exception("Couldn't find canCurveDash assignment in " + il.Method.FullName);
+            }
+
+            // We're now positioned before:
+            // ldarg.0
+            // ldc.i4.0
+            // stfld Player::canCurveDash
+
+            ILLabel skipAssign = cursor.DefineLabel();
+
+            // Mark the instruction immediately after the stfld as the branch target.
+            cursor.Index += 3;
+            cursor.MarkLabel(skipAssign);
+
+            // Go back before the assignment and inject:
+            // ldarg.0
+            // call AllowCurveCheck
+            // brtrue skipAssign
+            cursor.Index -= 3;
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate(AllowCurveCheck);
+            cursor.Emit(OpCodes.Brtrue, skipAssign);
+
+            // End result:
+            // ```
+            // if (!AllowCurveCheck(this)) {
+            //   this.canCurveDash = false;
+            // }
+            // ```
+        }
+        private static bool AllowCurveCheck(Player self)
+        {
+            var entities = self.Scene?.Tracker?.Entities;
+            if (entities is null)
+            {
+                return false;
+            }
+            return entities[typeof(AllowCurveOnCollideTrigger)].Cast<AllowCurveOnCollideTrigger>().Any(x => x.IsTriggered);
+            
         }
         public ReadOnlyDictionary<string, HashSet<Type>> EntityRegistry_SidToTypes { get; private set; } = null!;
         public ReadOnlyDictionary<Type, HashSet<string>> EntityRegistry_TypeToSids { get; private set; } = null!;
