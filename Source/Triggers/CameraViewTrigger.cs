@@ -29,6 +29,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private readonly bool onlyOnce;
         private readonly string flag;
         private readonly bool resetFlag;
+        private readonly bool needsBino;
 
         public CameraViewTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
@@ -36,6 +37,8 @@ namespace Celeste.Mod.BalintHelper.Triggers
             onlyOnce = data.Bool("onlyOnce", true);
             flag = data.Attr("flag");
             resetFlag = data.Bool("resetFlag", false);
+            needsBino = data.Bool("needsBino", true);
+
             if (string.IsNullOrWhiteSpace(flag))
             {
                 triggered = true;
@@ -47,17 +50,15 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         public override void Update()
         {
-            base.Update();
+            //no components to update
+            //base.Update();
 
             if (triggerOnPlayer && PlayerIsInside)
                 return;
 
             if (CameraCheck())
             {
-                if (!triggered)
-                {
-                    Fire();
-                }
+                TryFire();
             }
             else
             {
@@ -87,7 +88,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             base.OnEnter(player);
             if (triggerOnPlayer)
             {
-                Fire();
+                TryFire();
             }
         }
         private void ResetFlagIfNeeded()
@@ -107,19 +108,31 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 RemoveSelf();
             }
         }
+        public override void OnStay(Player player)
+        {
+            base.OnStay(player);
+            if (triggerOnPlayer)
+            {
+                TryFire();
+            }
+        }
         public override void OnLeave(Player player)
         {
             base.OnLeave(player);
             if (triggerOnPlayer)
             {
-                triggered = CameraCheck();
+                triggered = CameraCheck() && (!needsBino || SceneAs<Level>()?.IsInLookout() == true);
                 ResetFlagIfNeeded();
             }
         }
 
-        private void Fire()
+        private void TryFire()
         {
             if (triggered || (onlyOnce && triggeredOnce))
+            {
+                return;
+            }
+            if (needsBino && SceneAs<Level>()?.IsInLookout() != true)
             {
                 return;
             }

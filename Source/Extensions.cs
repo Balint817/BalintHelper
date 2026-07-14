@@ -6,6 +6,10 @@ namespace Celeste.Mod.BalintHelper
 {
     internal static class Extensions
     {
+        public static bool IsInLookout(this Scene scene)
+        {
+            return scene?.Tracker.GetEntity<Lookout.Hud>() != null;
+        }
         public static bool IsGone(this Entity? entity, Scene scene)
         {
             return entity == null || entity.Scene != scene;

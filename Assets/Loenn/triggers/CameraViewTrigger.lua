@@ -12,7 +12,8 @@ trigger.placements = {
             flag = "",
             triggerOnPlayer = false,
             onlyOnce = true,
-            resetFlag = false
+            resetFlag = false,
+            needsBino = true
         }
     }
 }
@@ -33,6 +34,10 @@ trigger.fieldInformation = {
     resetFlag = {
         fieldType = "boolean",
         description = "If true, the flag is cleared when the trigger is no longer active. If onlyOnce is true, this also delays the removal of the trigger until the flag is cleared."
+    },
+    needsBino = {
+        fieldType = "boolean",
+        description = "If true, the trigger requires binoculars to be active. Does not affect 'triggerOnPlayer' setting."
     }
 }
 
@@ -41,7 +46,8 @@ trigger.fieldOrder = {
     "flag",
     "triggerOnPlayer",
     "onlyOnce",
-    "resetFlag"
+    "resetFlag",
+    "needsBino"
 }
 
 return trigger
