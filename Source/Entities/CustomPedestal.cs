@@ -133,7 +133,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             returnDelay = Math.Max(0f, data.Float("returnDelay", 2.0f));
             instantReturnInBounds = data.Bool("instantReturnInBounds", true);
             maxDistance = data.Float("maxDistance", 0f);
-            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal"));
+            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal"));
             breakable = data.Bool("breakable", false);
             brokenDisableDuration = data.Float("brokenDisableDuration", 5.0f);
             showReturnLine = data.Bool("showReturnLine", true);

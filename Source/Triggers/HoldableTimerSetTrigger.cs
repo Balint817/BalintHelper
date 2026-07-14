@@ -46,7 +46,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             : base(data, offset)
         {
             timerValue = data.Float("value", 0f);
-            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal"));
+            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal"));
 
             playerTriggerMode = data.Enum("playerTriggerMode", TriggerModes.Never);
             entityTriggerMode = data.Enum("entityTriggerMode", TriggerModes.Never);

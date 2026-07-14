@@ -11,7 +11,7 @@ trigger.placements = {
 
             value = 0.0,
 
-            entityTypes = "TheoCrystal",
+            entityTypes = "TheoCrystal,ExtendedVariantMode/TheoCrystal",
             targetingMode = "Inside",
 
             playerTriggerMode = "Never",
