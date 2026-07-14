@@ -83,8 +83,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         public override void Update()
         {
-            base.Update();
-
             if (isGlobal)
             {
                 FireTrigger();
