@@ -8,7 +8,7 @@ namespace Celeste.Mod.BalintHelper
     {
         public static bool IsInLookout(this Scene scene)
         {
-            return scene?.Tracker.GetEntity<Lookout.Hud>() != null;
+            return scene?.Entities.FindFirst<Lookout.Hud>() != null;
         }
         public static bool IsGone(this Entity? entity, Scene scene)
         {
