@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -62,13 +63,62 @@ namespace Celeste.Mod.BalintHelper.Entities
         private ParticleType PtBreak => _ptBreak ??= CreateBreakParticleType();
         private ParticleType PtRepair => _ptRepair ??= CreateRepairParticleType();
 
-        private sealed class SharedReturnState
+        // Inject a Component on the held entity itself so that it is captured by save-state
+        // tools the same way Position/Speed/etc. are, and survives entity clones
+        // produced by save/load without desyncing from stale references.
+        private sealed class ReturnTimerComponent : Component
         {
-            public readonly Dictionary<Entity, float> ReturnTimers = new Dictionary<Entity, float>();
-            public readonly Dictionary<Entity, CustomPedestal> ReturnTargets = new Dictionary<Entity, CustomPedestal>();
+            public CustomPedestal Target;
+            public float Remaining;
+
+            public ReturnTimerComponent(CustomPedestal target, float remaining)
+                : base(active: false, visible: false)
+            {
+                Target = target;
+                Remaining = remaining;
+            }
         }
 
-        private static readonly ConditionalWeakTable<Scene, SharedReturnState> sharedReturnStates = new ConditionalWeakTable<Scene, SharedReturnState>();
+        private static ReturnTimerComponent GetTimerComponent(Entity entity) => entity.Get<ReturnTimerComponent>();
+
+        private static bool HasReturnTimer(Entity entity) => GetTimerComponent(entity) != null;
+
+        private static void RemoveReturnTimer(Entity entity)
+        {
+            var c = GetTimerComponent(entity);
+            if (c != null)
+            {
+                entity.Remove(c);
+            }
+        }
+
+        private static void SetReturnTimer(Entity entity, CustomPedestal target, float remaining)
+        {
+            var c = GetTimerComponent(entity);
+            if (c != null)
+            {
+                c.Target = target;
+                c.Remaining = remaining;
+            }
+            else
+            {
+                entity.Add(new ReturnTimerComponent(target, remaining));
+            }
+        }
+
+        private static bool TryGetReturnTarget(Entity entity, [MaybeNullWhen(false)] out CustomPedestal target)
+        {
+            var c = GetTimerComponent(entity);
+            target = c?.Target;
+            return c != null;
+        }
+
+        private static bool TryGetReturnRemaining(Entity entity, out float remaining)
+        {
+            var c = GetTimerComponent(entity);
+            remaining = c?.Remaining ?? 0f;
+            return c != null;
+        }
 
         private Image spriteNormalImg;
         private Image spriteBrokenImg;
@@ -85,7 +135,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool attachToSolid;
         private readonly bool applyLiftSpeed;
         private StaticMover? _staticMover;
-        private const float LiftSpeedGraceDuration = 10f / 60f; // ~0.1667s ≈ 10 frames @ 60fps
+        private const float LiftSpeedGraceDuration = 10f / 60f; // ~0.1667s ~= 10 frames @ 60fps
 
         private List<KeyValuePair<float, Vector2>> _storedLiftSpeeds = new();
         private Vector2 AggregatedLiftSpeed
@@ -103,10 +153,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         }
 
         public Entity? ClaimedEntity { get; private set; } = null;
-
-        private readonly SharedReturnState detachedReturnState = new SharedReturnState();
-        private Dictionary<Entity, float> returnTimers => GetSharedReturnState().ReturnTimers;
-        private Dictionary<Entity, CustomPedestal> returnTargets => GetSharedReturnState().ReturnTargets;
 
         private readonly bool canDash;
         private readonly bool canExplode;
@@ -253,6 +299,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             Tag = Tags.TransitionUpdate;
         }
+
         public override void Added(Scene scene)
         {
             base.Added(scene);
@@ -299,11 +346,6 @@ namespace Celeste.Mod.BalintHelper.Entities
             hasPendingExplosionBreak = false;
             base.Removed(scene);
         }
-
-        private SharedReturnState GetSharedReturnState()
-            => Scene == null
-                ? detachedReturnState
-                : sharedReturnStates.GetValue(Scene, static _ => new SharedReturnState());
 
         private bool IsAuthority() => GetAuthorityPedestal() == this;
 
@@ -430,8 +472,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
                 if (holdable.Holder != null)
                 {
-                    returnTimers.Remove(entity);
-                    returnTargets.Remove(entity);
+                    RemoveReturnTimer(entity);
                     ReleaseClaim(entity);
                     continue;
                 }
@@ -449,8 +490,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     }
                     else
                     {
-                        returnTimers.Remove(entity);
-                        returnTargets.Remove(entity);
+                        RemoveReturnTimer(entity);
                         continue;
                     }
                 }
@@ -459,12 +499,11 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             var eligibleSet = new HashSet<Entity>(eligibleEntities);
-            foreach (var entity in returnTimers.Keys.ToList())
+            foreach (var entity in candidates)
             {
-                if (!eligibleSet.Contains(entity) || entity.IsGone(Scene))
+                if (HasReturnTimer(entity) && (!eligibleSet.Contains(entity) || entity.IsGone(Scene)))
                 {
-                    returnTimers.Remove(entity);
-                    returnTargets.Remove(entity);
+                    RemoveReturnTimer(entity);
                 }
             }
 
@@ -474,14 +513,13 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 if (!assignments.TryGetValue(entity, out var target))
                 {
-                    returnTimers.Remove(entity);
-                    returnTargets.Remove(entity);
+                    RemoveReturnTimer(entity);
                     continue;
                 }
 
                 bool instantInBounds;
                 float delay = GetTargetDelay(entity, target, out instantInBounds);
-                bool targetChanged = !returnTargets.TryGetValue(entity, out var previousTarget) || previousTarget != target;
+                bool targetChanged = !TryGetReturnTarget(entity, out var previousTarget) || previousTarget != target;
 
                 if (delay <= 0f)
                 {
@@ -489,17 +527,15 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
                 }
 
-                if (targetChanged || !returnTimers.ContainsKey(entity))
+                if (targetChanged || !HasReturnTimer(entity))
                 {
-                    returnTargets[entity] = target;
-                    returnTimers[entity] = delay;
+                    SetReturnTimer(entity, target, delay);
                 }
             }
 
             var expired = new List<Entity>();
-            foreach (var kvp in returnTimers.ToList())
+            foreach (var entity in candidates.Where(HasReturnTimer).ToList())
             {
-                var entity = kvp.Key;
                 if (!assignments.TryGetValue(entity, out var timedTarget))
                 {
                     expired.Add(entity);
@@ -520,7 +556,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                     EmitReturnLine(entity.Center, timedTarget);
                 }
 
-                float remaining = kvp.Value - Engine.DeltaTime;
+                TryGetReturnRemaining(entity, out var currentRemaining);
+                float remaining = currentRemaining - Engine.DeltaTime;
                 if (remaining <= 0f)
                 {
                     TeleportEntityTo(entity, timedTarget);
@@ -528,14 +565,13 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
                 else
                 {
-                    returnTimers[entity] = remaining;
+                    SetReturnTimer(entity, timedTarget, remaining);
                 }
             }
 
             foreach (var entity in expired)
             {
-                returnTimers.Remove(entity);
-                returnTargets.Remove(entity);
+                RemoveReturnTimer(entity);
             }
 
             SnapClaimed();
@@ -557,7 +593,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             var holdable = ClaimedEntity.Get<Holdable>();
             bool isHeld = holdable?.Holder != null;
 
-            if (!isHeld && !returnTimers.ContainsKey(ClaimedEntity))
+            if (!isHeld && !HasReturnTimer(ClaimedEntity))
             {
                 ClaimedEntity.Position = SnapPosition(this);
                 (ClaimedEntity as Actor)?.ZeroRemainderX();
@@ -635,17 +671,23 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
         }
+
         private void ResetReturnTimersForThisPedestal()
         {
-            foreach (var entity in returnTargets.Keys.ToList())
+            if (Scene == null)
             {
-                if (returnTargets[entity] == this)
+                return;
+            }
+
+            foreach (var entity in Scene.Entities.ToArray())
+            {
+                if (TryGetReturnTarget(entity, out var target) && target == this)
                 {
-                    returnTargets.Remove(entity);
-                    returnTimers.Remove(entity);
+                    RemoveReturnTimer(entity);
                 }
             }
         }
+
         private void EjectClaimedWithLiftSpeed()
         {
             ResetReturnTimersForThisPedestal();
@@ -760,8 +802,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private void TeleportEntityTo(Entity entity, CustomPedestal target, bool playEffects = true)
         {
-            returnTimers.Remove(entity);
-            returnTargets.Remove(entity);
+            RemoveReturnTimer(entity);
             ReleaseClaim(entity);
 
             target.ClaimedEntity = entity;
@@ -786,8 +827,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private CustomPedestal? FindClaimingPedestal(Entity entity)
         {
             foreach (var ped in Scene.Tracker
-                         .GetEntities<CustomPedestal>()
-                         .Cast<CustomPedestal>())
+                .GetEntities<CustomPedestal>()
+                .Cast<CustomPedestal>())
             {
                 if (ped.ClaimedEntity == entity)
                 {
@@ -932,9 +973,9 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private float GetPriorityTimer(Entity entity, CustomPedestal pedestal)
         {
-            if (returnTargets.TryGetValue(entity, out var currentTarget)
+            if (TryGetReturnTarget(entity, out var currentTarget)
                 && currentTarget == pedestal
-                && returnTimers.TryGetValue(entity, out var remaining))
+                && TryGetReturnRemaining(entity, out var remaining))
             {
                 return remaining;
             }
@@ -1114,6 +1155,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 GlowOffsets[i] = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * radius;
             }
         }
+
         private void RenderNormalGlow()
         {
             if (!spriteNormalImg.Visible)
