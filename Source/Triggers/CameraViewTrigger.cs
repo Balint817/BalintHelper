@@ -46,7 +46,9 @@ namespace Celeste.Mod.BalintHelper.Triggers
             }
 
             bool binoOk = !needsBino || level.IsInLookout();
-            bool playerSource = triggerOnPlayer && PlayerIsInside;
+            // don't use PlayerIsInside to avoid Update order issues (Player might call OnEntry AFTER we've already updated)
+            // which might cause us to fire a frame late (or not fire at all if the interaction lasted for one frame)
+            bool playerSource = triggerOnPlayer && CollideCheck<Player>();
             bool cameraSource = CameraCheck(level);
             bool activeNow = (playerSource || cameraSource) && binoOk;
 
