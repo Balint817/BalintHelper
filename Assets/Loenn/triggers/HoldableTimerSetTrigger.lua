@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/HoldableTimerSetTrigger"
 
 trigger.placements = {
     {
-        name = "Holdable Timer Set Trigger",
+        name = "Holdable Grab Timer Set Trigger",
         data = {
             width = 16,
             height = 16,
@@ -16,7 +16,9 @@ trigger.placements = {
 
             playerTriggerMode = "Never",
             entityTriggerMode = "Never",
-            global = false
+            global = false,
+            onlyOnce = true,
+            waitForSuccess = true,
         }
     }
 }

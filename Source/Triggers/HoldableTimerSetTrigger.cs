@@ -7,6 +7,7 @@ using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
+    //TODO: "waitForSuccess" option, which will only remove the trigger if there was at least one valid holdable.
     [CustomEntity("BalintHelper/HoldableTimerSetTrigger")]
     public class HoldableTimerSetTrigger : Trigger
     {
@@ -38,6 +39,8 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private readonly TriggerModes entityTriggerMode;
         private readonly TargetingModes targetingMode;
         private readonly bool isGlobal;
+        private readonly bool onlyOnce;
+        private readonly bool waitForSuccess;
 
         private readonly EntityTypeFilter managedEntities;
 
@@ -52,12 +55,14 @@ namespace Celeste.Mod.BalintHelper.Triggers
             entityTriggerMode = data.Enum("entityTriggerMode", TriggerModes.Never);
             targetingMode = data.Enum("targetingMode", TargetingModes.Inside);
             isGlobal = data.Bool("global", false);
+            onlyOnce = data.Bool("onlyOnce", true);
+            waitForSuccess = data.Bool("waitForSuccess", true);
         }
 
         public override void OnEnter(Player player)
         {
             base.OnEnter(player);
-            if (playerTriggerMode == TriggerModes.OnEntry || playerTriggerMode == TriggerModes.EntryOrLeave)
+            if (playerTriggerMode == TriggerModes.OnEntry || playerTriggerMode == TriggerModes.EntryOrLeave || playerTriggerMode == TriggerModes.Stay)
             {
                 FireTrigger();
             }
@@ -109,7 +114,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             {
                 if (!insideLastFrame.Contains(entity))
                 {
-                    if (entityTriggerMode == TriggerModes.OnEntry || entityTriggerMode == TriggerModes.EntryOrLeave)
+                    if (entityTriggerMode == TriggerModes.OnEntry || entityTriggerMode == TriggerModes.EntryOrLeave || entityTriggerMode == TriggerModes.Stay)
                     {
                         shouldFire = true;
                     }
@@ -144,6 +149,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         private void FireTrigger()
         {
+            bool any = false;
             foreach (var entity in GetManagedHoldables())
             {
                 bool apply = false;
@@ -167,8 +173,13 @@ namespace Celeste.Mod.BalintHelper.Triggers
                     if (holdable != null)
                     {
                         HoldableCannotHoldTimerField?.SetValue(holdable, timerValue);
+                        any = true;
                     }
                 }
+            }
+            if (onlyOnce && (!waitForSuccess || any))
+            {
+                RemoveSelf();
             }
         }
         private bool IsManagedEntity(Entity entity)
