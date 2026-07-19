@@ -7,7 +7,6 @@ using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
-    //TODO: "waitForSuccess" option, which will only remove the trigger if there was at least one valid holdable.
     [CustomEntity("BalintHelper/HoldableTimerSetTrigger")]
     public class HoldableTimerSetTrigger : Trigger
     {
@@ -26,12 +25,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
             Outside,
             Everywhere
         }
-
-        private static readonly FieldInfo HoldableCannotHoldTimerField =
-            typeof(Holdable).GetField(
-                "cannotHoldTimer",
-                BindingFlags.Instance | BindingFlags.NonPublic
-            )!;
 
         private readonly float timerValue;
 
@@ -172,7 +165,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
                     var holdable = entity.Get<Holdable>();
                     if (holdable != null)
                     {
-                        HoldableCannotHoldTimerField?.SetValue(holdable, timerValue);
+                        holdable.cannotHoldTimer = timerValue;
                         any = true;
                     }
                 }
