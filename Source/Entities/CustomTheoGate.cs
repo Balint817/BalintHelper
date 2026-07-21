@@ -68,6 +68,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly bool closeOnNone;
         private readonly bool killDream;
+        private readonly string spriteId;
 
         private static readonly HashSet<int> killStates = new()
         {
@@ -95,8 +96,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             closeOnNone = data.Bool("closeOnNone", false);
             killDream = data.Bool("killDream", true);
             closedCenter = CalcClosedCenter(basePosition, closedLength, direction);
+            spriteId = data.Attr("spriteId", "templegate_theo");
 
-            Add(sprite = GFX.SpriteBank.Create("templegate_theo"));
+            Add(sprite = GFX.SpriteBank.Create(spriteId));
             sprite.Play("idle");
             ConfigureSpriteForDirection();
 
