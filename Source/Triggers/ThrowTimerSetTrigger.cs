@@ -26,7 +26,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         private readonly EntityTypeFilter managedEntities;
 
-        //p.minHoldTimer
         public ThrowTimerSetTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
         {
