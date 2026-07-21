@@ -44,8 +44,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
                     AggregateMode.Sum => triggers.Sum(t => t.CurrentCount),
                     _ => triggers.Max(t => t.CurrentCount)
                 };
-                Holdable t = null;
-                t.SlowFall
             }
 
             level.Session.SetCounter(CounterId, value);
