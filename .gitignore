@@ -9,7 +9,7 @@
 *.user
 *.userosscache
 *.sln.docstates
-BalintHelper/
+/BalintHelper/
 
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
@@ -364,3 +364,4 @@ MigrationBackup/
 FodyWeavers.xsd
 /BalintHelper/Loenn/entities/CustomPedestal_lonn.lua
 /BalintHelper/Loenn/triggers/dashCooldownResetTrigger.lua
+/Assets/Graphics/Atlases/Gui/tech/BalintHelper/og
