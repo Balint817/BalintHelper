@@ -33,7 +33,10 @@ namespace Celeste.Mod.BalintHelper
 
             IL.Celeste.Player.OnCollideV += PatchOnCollideV;
             IL.Celeste.Player.OnCollideH += PatchOnCollideH;
+
+            Everest.Events.CustomBirdTutorial.OnParseCommand += CustomBirdTutorial_OnParseCommand;
         }
+
         public override void Unload()
         {
             On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
@@ -41,6 +44,7 @@ namespace Celeste.Mod.BalintHelper
 
             IL.Celeste.Player.OnCollideV -= PatchOnCollideV;
             IL.Celeste.Player.OnCollideH -= PatchOnCollideH;
+            Everest.Events.CustomBirdTutorial.OnParseCommand -= CustomBirdTutorial_OnParseCommand;
         }
         private void OuiOptions_Update(On.Celeste.OuiOptions.orig_Update orig, OuiOptions self)
         {
@@ -50,6 +54,14 @@ namespace Celeste.Mod.BalintHelper
             //var keyboardKeys = Settings.Instance.Dash.Keyboard.Intersect(Settings.Instance.Down.Keyboard.Concat(Settings.Instance.DownMoveOnly.Keyboard)).ToHashSet();
             //var controllerKeys = Settings.Instance.Dash.Controller.Intersect(Settings.Instance.Down.Controller.Concat(Settings.Instance.DownMoveOnly.Controller)).ToHashSet();
             //var mouseKeys = Settings.Instance.Dash.Mouse.Intersect(Settings.Instance.Down.Mouse.Concat(Settings.Instance.DownMoveOnly.Mouse)).ToHashSet();
+        }
+        private MTexture CustomBirdTutorial_OnParseCommand(string command)
+        {
+            if (command == "GroundedUltra")
+            {
+                return GFX.Gui["tech/BalintHelper/grounded_ultra"];
+            }
+            return null!;
         }
 
         private void PatchOnCollideV(ILContext il) => PatchCanCurveDashAssignment(il);
