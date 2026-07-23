@@ -81,7 +81,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 return true;
             }
             
-            Level level = SceneAs<Level>();
+            var level = SceneAs<Level>();
             if (level == null)
             {
                 return false;

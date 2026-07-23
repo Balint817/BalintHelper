@@ -20,7 +20,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private readonly int maxUses;
 
         private int uses = 0;
-        private bool canActivate => maxUses <= 0 || uses < maxUses;
+        private bool CanActivate => maxUses <= 0 || uses < maxUses;
 
         public DashCooldownSetTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
@@ -67,12 +67,12 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         private void TrySet(Player player)
         {
-            if (!canActivate)
+            if (!CanActivate)
             {
                 return;
             }
 
-            float current = GetDashCooldown(player);
+            var current = GetDashCooldown(player);
 
             // don't reapply same value
             if (current == value)

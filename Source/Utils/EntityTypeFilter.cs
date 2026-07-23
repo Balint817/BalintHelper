@@ -8,13 +8,13 @@ namespace Celeste.Mod.BalintHelper.Utils
 {
     public sealed class EntityTypeFilter
     {
-        private readonly HashSet<string> typeNames = new HashSet<string>(StringComparer.Ordinal);
-        private readonly HashSet<int> entityIds = new HashSet<int>();
+        private readonly HashSet<string> typeNames = new(StringComparer.Ordinal);
+        private readonly HashSet<int> entityIds = [];
 
         public IReadOnlyCollection<string> TypeNames => typeNames;
         public IReadOnlyCollection<int> EntityIds => entityIds;
 
-        private static readonly char[] separator = new[] { ',' };
+        private static readonly char[] separator = [','];
         public bool Any => typeNames.Count != 0 || entityIds.Count != 0;
         public EntityTypeFilter(string raw)
         {

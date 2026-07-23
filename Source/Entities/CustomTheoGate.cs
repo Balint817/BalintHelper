@@ -272,12 +272,12 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             Vector2 delta = entity.Center - GateCenter;
 
-            float longAxisLimit = (float)Math.Sqrt(maxDistanceSq);
-            float shortAxisLimit = Math.Max(closedLength * 1f, 8f);
+            var longAxisLimit = (float)Math.Sqrt(maxDistanceSq);
+            var shortAxisLimit = Math.Max(closedLength * 1f, 8f);
 
             // For a vertical gate the long axis is Y; for horizontal it is X.
-            float horizontalLimit = IsHorizontal ? shortAxisLimit : longAxisLimit;
-            float verticalLimit = IsHorizontal ? longAxisLimit : shortAxisLimit;
+            var horizontalLimit = IsHorizontal ? shortAxisLimit : longAxisLimit;
+            var verticalLimit = IsHorizontal ? longAxisLimit : shortAxisLimit;
 
             return Math.Abs(delta.X) <= horizontalLimit
                 && Math.Abs(delta.Y) <= verticalLimit;
@@ -290,9 +290,9 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return true;
             }
 
-            float maxDistanceSq = IsOpen ? HoldingCloseDistSq : HoldingOpenDistSq;
+            var maxDistanceSq = IsOpen ? HoldingCloseDistSq : HoldingOpenDistSq;
 
-            Player playerEntity = Scene.Tracker.GetEntity<Player>();
+            var playerEntity = Scene.Tracker.GetEntity<Player>();
 
             if (playerMode == PlayerMode.Required)
             {
@@ -311,7 +311,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
 
-            bool foundRelevantHoldable = false;
+            var foundRelevantHoldable = false;
 
             if (theoMode == TheoModes.Each)
             {
@@ -322,7 +322,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             foreach (Entity entity in GetManagedHoldables())
             {
                 foundRelevantHoldable = true;
-                bool isNearby = IsEntityWithinGateRange(entity, maxDistanceSq);
+                var isNearby = IsEntityWithinGateRange(entity, maxDistanceSq);
 
                 if (theoMode == TheoModes.None)
                 {
@@ -409,7 +409,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 return;
             }
-            Vector2 killDir = direction switch
+            var killDir = direction switch
             {
                 GateDirection.Up => -Vector2.UnitY,
                 GateDirection.Left => -Vector2.UnitX,
@@ -430,7 +430,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             else if (!lockState)
             {
-                bool nearby = TheoIsNearby();
+                var nearby = TheoIsNearby();
                 if (IsOpen && !nearby)
                 {
                     Close();
@@ -452,7 +452,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
 
-            float targetDrawLength = IsOpen ? MinDrawLength : closedLength;
+            var targetDrawLength = IsOpen ? MinDrawLength : closedLength;
             if (drawLength != targetDrawLength)
             {
                 lockState = true;
@@ -537,7 +537,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             else
             {
                 // Scale along texture-Y (= world length axis due to rotation).
-                float oldScaleY = sprite.Scale.Y;
+                var oldScaleY = sprite.Scale.Y;
                 var oldRenderPos = sprite.RenderPosition;
 
                 sprite.Scale.Y = drawLength / sprite.Height;

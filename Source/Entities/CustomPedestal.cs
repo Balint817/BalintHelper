@@ -25,8 +25,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private const string DefaultRepairParticleColorB = "ffffff";
         private const string DefaultGlowColor = "7fffff";
 
-        private static readonly string[] RepairParticleAtlases = { "particles/smoke0", "particles/smoke1", "particles/smoke2", "particles/smoke3" };
-        private static readonly string[] ExplodeParticleAtlases = { "particles/zappysmoke00", "particles/zappysmoke01", "particles/zappysmoke02", "particles/zappysmoke03" };
+        private static readonly string[] RepairParticleAtlases = ["particles/smoke0", "particles/smoke1", "particles/smoke2", "particles/smoke3"];
+        private static readonly string[] ExplodeParticleAtlases = ["particles/zappysmoke00", "particles/zappysmoke01", "particles/zappysmoke02", "particles/zappysmoke03"];
 
         private readonly string spriteNormalPath;
         private readonly string spriteBrokenPath;
@@ -34,7 +34,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool instantReturnInBounds;
         private readonly float maxDistance;
         private readonly EntityTypeFilter managedEntities;
-        private readonly Dictionary<Type, FieldInfo?> speedFieldInfos = new Dictionary<Type, FieldInfo?>();
+        private readonly Dictionary<Type, FieldInfo?> speedFieldInfos = [];
         private readonly bool breakable;
         private readonly float brokenDisableDuration;
         private readonly bool showReturnLine;
@@ -62,10 +62,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private ParticleType PtExplode => _ptExplode ??= CreateExplodeParticleType();
         private ParticleType PtBreak => _ptBreak ??= CreateBreakParticleType();
         private ParticleType PtRepair => _ptRepair ??= CreateRepairParticleType();
-
-        // Inject a Component on the held entity itself so that it is captured by save-state
-        // tools the same way Position/Speed/etc. are, and survives entity clones
-        // produced by save/load without desyncing from stale references.
         private sealed class ReturnTimerComponent : Component
         {
             public CustomPedestal Target;
@@ -120,8 +116,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             return c != null;
         }
 
-        private Image spriteNormalImg;
-        private Image spriteBrokenImg;
+        private readonly Image spriteNormalImg;
+        private readonly Image spriteBrokenImg;
 
         private SilentFloatingDebris? explosionTrackerDebris;
         private bool hasPendingExplosionBreak;
@@ -134,10 +130,10 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly bool attachToSolid;
         private readonly bool applyLiftSpeed;
-        private StaticMover? _staticMover;
+        private readonly StaticMover? _staticMover;
         private const float LiftSpeedGraceDuration = 10f / 60f; // ~0.1667s ~= 10 frames @ 60fps
 
-        private List<KeyValuePair<float, Vector2>> _storedLiftSpeeds = new();
+        private readonly List<KeyValuePair<float, Vector2>> _storedLiftSpeeds = [];
         private Vector2 AggregatedLiftSpeed
         {
             get
@@ -267,10 +263,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     {
                         Visible = true;
                         isEnabled = true;
-                        if (explosionTrackerDebris != null)
-                        {
-                            explosionTrackerDebris.Collidable = !isBroken;
-                        }
+                        explosionTrackerDebris?.Collidable = !isBroken;
                     },
                     OnDisable = () =>
                     {
@@ -278,10 +271,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                         hasPendingExplosionBreak = false;
                         Visible = false;
                         isEnabled = false;
-                        if (explosionTrackerDebris != null)
-                        {
-                            explosionTrackerDebris.Collidable = false;
-                        }
+                        explosionTrackerDebris?.Collidable = false;
                     },
                     OnDestroy = () =>
                     {
@@ -318,10 +308,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 ApplyBrokenState();
             }
 
-            if (explosionTrackerDebris != null)
-            {
-                explosionTrackerDebris.Collidable = !isBroken;
-            }
+            explosionTrackerDebris?.Collidable = !isBroken;
 
             foreach (var entity in scene.Entities)
             {
@@ -383,10 +370,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 _storedLiftSpeeds.RemoveAt(0);
             }
 
-            if (explosionTrackerDebris != null)
-            {
-                explosionTrackerDebris.Position = Position + Collider.Position;
-            }
+            explosionTrackerDebris?.Position = Position + Collider.Position;
 
             if (!isEnabled)
             {
@@ -444,7 +428,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
                 }
 
-                bool wanted = false;
+                var wanted = false;
                 foreach (var ped in allPedestals)
                 {
                     if (ped.WantsEntity(e))
@@ -517,9 +501,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
                 }
 
-                bool instantInBounds;
-                float delay = GetTargetDelay(entity, target, out instantInBounds);
-                bool targetChanged = !TryGetReturnTarget(entity, out var previousTarget) || previousTarget != target;
+                var delay = GetTargetDelay(entity, target, out var instantInBounds);
+                var targetChanged = !TryGetReturnTarget(entity, out var previousTarget) || previousTarget != target;
 
                 if (delay <= 0f)
                 {
@@ -542,8 +525,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     continue;
                 }
 
-                bool instantInBounds;
-                GetTargetDelay(entity, timedTarget, out instantInBounds);
+                GetTargetDelay(entity, timedTarget, out var instantInBounds);
                 if (instantInBounds)
                 {
                     TeleportEntityTo(entity, timedTarget, false);
@@ -591,7 +573,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             var holdable = ClaimedEntity.Get<Holdable>();
-            bool isHeld = holdable?.Holder != null;
+            var isHeld = holdable?.Holder != null;
 
             if (!isHeld && !HasReturnTimer(ClaimedEntity))
             {
@@ -606,7 +588,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        private void SetHoldableTimer(Holdable? holdable, float delay)
+        private static void SetHoldableTimer(Holdable? holdable, float delay)
         {
             if (holdable == null)
             {
@@ -616,7 +598,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             HoldableCannotHoldTimer.SetValue(holdable, delay);
         }
 
-        private void SetHoldableTimer(Holdable? holdable)
+        private static void SetHoldableTimer(Holdable? holdable)
         {
             if (holdable == null)
             {
@@ -642,7 +624,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return;
             }
 
-            Player player = Scene.Tracker.GetEntity<Player>();
+            var player = Scene.Tracker.GetEntity<Player>();
             if (player == null)
             {
                 return;
@@ -653,7 +635,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 // Temporarily swap to the extended dash collider for the check
                 var origCollider = Collider;
                 Collider = dashCollider;
-                bool hasCollided = CollideCheck(player);
+                var hasCollided = CollideCheck(player);
                 Collider = origCollider;
 
                 if (hasCollided)
@@ -707,9 +689,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (hasPendingExplosionBreak)
             {
                 const float multiplier = 2;
-                float baseDirectionMultiplier = 150f * multiplier;
-                float verticalSpeedOffset = 0.1f;
-                float verticalSpeedMultiplier = 150f * multiplier;
+                var baseDirectionMultiplier = 150f * multiplier;
+                var verticalSpeedOffset = 0.1f;
+                var verticalSpeedMultiplier = 150f * multiplier;
 
                 var direction = pendingExplosionFrom;
 
@@ -736,16 +718,13 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             ApplyBrokenState();
 
-            if (explosionTrackerDebris != null)
-            {
-                explosionTrackerDebris.Collidable = false;
-            }
+            explosionTrackerDebris?.Collidable = false;
 
             if (ClaimedEntity != null)
             {
-                float baseDirectionMultiplier = 150f * multiplier;
-                float verticalSpeedOffset = 0.1f;
-                float verticalSpeedMultiplier = 150f * multiplier;
+                var baseDirectionMultiplier = 150f * multiplier;
+                var verticalSpeedOffset = 0.1f;
+                var verticalSpeedMultiplier = 150f * multiplier;
 
                 EnsureSpeedFieldCached(ClaimedEntity.GetType());
                 if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField)
@@ -788,10 +767,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             isBroken = false;
 
-            if (explosionTrackerDebris != null)
-            {
-                explosionTrackerDebris.Collidable = true;
-            }
+            explosionTrackerDebris?.Collidable = true;
 
             spriteNormalImg.Visible = true;
             spriteBrokenImg.Visible = false;
@@ -856,7 +832,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             foreach (var entity in entities.OrderBy(GetStableId))
             {
-                TryAssignTarget(entity, assignments, pedestalOwners, new HashSet<CustomPedestal>());
+                TryAssignTarget(entity, assignments, pedestalOwners, []);
             }
 
             return assignments;
@@ -909,11 +885,11 @@ namespace Celeste.Mod.BalintHelper.Entities
             return false;
         }
 
-        private IEnumerable<CustomPedestal> GetCandidatePedestals(Entity entity)
+        private List<CustomPedestal> GetCandidatePedestals(Entity entity)
         {
             if (Scene == null)
             {
-                return Enumerable.Empty<CustomPedestal>();
+                return [];
             }
 
             return Scene.Tracker
@@ -925,7 +901,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 .ToList();
         }
 
-        private bool CanTargetPedestal(Entity entity, CustomPedestal pedestal)
+        private static bool CanTargetPedestal(Entity entity, CustomPedestal pedestal)
         {
             if (pedestal.isBroken || !pedestal.isEnabled)
             {
@@ -952,17 +928,17 @@ namespace Celeste.Mod.BalintHelper.Entities
             return true;
         }
 
-        private bool HasHigherPriority(Entity contender, Entity incumbent, CustomPedestal pedestal)
+        private static bool HasHigherPriority(Entity contender, Entity incumbent, CustomPedestal pedestal)
         {
-            float contenderDistance = Vector2.DistanceSquared(contender.Center, SnapPosition(pedestal));
-            float incumbentDistance = Vector2.DistanceSquared(incumbent.Center, SnapPosition(pedestal));
+            var contenderDistance = Vector2.DistanceSquared(contender.Center, SnapPosition(pedestal));
+            var incumbentDistance = Vector2.DistanceSquared(incumbent.Center, SnapPosition(pedestal));
             if (Math.Abs(contenderDistance - incumbentDistance) > 1f)
             {
                 return contenderDistance < incumbentDistance;
             }
 
-            float contenderTimer = GetPriorityTimer(contender, pedestal);
-            float incumbentTimer = GetPriorityTimer(incumbent, pedestal);
+            var contenderTimer = GetPriorityTimer(contender, pedestal);
+            var incumbentTimer = GetPriorityTimer(incumbent, pedestal);
             if (Math.Abs(contenderTimer - incumbentTimer) > 0.01f)
             {
                 return contenderTimer < incumbentTimer;
@@ -971,7 +947,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             return GetStableId(contender) < GetStableId(incumbent);
         }
 
-        private float GetPriorityTimer(Entity entity, CustomPedestal pedestal)
+        private static float GetPriorityTimer(Entity entity, CustomPedestal pedestal)
         {
             if (TryGetReturnTarget(entity, out var currentTarget)
                 && currentTarget == pedestal
@@ -983,9 +959,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             return GetTargetDelay(entity, pedestal, out _);
         }
 
-        private float GetTargetDelay(Entity entity, CustomPedestal pedestal, out bool instantInBounds)
+        private static float GetTargetDelay(Entity entity, CustomPedestal pedestal, out bool instantInBounds)
         {
-            float delay = pedestal.returnDelay;
+            var delay = pedestal.returnDelay;
             instantInBounds = false;
 
             if (delay > 0f && pedestal.instantReturnInBounds && pedestal.CollidePoint(entity.Center))
@@ -1021,7 +997,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static Vector2 SnapPosition(CustomPedestal pedestal)
             => pedestal.Position + new Vector2(0f, -32f);
 
-        private ParticleType CreateReturnParticleType() => new ParticleType
+        private ParticleType CreateReturnParticleType() => new()
         {
             Source = GFX.Game["particles/blob"],
             Color = returnParticleColorA,
@@ -1037,7 +1013,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             DirectionRange = (float)Math.PI * 2f
         };
 
-        private ParticleType CreateExplodeParticleType() => new ParticleType
+        private ParticleType CreateExplodeParticleType() => new()
         {
             Source = GFX.Game[ExplodeParticleAtlases[0]],
             Color = explodeParticleColorA,
@@ -1053,7 +1029,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             DirectionRange = (float)Math.PI * 2f
         };
 
-        private ParticleType CreateBreakParticleType() => new ParticleType
+        private ParticleType CreateBreakParticleType() => new()
         {
             Source = GFX.Game["particles/shard"],
             Color = breakParticleColorA,
@@ -1070,7 +1046,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             DirectionRange = (float)Math.PI * 2f
         };
 
-        private ParticleType CreateRepairParticleType() => new ParticleType
+        private ParticleType CreateRepairParticleType() => new()
         {
             Source = GFX.Game[RepairParticleAtlases[0]],
             Color = repairParticleColorA,
@@ -1125,7 +1101,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (breakable && canDash)
             {
-                Collider origCollider = Collider;
+                var origCollider = Collider;
                 Collider = dashCollider;
 
                 dashCollider.Render(camera, Color.Goldenrod);
@@ -1134,7 +1110,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             if (attachToSolid)
             {
-                Collider origCollider = Collider;
+                var origCollider = Collider;
                 Collider = attachCheckCollider;
 
                 attachCheckCollider.Render(camera, Color.Aqua);
@@ -1151,7 +1127,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             GlowOffsets = new Vector2[glowSteps];
             for (int i = 0; i < glowSteps; i++)
             {
-                float angle = (float)i / glowSteps * MathHelper.TwoPi;
+                var angle = (float)i / glowSteps * MathHelper.TwoPi;
                 GlowOffsets[i] = new Vector2((float)Math.Cos(angle), (float)Math.Sin(angle)) * radius;
             }
         }
@@ -1169,11 +1145,11 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return;
             }
 
-            MTexture texture = GFX.Game[spriteNormalPath];
-            Vector2 renderPos = Position - spriteNormalImg.Origin;
+            var texture = GFX.Game[spriteNormalPath];
+            var renderPos = Position - spriteNormalImg.Origin;
 
-            float strength = (spriteNormalImg.Color.A / 255f) * 0.14f;
-            Color glowColorDimmed = glowColor * strength;
+            var strength = (spriteNormalImg.Color.A / 255f) * 0.14f;
+            var glowColorDimmed = glowColor * strength;
 
             foreach (Vector2 offset in GlowOffsets)
             {
@@ -1181,10 +1157,10 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        private void EmitParticleFamilyBurst(ParticleType type, IReadOnlyList<string> atlases, int count)
+        private void EmitParticleFamilyBurst(ParticleType type, string[] atlases, int count)
         {
             var particles = (Scene as Level)?.Particles;
-            if (particles == null || atlases.Count == 0)
+            if (particles == null || atlases.Length == 0)
             {
                 return;
             }
@@ -1204,7 +1180,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             for (int i = 0; i < count; i++)
             {
-                type.Source = GFX.Game[atlases[Calc.Random.Next(atlases.Count)]];
+                type.Source = GFX.Game[atlases[Calc.Random.Next(atlases.Length)]];
                 var position = new Vector2(
                     Calc.Random.Range(source.Left, source.Right),
                     Calc.Random.Range(source.Top, source.Bottom));

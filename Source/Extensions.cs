@@ -20,7 +20,7 @@ namespace Celeste.Mod.BalintHelper
         }
         public static bool? TryGetSafeExtended<T>(this DynamicData data, string fieldName, [MaybeNullWhen(false)] out T? value)
         {
-            value = default(T);
+            value = default;
             if (data.TryGet(fieldName, out object? boxedValue))
             {
                 if (boxedValue is T tValue)

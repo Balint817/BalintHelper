@@ -16,7 +16,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             Collider = new Hitbox(width, height);
 
             // Remove the PlayerCollider component
-            PlayerCollider playerCollider = Get<PlayerCollider>();
+            var playerCollider = Get<PlayerCollider>();
             if (playerCollider != null)
             {
                 playerCollider.OnCollide = null;

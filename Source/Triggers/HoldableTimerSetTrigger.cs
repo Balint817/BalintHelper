@@ -37,7 +37,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         private readonly EntityTypeFilter managedEntities;
 
-        private HashSet<Entity> insideLastFrame = new HashSet<Entity>();
+        private HashSet<Entity> insideLastFrame = [];
         public HoldableTimerSetTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
         {
@@ -92,8 +92,8 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 return;
             }
 
-            bool shouldFire = false;
-            HashSet<Entity> insideThisFrame = new HashSet<Entity>();
+            var shouldFire = false;
+            var insideThisFrame = new HashSet<Entity>();
 
             foreach (var entity in GetManagedHoldables())
             {
@@ -142,10 +142,10 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         private void FireTrigger()
         {
-            bool any = false;
+            var any = false;
             foreach (var entity in GetManagedHoldables())
             {
-                bool apply = false;
+                var apply = false;
 
                 switch (targetingMode)
                 {
