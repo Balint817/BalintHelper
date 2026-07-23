@@ -57,11 +57,31 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly EntityTypeFilter managedEntities;
         private readonly HashSet<string> foundTypeNames = new(StringComparer.Ordinal);
-        private readonly HashSet<int> foundEntityIds = new();
+        private readonly HashSet<int> foundEntityIds = [];
 
         private float drawLength;
         private float drawLengthMoveSpeed;
-        private bool open;
+        private bool _open;
+        private bool IsOpen
+        {
+            get
+            {
+                return _open;
+            }
+            set
+            {
+                if (_open != value)
+                {
+                    _open = value;
+                    if (!string.IsNullOrEmpty(outputFlag)
+                        && Scene is Level level
+                        && level.Session is { } session)
+                    {
+                        session.SetFlag(outputFlag, _open);
+                    }
+                }
+            }
+        }
         private float holdingWaitTimer = HoldingWaitTime;
         private bool lockState;
 
@@ -69,12 +89,12 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool closeOnNone;
         private readonly bool killDream;
         private readonly string spriteId;
-
-        private static readonly HashSet<int> killStates = new()
-        {
+        private readonly string outputFlag;
+        private static readonly HashSet<int> killStates =
+        [
             Player.StDreamDash,
             Player.StSummitLaunch
-        };
+        ];
 
         public CustomTheoGate(EntityData data, Vector2 offset)
             : base(
@@ -97,6 +117,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             killDream = data.Bool("killDream", true);
             closedCenter = CalcClosedCenter(basePosition, closedLength, direction);
             spriteId = data.Attr("spriteId", "templegate_theo");
+            outputFlag = data.Attr("outputFlag", null);
 
             Add(sprite = GFX.SpriteBank.Create(spriteId));
             sprite.Play("idle");
@@ -165,7 +186,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 ApplyClosedCollider();
                 drawLength = closedLength;
-                open = false;
+                IsOpen = false;
             }
         }
 
@@ -178,7 +199,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             shaker.ShakeFor(0.2f, removeOnFinish: false);
             ApplyOpenCollider();
             sprite.Play("open");
-            open = true;
+            IsOpen = true;
         }
 
         public void StartOpen()
@@ -186,7 +207,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             ApplyOpenCollider();
             drawLength = MinDrawLength;
             sprite.Play("open");
-            open = true;
+            IsOpen = true;
         }
 
         public void Close()
@@ -198,7 +219,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             shaker.ShakeFor(0.2f, removeOnFinish: false);
             ApplyClosedCollider();
             sprite.Play("hit");
-            open = false;
+            IsOpen = false;
         }
 
         private void ApplyClosedCollider()
@@ -269,7 +290,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return true;
             }
 
-            float maxDistanceSq = open ? HoldingCloseDistSq : HoldingOpenDistSq;
+            float maxDistanceSq = IsOpen ? HoldingCloseDistSq : HoldingOpenDistSq;
 
             Player playerEntity = Scene.Tracker.GetEntity<Player>();
 
@@ -410,12 +431,12 @@ namespace Celeste.Mod.BalintHelper.Entities
             else if (!lockState)
             {
                 bool nearby = TheoIsNearby();
-                if (open && !nearby)
+                if (IsOpen && !nearby)
                 {
                     Close();
                     KillPlayerOnClose();
                 }
-                else if (!open)
+                else if (!IsOpen)
                 {
                     if (nearby)
                     {
@@ -431,7 +452,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
 
-            float targetDrawLength = open ? MinDrawLength : closedLength;
+            float targetDrawLength = IsOpen ? MinDrawLength : closedLength;
             if (drawLength != targetDrawLength)
             {
                 lockState = true;
@@ -495,10 +516,10 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             RenderCapRect();
 
-            Vector2 savedEntityPos = Position;
+            var savedEntityPos = Position;
             Position = basePosition;
 
-            Vector2 shakeOffset = new Vector2(Math.Sign(shaker.Value.X), 0f);
+            var shakeOffset = new Vector2(Math.Sign(shaker.Value.X), 0f);
 
             if (drawLength <= sprite.Height)
             {
@@ -517,7 +538,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 // Scale along texture-Y (= world length axis due to rotation).
                 float oldScaleY = sprite.Scale.Y;
-                Vector2 oldRenderPos = sprite.RenderPosition;
+                var oldRenderPos = sprite.RenderPosition;
 
                 sprite.Scale.Y = drawLength / sprite.Height;
                 sprite.RenderPosition += shakeOffset;

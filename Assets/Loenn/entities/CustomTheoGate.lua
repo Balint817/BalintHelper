@@ -21,6 +21,7 @@ customTheoGate.placements = {
             closeOnNone = false,
             killDream = true,
             spriteId = "templegate_theo",
+            outputFlag = ""
         }
     },
     {
@@ -34,6 +35,7 @@ customTheoGate.placements = {
             closeOnNone = false,
             killDream = true,
             spriteId = "templegate_theo",
+            outputFlag = ""
         }
     },
     {
@@ -47,6 +49,7 @@ customTheoGate.placements = {
             closeOnNone = false,
             killDream = true,
             spriteId = "templegate_theo",
+            outputFlag = ""
         }
     },
     {
@@ -60,6 +63,7 @@ customTheoGate.placements = {
             closeOnNone = false,
             killDream = true,
             spriteId = "templegate_theo",
+            outputFlag = ""
         }
     }
 }
@@ -93,6 +97,9 @@ customTheoGate.fieldInformation = {
     spriteId = {
         fieldType = "string"
     }
+    outputFlag = {
+        fieldType = "string"
+    }
 }
 
 customTheoGate.fieldOrder = {
@@ -105,7 +112,8 @@ customTheoGate.fieldOrder = {
     "closeOnNone",
     "killDream",
     "playerMode",
-    "spriteId"
+    "spriteId",
+    "outputFlag"
 }
 
 -- Prevent standard width handles from cluttering the UI
