@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Celeste.Mod.BalintHelper
 {
@@ -46,7 +47,7 @@ namespace Celeste.Mod.BalintHelper
             IL.Celeste.Player.OnCollideH -= PatchOnCollideH;
             Everest.Events.CustomBirdTutorial.OnParseCommand -= CustomBirdTutorial_OnParseCommand;
         }
-        private void OuiOptions_Update(On.Celeste.OuiOptions.orig_Update orig, OuiOptions self)
+        private static void OuiOptions_Update(On.Celeste.OuiOptions.orig_Update orig, OuiOptions self)
         {
             orig(self);
 
@@ -64,9 +65,9 @@ namespace Celeste.Mod.BalintHelper
             return null!;
         }
 
-        private void PatchOnCollideV(ILContext il) => PatchCanCurveDashAssignment(il);
-        private void PatchOnCollideH(ILContext il) => PatchCanCurveDashAssignment(il);
-        private void PatchCanCurveDashAssignment(ILContext il)
+        private static void PatchOnCollideV(ILContext il) => PatchCanCurveDashAssignment(il);
+        private static void PatchOnCollideH(ILContext il) => PatchCanCurveDashAssignment(il);
+        private static void PatchCanCurveDashAssignment(ILContext il)
         {
             // Starting point:
             // ```
