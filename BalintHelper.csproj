@@ -53,4 +53,9 @@
 	<PropertyGroup>
 		<PathMap>$(MSBuildProjectDirectory)=BalintHelper/</PathMap>
 	</PropertyGroup>
+
+<PropertyGroup>
+    <NoWarn>$(NoWarn);IDE0130</NoWarn>
+	<NoWarn>$(NoWarn);IDE0290</NoWarn>
+</PropertyGroup>
 </Project>
