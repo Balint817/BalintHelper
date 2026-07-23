@@ -3,7 +3,6 @@ using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Celeste.Mod.BalintHelper.Triggers
@@ -31,7 +30,9 @@ namespace Celeste.Mod.BalintHelper.Triggers
         public void UpdateCounter()
         {
             if (Scene is not Level level)
+            {
                 return;
+            }
 
             int value = 0;
             var triggers = level.Tracker.GetEntities<EntityAggregateCountTrigger>().Cast<EntityAggregateCountTrigger>().Where(x => x.counterId == CounterId).ToArray();
@@ -112,16 +113,24 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 foreach (Entity entity in Scene.Entities)
                 {
                     if (entity == this)
+                    {
                         continue;
+                    }
 
                     if (entity.Collider == null)
+                    {
                         continue;
+                    }
 
                     if (!managedEntities.Matches(entity))
+                    {
                         continue;
+                    }
 
                     if (CollideCheck(entity))
+                    {
                         newCount++;
+                    }
                 }
             }
 

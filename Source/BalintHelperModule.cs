@@ -10,7 +10,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 
 namespace Celeste.Mod.BalintHelper
 {
@@ -120,7 +119,7 @@ namespace Celeste.Mod.BalintHelper
                 return false;
             }
             return entities[typeof(AllowCurveOnCollideTrigger)].Cast<AllowCurveOnCollideTrigger>().Any(x => x.IsTriggered);
-            
+
         }
         public ReadOnlyDictionary<string, HashSet<Type>> EntityRegistry_SidToTypes { get; private set; } = null!;
         public ReadOnlyDictionary<Type, HashSet<string>> EntityRegistry_TypeToSids { get; private set; } = null!;

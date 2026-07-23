@@ -1,10 +1,8 @@
-﻿using Celeste.Mod.BalintHelper.Utils;
-using Celeste.Mod.Entities;
+﻿using Celeste.Mod.Entities;
 using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace Celeste.Mod.BalintHelper.Triggers
@@ -80,7 +78,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             {
                 return true;
             }
-            
+
             var level = SceneAs<Level>();
             if (level == null)
             {

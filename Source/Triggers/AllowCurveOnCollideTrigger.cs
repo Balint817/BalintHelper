@@ -1,7 +1,6 @@
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
@@ -18,7 +17,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
         {
             flag = data.Attr("flag", "");
             global = data.Bool("global", false);
-            if (!string.IsNullOrEmpty(flag)) 
+            if (!string.IsNullOrEmpty(flag))
             {
                 invert = flag[0] == '!';
                 flag = flag[1..];
