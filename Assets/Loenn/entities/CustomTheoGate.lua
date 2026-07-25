@@ -78,26 +78,33 @@ customTheoGate.fieldInformation = {
         editable = false
     },
     theoMode = {
+        description = "How many nearby matches should be required to open the gate.\nAny: At least one match\nAll: All valid entities\nEach: One of each entity\nNone: Closes when any is near the gate.",
         options = { "Any", "All", "Each", "None" },
         editable = false
     },
     entityTypes = {
+        description = "Comma-separated type names or entity IDs to match against nearby entities.",
         fieldType = "string"
     },
     closeOnNone = {
+        description = "If true, the gate will close when no matching entities are present in the current room (for example, by being thrown out of the room)",
         fieldType = "boolean"
     },
     killDream = {
+        description = "If true, the gate will kill the player if they collide with it in a dream block.",
         fieldType = "boolean"
     },
     playerMode = {
+        description = "How the player should be treated when they approach the gate.\nIgnored: The player is not required to open the gate.\nRequired: Besides the entities, the player is also required to be nearby to open the gate.\nRepels: The gate closes if the player is nearby.",
         options = { "Ignored", "Required", "Repels" },
         editable = false
     },
     spriteId = {
+        description = "The sprite ID to use for the gate.",
         fieldType = "string"
     },
     outputFlag = {
+        description = "The session flag to set when the gate opens. If empty, no flag is set.",
         fieldType = "string"
     }
 }
