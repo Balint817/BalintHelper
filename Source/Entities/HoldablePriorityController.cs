@@ -1,4 +1,5 @@
-﻿using Celeste.Mod.BalintHelper.Triggers;
+﻿using Celeste.Mod.BalintHelper.Utils;
+using Celeste.Mod.BalintHelper.Triggers;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections.Generic;
@@ -64,7 +65,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 .ToList();
         }
 
-        private readonly MRUSet<Holdable> holdableOrder = new();
+        private readonly MRUSet<Holdable> holdableOrder = [];
         
         public override void Update()
         {
@@ -86,34 +87,18 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 return null!;
             }
-            switch (mode)
+            return mode switch
             {
-                case HoldableSelectMode.HighestId:
-                    return candidates.Last();
-
-                case HoldableSelectMode.Newest:
-                    return holdableOrder.Last();
-
-                case HoldableSelectMode.Oldest:
-                    return holdableOrder.First();
-
-                case HoldableSelectMode.Closest:
-                    return candidates.MinBy(h => CenterDist(player, h))!;
-
-                case HoldableSelectMode.Furthest:
-                    return candidates.MaxBy(h => CenterDist(player, h))!;
-
-                case HoldableSelectMode.ClosestFacing:
-                    return candidates.MinBy(h => FacingDist(player, h))!;
-
-                case HoldableSelectMode.FurthestFacing:
-                    return candidates.MaxBy(h => FacingDist(player, h))!;
-
-                    // vanilla behavior
-                case HoldableSelectMode.LowestId:
-                default:
-                    return candidates.First();
-            }
+                HoldableSelectMode.HighestId => candidates.Last(),
+                HoldableSelectMode.Newest => holdableOrder.Last(),
+                HoldableSelectMode.Oldest => holdableOrder.First(),
+                HoldableSelectMode.Closest => candidates.MinBy(h => CenterDist(player, h))!,
+                HoldableSelectMode.Furthest => candidates.MaxBy(h => CenterDist(player, h))!,
+                HoldableSelectMode.ClosestFacing => candidates.MinBy(h => FacingDist(player, h))!,
+                HoldableSelectMode.FurthestFacing => candidates.MaxBy(h => FacingDist(player, h))!,
+                // vanilla behavior
+                _ => candidates.First(),
+            };
         }
 
         // Center-to-center distance.
