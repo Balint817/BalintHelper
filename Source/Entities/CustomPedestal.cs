@@ -504,7 +504,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 if (holdable.Holder != null)
                 {
                     RemoveReturnTimer(entity);
-                    ReleaseClaim(entity);
+                    ReleaseClaim(entity, true);
                     continue;
                 }
 
@@ -881,7 +881,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             {
                 SetHoldableTimer(ped.ClaimedEntity.Get<Holdable>(), 0);
                 ped.ClaimedEntity = null;
-                if (staticMovers)
+                if (staticMovers && triggerMoverOnGrab)
                 {
                     ped._staticMover?.TriggerPlatform();
                 }
