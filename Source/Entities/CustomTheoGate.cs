@@ -73,12 +73,8 @@ namespace Celeste.Mod.BalintHelper.Entities
                 if (_open != value)
                 {
                     _open = value;
-                    if (!string.IsNullOrEmpty(outputFlag)
-                        && Scene is Level level
-                        && level.Session is { } session)
-                    {
-                        session.SetFlag(outputFlag, _open);
-                    }
+
+                    Scene.TrySetFlag(outputFlag, _open);
                 }
             }
         }
@@ -172,6 +168,12 @@ namespace Celeste.Mod.BalintHelper.Entities
                     sprite.Position = new Vector2(closedLength, GateThickness / 2f);
                     break;
             }
+        }
+
+        public override void Added(Scene scene)
+        {
+            base.Added(scene);
+            scene.TrySetFlag(outputFlag, false);
         }
 
         public override void Awake(Scene scene)

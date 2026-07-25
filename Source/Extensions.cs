@@ -10,6 +10,16 @@ namespace Celeste.Mod.BalintHelper
         {
             return scene?.Entities.FindFirst<Lookout.Hud>() != null;
         }
+
+        public static void TrySetFlag(this Scene? scene, string? flag, bool value)
+        {
+            if (!string.IsNullOrEmpty(flag)
+                && scene is Level level
+                && level.Session is { } session)
+            {
+                session.SetFlag(flag, value);
+            }
+        }
         public static bool IsGone(this Entity? entity, Scene scene)
         {
             return entity == null || entity.Scene != scene;

@@ -1,5 +1,6 @@
 ﻿using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
+using Monocle;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
@@ -27,6 +28,15 @@ namespace Celeste.Mod.BalintHelper.Triggers
             {
                 RemoveSelf();
                 Logger.Warn("BalintHelper", $"{nameof(CameraViewTrigger)} with empty flag at {Position}");
+            }
+        }
+
+        public override void Added(Scene scene)
+        {
+            base.Added(scene);
+            if (resetFlag)
+            {
+                scene.TrySetFlag(flag, false);
             }
         }
 
@@ -61,7 +71,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 triggered = false;
                 if (resetFlag)
                 {
-                    level.Session?.SetFlag(flag, false);
+                    Scene.TrySetFlag(flag, false);
                     if (onlyOnce)
                     {
                         RemoveSelf();
@@ -88,7 +98,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             }
             triggered = true;
             triggeredOnce = true;
-            level.Session?.SetFlag(flag, true);
+            level.TrySetFlag(flag, true);
 
             if (onlyOnce && !resetFlag)
             {
