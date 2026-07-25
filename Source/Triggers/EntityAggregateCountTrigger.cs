@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.BalintHelper.Source.Entities;
+﻿using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;

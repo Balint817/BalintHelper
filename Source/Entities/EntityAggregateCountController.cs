@@ -4,7 +4,7 @@ using Monocle;
 using System;
 using System.Linq;
 
-namespace Celeste.Mod.BalintHelper.Source.Entities
+namespace Celeste.Mod.BalintHelper.Entities
 {
     [CustomEntity("BalintHelper/EntityAggregateCountController")]
     [Tracked]

@@ -1,0 +1,133 @@
+﻿using Celeste.Mod.BalintHelper.Triggers;
+using Microsoft.Xna.Framework;
+using Monocle;
+using System.Collections.Generic;
+using System.Linq;
+
+namespace Celeste.Mod.BalintHelper.Entities
+{
+    [Tracked(false)]
+    public class HoldablePriorityController : Entity
+    {
+        public static HoldablePriorityController GetOrCreate(Scene scene)
+        {
+            var ctrl = scene.Tracker.GetEntity<HoldablePriorityController>();
+            if (ctrl == null)
+            {
+                ctrl = new HoldablePriorityController();
+                scene.Add(ctrl);
+            }
+            return ctrl;
+        }
+
+        private HoldablePriorityController()
+        {
+            Tag = Tags.Persistent | Tags.Global;
+        }
+        public Holdable GetTarget(Player player)
+        {
+            var triggers = Scene.Tracker
+                .GetEntities<HoldablePriorityTrigger>()
+                .Cast<HoldablePriorityTrigger>()
+                .Where(t => t.PlayerIsInside)
+                .ToList();
+
+            if (triggers.Count == 0)
+                return null!;
+
+            var mode = triggers[^1].Mode;
+            var flags = triggers.Aggregate(HoldableSelectFlags.None,
+                            (acc, t) => acc | t.Flags);
+
+            if (flags.HasFlag(HoldableSelectFlags.DisableTheoFreeze))
+            {
+                var current = player.Holding;
+                if (current != null)
+                {
+                    return current;
+                }
+            }
+
+            var candidates = GetPickupCandidates(player);
+            if (candidates.Count == 0)
+                return null!;
+
+            return SelectBy(player, candidates, mode);
+        }
+
+        private List<Holdable> GetPickupCandidates(Player player)
+        {
+            return Scene.Tracker
+                .GetComponents<Holdable>()
+                .Cast<Holdable>()
+                .Where(h => h.IsHeld == false && h.cannotHoldTimer <= 0 && h.Check(player))
+                .ToList();
+        }
+
+        private readonly MRUSet<Holdable> holdableOrder = new();
+        
+        public override void Update()
+        {
+            // track which holdables the player grabs
+            if (Scene?.Tracker?.GetEntity<Player>() is not { } player)
+            {
+                return;
+            }
+            if (player.Holding is { } holdable)
+            {
+                holdableOrder.Add(holdable);
+            }
+        }
+
+        private Holdable SelectBy(Player player, List<Holdable> candidates,
+                                  HoldableSelectMode mode)
+        {
+            if (candidates.Count == 0)
+            {
+                return null!;
+            }
+            switch (mode)
+            {
+                case HoldableSelectMode.HighestId:
+                    return candidates.Last();
+
+                case HoldableSelectMode.Newest:
+                    return holdableOrder.Last();
+
+                case HoldableSelectMode.Oldest:
+                    return holdableOrder.First();
+
+                case HoldableSelectMode.Closest:
+                    return candidates.MinBy(h => CenterDist(player, h))!;
+
+                case HoldableSelectMode.Furthest:
+                    return candidates.MaxBy(h => CenterDist(player, h))!;
+
+                case HoldableSelectMode.ClosestFacing:
+                    return candidates.MinBy(h => FacingDist(player, h))!;
+
+                case HoldableSelectMode.FurthestFacing:
+                    return candidates.MaxBy(h => FacingDist(player, h))!;
+
+                    // vanilla behavior
+                case HoldableSelectMode.LowestId:
+                default:
+                    return candidates.First();
+            }
+        }
+
+        // Center-to-center distance.
+        private static float CenterDist(Player player, Holdable h) =>
+            Vector2.Distance(player.Center, h.Entity.Center);
+
+        // Distance measured from the edge of the player's hitbox in the facing direction.
+        private static float FacingDist(Player player, Holdable h)
+        {
+            float edgeX = player.Facing == Facings.Right
+                ? player.Right
+                : player.Left;
+            var edgePoint = new Vector2(edgeX, player.CenterY);
+            return Vector2.Distance(edgePoint, h.Entity.Center);
+        }
+    }
+}

@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using Monocle;
 
-namespace Celeste.Mod.BalintHelper.Source.Entities
+namespace Celeste.Mod.BalintHelper.Entities
 {
 
     [CustomEntity("BalintHelper/NoDemoBindExtensionController")]

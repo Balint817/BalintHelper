@@ -1,4 +1,5 @@
 using Celeste.Mod.BalintHelper.Entities;
+using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.BalintHelper.Triggers;
 using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
@@ -35,6 +36,23 @@ namespace Celeste.Mod.BalintHelper
             IL.Celeste.Player.OnCollideH += PatchOnCollideH;
 
             Everest.Events.CustomBirdTutorial.OnParseCommand += CustomBirdTutorial_OnParseCommand;
+
+            On.Celeste.Player.Pickup += Player_Pickup;
+        }
+
+        private bool Player_Pickup(On.Celeste.Player.orig_Pickup orig, Player self, Holdable pickup)
+        {
+            if (self.Scene is not { } scene || HoldablePriorityController.GetOrCreate(scene) is not { } controller)
+            {
+                return orig(self, pickup);
+            }
+            var target = controller.GetTarget(self);
+            if (target == null)
+            {
+                // this branch might need some performance checks?
+                return orig(self, pickup);
+            }
+            return orig(self, target);
         }
 
         public override void Unload()
