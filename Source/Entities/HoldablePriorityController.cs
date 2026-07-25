@@ -27,7 +27,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         }
         public Holdable GetTarget(Player player)
         {
-            var triggers = Scene.Tracker
+            var triggers = player.Scene.Tracker
                 .GetEntities<HoldablePriorityTrigger>()
                 .Cast<HoldablePriorityTrigger>()
                 .Where(t => t.PlayerIsInside)
@@ -56,9 +56,9 @@ namespace Celeste.Mod.BalintHelper.Entities
             return SelectBy(player, candidates, mode);
         }
 
-        private List<Holdable> GetPickupCandidates(Player player)
-        {
-            return Scene.Tracker
+        private static List<Holdable> GetPickupCandidates(Player player)
+        {   
+            return player.Scene.Tracker
                 .GetComponents<Holdable>()
                 .Cast<Holdable>()
                 .Where(h => h.IsHeld == false && h.cannotHoldTimer <= 0 && h.Check(player))
@@ -90,8 +90,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             return mode switch
             {
                 HoldableSelectMode.HighestId => candidates.Last(),
-                HoldableSelectMode.Newest => holdableOrder.Last(),
-                HoldableSelectMode.Oldest => holdableOrder.First(),
+                HoldableSelectMode.Newest => OrderedHoldablesOrDefault(candidates, false),
+                HoldableSelectMode.Oldest => OrderedHoldablesOrDefault(candidates, true),
                 HoldableSelectMode.Closest => candidates.MinBy(h => CenterDist(player, h))!,
                 HoldableSelectMode.Furthest => candidates.MaxBy(h => CenterDist(player, h))!,
                 HoldableSelectMode.ClosestFacing => candidates.MinBy(h => FacingDist(player, h))!,
@@ -99,6 +99,26 @@ namespace Celeste.Mod.BalintHelper.Entities
                 // vanilla behavior
                 _ => candidates.First(),
             };
+        }
+
+        private Holdable OrderedHoldablesOrDefault(List<Holdable> candidates, bool oldest)
+        {
+            var filteredHoldableOrder = holdableOrder.Intersect(candidates).ToList();
+            if (filteredHoldableOrder.Count > 0)
+            {
+                if (!oldest)
+                {
+                    return filteredHoldableOrder.Last();
+                }
+                if (filteredHoldableOrder.Count != candidates.Count)
+                {
+                    // count the one that was never grabbed as the "oldest" one
+                    return candidates.Except(filteredHoldableOrder).First();
+                }
+                return filteredHoldableOrder.First();
+            }
+            // vanilla behavior
+            return candidates.First();
         }
 
         // Center-to-center distance.

@@ -1,4 +1,5 @@
 ﻿
+using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -42,6 +43,12 @@ namespace Celeste.Mod.BalintHelper.Triggers
                     ? HoldableSelectFlags.DisableTheoFreeze
                     : HoldableSelectFlags.None;
 
+        }
+
+        public override void Added(Scene scene)
+        {
+            base.Added(scene);
+            HoldablePriorityController.GetOrCreate(scene);
         }
     }
 }
