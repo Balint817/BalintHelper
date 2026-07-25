@@ -133,6 +133,14 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly StaticMover? _staticMover;
         private const float LiftSpeedGraceDuration = 10f / 60f; // ~0.1667s ~= 10 frames @ 60fps
 
+        // "Repair,Entity,Grab,Explosion,Dash"
+        private readonly bool triggerMoverOnRepair;
+        private readonly bool triggerMoverOnEntityClaimed;
+        private readonly bool triggerMoverOnGrab;
+        private readonly bool triggerMoverOnExplosion;
+        private readonly bool triggerMoverOnDash;
+
+
         private readonly List<KeyValuePair<float, Vector2>> _storedLiftSpeeds = [];
         private Vector2 AggregatedLiftSpeed
         {
@@ -287,6 +295,41 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             dashCollider = new Hitbox(32f, 32f * (1f + dashHitboxExtension), -16f, -64f);
 
+            var triggerMoverOn = data.Attr("triggerMoverOn", "").ToLowerInvariant().Split(",");
+            foreach (var item in triggerMoverOn)
+            {
+                switch (item)
+                {
+                    case "repair":
+                    case "repaired":
+                        triggerMoverOnRepair = true;
+                        break;
+                    case "entity":
+                    case "claim":
+                    case "claimed":
+                        triggerMoverOnEntityClaimed = true;
+                        break;
+                    case "grab":
+                    case "grabbed":
+                    case "release":
+                    case "released":
+                        triggerMoverOnGrab = true;
+                        break;
+                    case "explosion":
+                    case "explode":
+                    case "exploded":
+                        triggerMoverOnExplosion = true;
+                        break;
+                    case "dash":
+                    case "dashed":
+                        triggerMoverOnDash = true;
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+
             Tag = Tags.TransitionUpdate;
         }
 
@@ -382,6 +425,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                 hasPendingExplosionBreak = false;
                 Vector2 pushDirection = (SnapPosition(this) - pendingExplosionFrom).SafeNormalize(Vector2.UnitY);
                 Break(pushDirection, 2.0f);
+                if (triggerMoverOnExplosion)
+                {
+                    _staticMover?.TriggerPlatform();
+                }
             }
 
             if (isBroken)
@@ -650,6 +697,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                     {
                         player.CancelDash();
                     }
+                    if (triggerMoverOnDash)
+                    {
+                        _staticMover?.TriggerPlatform();
+                    }
                 }
             }
         }
@@ -774,6 +825,10 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             EmitParticleFamilyBurst(PtRepair, RepairParticleAtlases, 20);
             Audio.Play(soundRepair, SnapPosition(this));
+            if (triggerMoverOnRepair)
+            {
+                _staticMover?.TriggerPlatform();
+            }
         }
 
         private void TeleportEntityTo(Entity entity, CustomPedestal target, bool playEffects = true)
@@ -798,6 +853,10 @@ namespace Celeste.Mod.BalintHelper.Entities
                 target.EmitParticleFamilyBurst(PtExplode, ExplodeParticleAtlases, 15);
                 Audio.Play(soundTeleport, SnapPosition(target));
             }
+            if (triggerMoverOnEntityClaimed)
+            {
+                target._staticMover?.TriggerPlatform();
+            }
         }
 
         private CustomPedestal? FindClaimingPedestal(Entity entity)
@@ -815,13 +874,17 @@ namespace Celeste.Mod.BalintHelper.Entities
             return null;
         }
 
-        private void ReleaseClaim(Entity entity)
+        private void ReleaseClaim(Entity entity, bool staticMovers = false)
         {
             var ped = FindClaimingPedestal(entity);
             if (ped != null && ped.ClaimedEntity != null)
             {
                 SetHoldableTimer(ped.ClaimedEntity.Get<Holdable>(), 0);
                 ped.ClaimedEntity = null;
+                if (staticMovers)
+                {
+                    ped._staticMover?.TriggerPlatform();
+                }
             }
         }
 
