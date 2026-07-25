@@ -54,6 +54,14 @@ trigger.fieldInformation = {
     global = {
         fieldType = "boolean",
         description = "If true, ignores interaction triggers and applies to targets every frame"
+    },
+    onlyOnce = {
+        fieldType = "boolean",
+        description = "If true, the trigger removes itself after activating"
+    },
+    waitForSuccess = {
+        fieldType = "boolean",
+        description = "If true, onlyOnce is only counted if at least one target was affected"
     }
 }
 
@@ -64,7 +72,9 @@ trigger.fieldOrder = {
     "targetingMode",
     "playerTriggerMode",
     "entityTriggerMode",
-    "global"
+    "global",
+    "onlyOnce",
+    "waitForSuccess"
 }
 
 return trigger

@@ -42,7 +42,7 @@ trigger.fieldInformation = {
     },
     waitForSuccess = {
         fieldType = "boolean",
-        description = "If true, only remove the trigger if there was a successful entity match"
+        description = "If true, onlyOnce is only counted if at least one target was affected"
     }
 }
 

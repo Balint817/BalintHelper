@@ -18,11 +18,9 @@ silentDebris.placements = {
     }
 }
 
--- Enable resizing on both the X and Y axes
 silentDebris.minimumSize = { 8, 8 }
 silentDebris.resizable = { true, true }
 
--- Explicitly define the order of settings in the right-click properties menu
 silentDebris.fieldOrder = {
     "x",
     "y",
@@ -30,7 +28,6 @@ silentDebris.fieldOrder = {
     "height"
 }
 
--- Force Lönn to treat X and Y as numbers in the UI configuration
 silentDebris.fieldInformation = {
     x = {
         fieldType = "integer"
@@ -45,7 +42,6 @@ function silentDebris.sprite(room, entity)
     local width = entity.width or 16
     local height = entity.height or 16
 
-    -- Fill the resized zone with tiled 8x8 debris textures for visual clarity in the editor
     for x = 0, width - 1, 8 do
         for y = 0, height - 1, 8 do
             local sprite = drawableSprite.fromTexture(texture, entity)

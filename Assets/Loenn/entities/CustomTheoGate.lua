@@ -17,9 +17,9 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "Any",
             entityTypes = "TheoCrystal,ExtendedVariantMode/TheoCrystal",
-            playerMode = "Ignored",
             closeOnNone = false,
             killDream = true,
+            playerMode = "Ignored",
             spriteId = "templegate_theo",
             outputFlag = ""
         }
@@ -31,9 +31,9 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "All",
             entityTypes = "TheoCrystal,ExtendedVariantMode/TheoCrystal",
-            playerMode = "Ignored",
             closeOnNone = false,
             killDream = true,
+            playerMode = "Ignored",
             spriteId = "templegate_theo",
             outputFlag = ""
         }
@@ -45,9 +45,9 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "Each",
             entityTypes = "TheoCrystal,ExtendedVariantMode/TheoCrystal",
-            playerMode = "Ignored",
             closeOnNone = false,
             killDream = true,
+            playerMode = "Ignored",
             spriteId = "templegate_theo",
             outputFlag = ""
         }
@@ -59,9 +59,9 @@ customTheoGate.placements = {
             direction = "Down",
             theoMode = "None",
             entityTypes = "TheoCrystal,ExtendedVariantMode/TheoCrystal",
-            playerMode = "Ignored",
             closeOnNone = false,
             killDream = true,
+            playerMode = "Ignored",
             spriteId = "templegate_theo",
             outputFlag = ""
         }
@@ -69,6 +69,10 @@ customTheoGate.placements = {
 }
 
 customTheoGate.fieldInformation = {
+    height = {
+        fieldType = "integer",
+        minimumValue = 16
+    },
     direction = {
         options = { "Down", "Up", "Left", "Right" },
         editable = false
@@ -76,14 +80,6 @@ customTheoGate.fieldInformation = {
     theoMode = {
         options = { "Any", "All", "Each", "None" },
         editable = false
-    },
-    playerMode = {
-        options = { "Ignored", "Required", "Repels" },
-        editable = false
-    },
-    height = {
-        fieldType = "integer",
-        minimumValue = 16
     },
     entityTypes = {
         fieldType = "string"
@@ -94,9 +90,13 @@ customTheoGate.fieldInformation = {
     killDream = {
         fieldType = "boolean"
     },
+    playerMode = {
+        options = { "Ignored", "Required", "Repels" },
+        editable = false
+    },
     spriteId = {
         fieldType = "string"
-    }
+    },
     outputFlag = {
         fieldType = "string"
     }
