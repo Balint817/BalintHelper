@@ -2,7 +2,7 @@
 using MonoMod.Utils;
 using System.Diagnostics.CodeAnalysis;
 
-namespace Celeste.Mod.BalintHelper
+namespace Celeste.Mod.BalintHelper.Source.Utils
 {
     internal static class Extensions
     {
