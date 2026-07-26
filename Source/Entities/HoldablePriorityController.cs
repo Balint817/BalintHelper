@@ -1,5 +1,5 @@
-﻿using Celeste.Mod.BalintHelper.Utils;
-using Celeste.Mod.BalintHelper.Triggers;
+﻿using Celeste.Mod.BalintHelper.Triggers;
+using Celeste.Mod.BalintHelper.Utils;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections.Generic;
@@ -34,7 +34,9 @@ namespace Celeste.Mod.BalintHelper.Entities
                 .ToList();
 
             if (triggers.Count == 0)
+            {
                 return null!;
+            }
 
             var mode = triggers[^1].Mode;
             var flags = triggers.Aggregate(HoldableSelectFlags.None,
@@ -51,13 +53,15 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             var candidates = GetPickupCandidates(player);
             if (candidates.Count == 0)
+            {
                 return null!;
+            }
 
             return SelectBy(player, candidates, mode);
         }
 
         private static List<Holdable> GetPickupCandidates(Player player)
-        {   
+        {
             return player.Scene.Tracker
                 .GetComponents<Holdable>()
                 .Cast<Holdable>()
@@ -66,7 +70,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         }
 
         private readonly MRUSet<Holdable> holdableOrder = [];
-        
+
         public override void Update()
         {
             // track which holdables the player grabs

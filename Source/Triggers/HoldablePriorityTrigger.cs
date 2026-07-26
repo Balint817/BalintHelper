@@ -3,7 +3,6 @@ using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
-using MonoMod.Cil;
 using System;
 
 namespace Celeste.Mod.BalintHelper.Triggers

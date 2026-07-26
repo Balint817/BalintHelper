@@ -27,7 +27,11 @@ namespace Celeste.Mod.BalintHelper.Utils
 
         public bool Remove(T item)
         {
-            if (!_set.Remove(item)) return false;
+            if (!_set.Remove(item))
+            {
+                return false;
+            }
+
             _order.Remove(item);
             return true;
         }
