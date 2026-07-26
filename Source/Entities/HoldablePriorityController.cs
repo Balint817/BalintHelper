@@ -61,7 +61,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             return player.Scene.Tracker
                 .GetComponents<Holdable>()
                 .Cast<Holdable>()
-                .Where(h => h.IsHeld == false && h.cannotHoldTimer <= 0 && h.Check(player))
+                .Where(h => player.Holding != h && h.cannotHoldTimer <= 0 && h.Check(player))
                 .ToList();
         }
 
