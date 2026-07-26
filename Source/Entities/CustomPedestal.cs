@@ -1,5 +1,4 @@
-﻿using Celeste.Mod.BalintHelper.Source.Utils;
-using Celeste.Mod.BalintHelper.Utils;
+﻿using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
