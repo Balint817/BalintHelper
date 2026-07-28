@@ -427,7 +427,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 Break(pushDirection, 2.0f);
                 if (triggerMoverOnExplosion)
                 {
-                    _staticMover?.TriggerPlatform();
+                    _staticMover?.TriggerWithRiders();
                 }
             }
 
@@ -699,7 +699,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     }
                     if (triggerMoverOnDash)
                     {
-                        _staticMover?.TriggerPlatform();
+                        _staticMover?.TriggerWithRiders();
                     }
                 }
             }
@@ -827,7 +827,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             Audio.Play(soundRepair, SnapPosition(this));
             if (triggerMoverOnRepair)
             {
-                _staticMover?.TriggerPlatform();
+                _staticMover?.TriggerWithRiders();
             }
         }
 
@@ -855,7 +855,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             if (triggerMoverOnEntityClaimed)
             {
-                target._staticMover?.TriggerPlatform();
+                target._staticMover?.TriggerWithRiders();
             }
         }
 
@@ -883,7 +883,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 ped.ClaimedEntity = null;
                 if (staticMovers && triggerMoverOnGrab)
                 {
-                    ped._staticMover?.TriggerPlatform();
+                    ped._staticMover?.TriggerWithRiders();
                 }
             }
         }

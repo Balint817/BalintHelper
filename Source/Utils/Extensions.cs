@@ -1,4 +1,5 @@
-﻿using Monocle;
+﻿using Celeste.Mod.BalintHelper.Components;
+using Monocle;
 using MonoMod.Utils;
 using System.Diagnostics.CodeAnalysis;
 
@@ -19,6 +20,19 @@ namespace Celeste.Mod.BalintHelper.Utils
             {
                 session.SetFlag(flag, value);
             }
+        }
+        public static void TriggerWithRiders(this StaticMover staticMover)
+        {
+            if (staticMover is null)
+            {
+                return;
+            }
+            staticMover.TriggerPlatform();
+            if (staticMover.Scene?.Tracker?.GetEntity<Player>() is not { } player)
+            {
+                return;
+            }
+            player.Add(new PlayerAddRider(staticMover));
         }
         public static bool IsGone(this Entity? entity, Scene scene)
         {

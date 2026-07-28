@@ -1,3 +1,4 @@
+using Celeste.Mod.BalintHelper.Components;
 using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.BalintHelper.Triggers;
 using Celeste.Mod.Registry;
@@ -23,12 +24,10 @@ namespace Celeste.Mod.BalintHelper
 
         public override void Load()
         {
-            On.Celeste.FloatingDebris.OnExplode += OnFloatingDebrisExplode;
-
             EntityRegistry_SidToTypes = new((Dictionary<string, HashSet<Type>>)typeof(EntityRegistry).GetField("SidToTypes", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!);
-
             EntityRegistry_TypeToSids = new((Dictionary<Type, HashSet<string>>)typeof(EntityRegistry).GetField("TypeToSids", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!);
 
+            On.Celeste.FloatingDebris.OnExplode += OnFloatingDebrisExplode;
             On.Celeste.OuiOptions.Update += OuiOptions_Update;
 
             IL.Celeste.Player.OnCollideV += PatchOnCollideV;
@@ -37,9 +36,38 @@ namespace Celeste.Mod.BalintHelper
             Everest.Events.CustomBirdTutorial.OnParseCommand += CustomBirdTutorial_OnParseCommand;
 
             On.Celeste.Player.Pickup += Player_Pickup;
+
+            On.Celeste.Solid.GetPlayerRider += Solid_GetPlayerRider;
         }
 
-        private bool Player_Pickup(On.Celeste.Player.orig_Pickup orig, Player self, Holdable pickup)
+        public override void Unload()
+        {
+            On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
+            On.Celeste.OuiOptions.Update -= OuiOptions_Update;
+
+            IL.Celeste.Player.OnCollideV -= PatchOnCollideV;
+            IL.Celeste.Player.OnCollideH -= PatchOnCollideH;
+
+            Everest.Events.CustomBirdTutorial.OnParseCommand -= CustomBirdTutorial_OnParseCommand;
+
+            On.Celeste.Player.Pickup -= Player_Pickup;
+
+            On.Celeste.Solid.GetPlayerRider -= Solid_GetPlayerRider;
+        }
+
+        private static Player Solid_GetPlayerRider(On.Celeste.Solid.orig_GetPlayerRider orig, Solid self)
+        {
+            if (self.Scene?.Tracker?.GetEntity<Player>() is not { } player
+                || player.Get<PlayerAddRider>() is not { } component
+                || component.TargetMover.Platform != self)
+            {
+                return orig(self);
+            }
+            component.Used = true;
+            return player;
+        }
+
+        private static bool Player_Pickup(On.Celeste.Player.orig_Pickup orig, Player self, Holdable pickup)
         {
             if (self.Scene is not { } scene || HoldablePriorityController.GetOrCreate(scene) is not { } controller)
             {
@@ -52,16 +80,6 @@ namespace Celeste.Mod.BalintHelper
                 return orig(self, pickup);
             }
             return orig(self, target);
-        }
-
-        public override void Unload()
-        {
-            On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
-            On.Celeste.OuiOptions.Update -= OuiOptions_Update;
-
-            IL.Celeste.Player.OnCollideV -= PatchOnCollideV;
-            IL.Celeste.Player.OnCollideH -= PatchOnCollideH;
-            Everest.Events.CustomBirdTutorial.OnParseCommand -= CustomBirdTutorial_OnParseCommand;
         }
         private static void OuiOptions_Update(On.Celeste.OuiOptions.orig_Update orig, OuiOptions self)
         {
