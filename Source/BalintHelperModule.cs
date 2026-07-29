@@ -19,11 +19,12 @@ namespace Celeste.Mod.BalintHelper
         public static BalintHelperModule Instance { get; private set; } = null!;
         public BalintHelperModule()
         {
-            Instance = this;
         }
 
         public override void Load()
         {
+            Instance = this;
+
             EntityRegistry_SidToTypes = new((Dictionary<string, HashSet<Type>>)typeof(EntityRegistry).GetField("SidToTypes", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!);
             EntityRegistry_TypeToSids = new((Dictionary<Type, HashSet<string>>)typeof(EntityRegistry).GetField("TypeToSids", BindingFlags.NonPublic | BindingFlags.Static)!.GetValue(null)!);
 
@@ -53,6 +54,8 @@ namespace Celeste.Mod.BalintHelper
             On.Celeste.Player.Pickup -= Player_Pickup;
 
             On.Celeste.Solid.GetPlayerRider -= Solid_GetPlayerRider;
+
+            Instance = null!;
         }
 
         private static Player Solid_GetPlayerRider(On.Celeste.Solid.orig_GetPlayerRider orig, Solid self)
