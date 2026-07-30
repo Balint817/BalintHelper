@@ -17,10 +17,6 @@ namespace Celeste.Mod.BalintHelper
     public class BalintHelperModule : EverestModule
     {
         public static BalintHelperModule Instance { get; private set; } = null!;
-        public BalintHelperModule()
-        {
-        }
-
         public override void Load()
         {
             Instance = this;
