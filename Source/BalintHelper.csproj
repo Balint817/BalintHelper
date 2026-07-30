@@ -24,6 +24,10 @@
 </ItemGroup>
 
 <ItemGroup>
+  <ProjectReference Include="..\DynamicInstructions\DynamicInstructions.csproj" />
+</ItemGroup>
+
+<ItemGroup>
 <Reference Include="$(CelestePrefix)\MMHOOK_Celeste.dll" Private="false" />
 <Reference Include="$(CelestePrefix)\FNA.dll" Private="false" />
 </ItemGroup>
