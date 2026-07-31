@@ -1,5 +1,5 @@
-﻿using DynamicInstructions.Abstract;
-using DynamicInstructions.Pointers;
+﻿using DynamicInstructions.Instructions.Abstract;
+using DynamicInstructions.Instructions.Pointers;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
