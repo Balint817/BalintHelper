@@ -101,7 +101,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 IsHorizontalDir(data.Enum("direction", GateDirection.Down))
                     ? GateThickness
                     : Math.Max(data.Height, GateThickness),
-                safe: true)
+                safe: false)
         {
             basePosition = data.Position + offset;
             direction = data.Enum("direction", GateDirection.Down);
