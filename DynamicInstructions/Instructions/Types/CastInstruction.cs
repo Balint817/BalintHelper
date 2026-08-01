@@ -38,7 +38,7 @@ namespace DynamicInstructions.Instructions.Types
         public readonly Type TargetType;
         public readonly Type? SourceType;
 
-        public CastInstruction(Type targetType, Type? sourceType = null)
+        public CastInstruction(Type? sourceType, Type targetType)
         {
             TargetType = targetType ?? throw new ArgumentNullException(nameof(targetType));
             SourceType = sourceType;
