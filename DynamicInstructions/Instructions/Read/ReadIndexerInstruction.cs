@@ -3,7 +3,7 @@ using System.Reflection;
 
 namespace DynamicInstructions.Instructions.Read
 {
-    public delegate void ReadIndexerHandler(
+    public delegate object? ReadIndexerHandler(
         Interpreter.MethodState state,
         List<BaseInstruction> instructions,
         object info);
@@ -46,8 +46,7 @@ namespace DynamicInstructions.Instructions.Read
                     }
                 }
 
-                var value = getMethod.Invoke(instance, args);
-                state.Stack.Push(value);
+                return getMethod.Invoke(instance, args);
             })
         };
 
@@ -62,7 +61,8 @@ namespace DynamicInstructions.Instructions.Read
             {
                 if (runtimeType.IsAssignableTo(kv.Key))
                 {
-                    kv.Value(state, instructions, info);
+                    var value = kv.Value(state, instructions, info);
+                    state.Stack.Push(value);
                     return true;
                 }
             }
