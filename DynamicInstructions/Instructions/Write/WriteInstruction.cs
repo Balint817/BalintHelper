@@ -3,70 +3,109 @@ using System.Reflection;
 
 namespace DynamicInstructions.Instructions.Write
 {
+    public delegate void WriteHandler(
+        Interpreter.MethodState state,
+        List<BaseInstruction> instructions,
+        object info,
+        object? value);
+
     public class WriteInstruction : BaseInstruction
     {
-        public static readonly Dictionary<Type, Action<Interpreter.MethodState, List<BaseInstruction>, object, object?>> CustomHandlers = [];
+        public static readonly List<KeyValuePair<Type, WriteHandler>> WriteHandlers = new()
+        {
+            new(typeof(Interpreter.VariableInfo), static (state, instructions, info, value) =>
+            {
+                var variableInfo = (Interpreter.VariableInfo)info;
+                variableInfo.SetValue(state, value);
+            }),
+
+            new(typeof(FieldInfo), static (state, instructions, info, value) =>
+            {
+                var fieldInfo = (FieldInfo)info;
+                object? instance = null;
+
+                if (!fieldInfo.IsStatic)
+                {
+                    if (!state.Stack.TryPop(out instance))
+                    {
+                        throw new InvalidProgramException(
+                            "stack imbalance, failed to obtain instance for field write");
+                    }
+                }
+
+                fieldInfo.SetValue(instance, value);
+            }),
+
+            new(typeof(PropertyInfo), static (state, instructions, info, value) =>
+            {
+                var propertyInfo = (PropertyInfo)info;
+                var setMethod = propertyInfo.SetMethod
+                    ?? throw new InvalidProgramException(
+                        $"property {propertyInfo.Name} is not writable");
+
+                if (setMethod.GetParameters().Length != 1)
+                {
+                    throw new InvalidProgramException(
+                        $"property {propertyInfo.Name} is an indexer");
+                }
+
+                object? instance = null;
+                if (!setMethod.IsStatic)
+                {
+                    if (!state.Stack.TryPop(out instance))
+                    {
+                        throw new InvalidProgramException(
+                            "stack imbalance, failed to obtain instance for property write");
+                    }
+                }
+
+                setMethod.Invoke(instance, new object?[] { value });
+            })
+        };
+
+        private static bool TryWriteRegistered(
+            Interpreter.MethodState state,
+            List<BaseInstruction> instructions,
+            object info,
+            object? value)
+        {
+            var runtimeType = info.GetType();
+
+            foreach (var kv in WriteHandlers)
+            {
+                if (runtimeType.IsAssignableTo(kv.Key))
+                {
+                    kv.Value(state, instructions, info, value);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public override void Execute(Interpreter.MethodState state, List<BaseInstruction> instructions)
         {
             if (!state.Stack.TryPop(out var value))
             {
-                throw new InvalidProgramException("stack imbalance, failed to obtain value to write");
+                throw new InvalidProgramException(
+                    "stack imbalance, failed to obtain value to write");
             }
+
             if (!state.Stack.TryPop(out var infoBoxed))
             {
-                throw new InvalidProgramException("stack imbalance, failed to obtain variable info to write");
+                throw new InvalidProgramException(
+                    "stack imbalance, failed to obtain variable info to write");
             }
+
             if (infoBoxed is null)
             {
                 throw new InvalidProgramException("type mismatch, variable info was null");
             }
-            switch (infoBoxed)
+
+            if (!TryWriteRegistered(state, instructions, infoBoxed, value))
             {
-                case Interpreter.VariableInfo variableInfo:
-                    {
-                        variableInfo.SetValue(state, value);
-                    }
-                    break;
-                case FieldInfo fieldInfo:
-                    {
-                        object? instance = null;
-                        if (!fieldInfo.IsStatic)
-                        {
-                            if (!state.Stack.TryPop(out instance))
-                            {
-                                throw new InvalidProgramException("stack imbalance, failed to obtain instance for field write");
-                            }
-                        }
-                        fieldInfo.SetValue(instance, value);
-                    }
-                    break;
-                case PropertyInfo propertyInfo:
-                    {
-                        var setMethod = propertyInfo.SetMethod
-                            ?? throw new InvalidProgramException($"property {propertyInfo.Name} is not writable");
-                        object? instance = null;
-                        if (!setMethod.IsStatic)
-                        {
-                            state.Stack.TryPop(out instance);
-                        }
-                        if (setMethod.GetParameters().Length != 1)
-                        {
-                            throw new InvalidProgramException($"property {propertyInfo.Name} is an indexer");
-                        }
-                        setMethod.Invoke(instance, [value]);
-                        break;
-                    }
-                default:
-                    var type = infoBoxed.GetType();
-                    foreach (var kv in CustomHandlers)
-                    {
-                        if (type.IsAssignableTo(kv.Key))
-                        {
-                            kv.Value(state, instructions, infoBoxed, value);
-                            return;
-                        }
-                    }
-                    throw new InvalidProgramException($"type mismatch, object of type {infoBoxed?.GetType().FullName} is not writable");
+                throw new InvalidProgramException(
+                    $"type mismatch, object of type {infoBoxed.GetType().FullName} is not writable");
             }
         }
     }

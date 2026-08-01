@@ -3,8 +3,21 @@ using System.Reflection;
 
 namespace DynamicInstructions.Instructions.Invoke
 {
-    public delegate void RefWrite(Interpreter.MethodState state, object original, object? value);
-    public delegate object? RefRead(Interpreter.MethodState state, object original);
+    public delegate void RefWrite(
+        Interpreter.MethodState state,
+        List<BaseInstruction> instructions,
+        object original,
+        object? value);
+
+    public delegate object? RefRead(
+        Interpreter.MethodState state,
+        List<BaseInstruction> instructions,
+        object original);
+
+    public delegate void InvokeHandler(
+        Interpreter.MethodState state,
+        List<BaseInstruction> instructions,
+        object info);
 
     public class RefHandler
     {
@@ -16,154 +29,212 @@ namespace DynamicInstructions.Instructions.Invoke
             Write = write;
         }
     }
+
     public class InvokeInstruction : BaseInstruction
     {
-        // extract these into delegate types
-        public static readonly Dictionary<Type, Func<Interpreter.MethodState, List<BaseInstruction>, object, object>> CustomHandlers = [];
-        public static readonly Dictionary<Type, RefHandler> RefHandlers = new()
-        {
-            [typeof(Interpreter.VariableInfo)] = new RefHandler(
-                (state, original) =>
+        public static readonly List<KeyValuePair<Type, InvokeHandler>> InvokeHandlers =
+        [
+            new(typeof(MethodInfo), static (state, instructions, info) =>
+            {
+                var methodInfo = (MethodInfo)info;
+                var parameters = methodInfo.GetParameters();
+                var paramInfoBox = new ParameterInfoBox(parameters, state, instructions);
+
+                object? instance = null;
+                if (!methodInfo.IsStatic)
+                {
+                    if (!state.Stack.TryPop(out instance))
+                    {
+                        throw new InvalidProgramException("stack imbalance, failed to obtain method instance");
+                    }
+                }
+
+                var value = methodInfo.Invoke(instance, paramInfoBox.Args);
+                if (methodInfo.ReturnType != typeof(void))
+                {
+                    state.Stack.Push(value);
+                }
+
+                paramInfoBox.WriteBack(state, instructions);
+            }),
+
+            new(typeof(Interpreter.DynamicMethodInfo), static (state, instructions, info) =>
+            {
+                var dynamicMethodInfo = (Interpreter.DynamicMethodInfo)info;
+                var hasReturn = state.Interpreter.InvokeDynamicMethod(dynamicMethodInfo.Name, out var returnValue, null, state);
+                if (hasReturn)
+                {
+                    state.Stack.Push(returnValue);
+                }
+            }),
+
+            new(typeof(ConstructorInfo), static (state, instructions, info) =>
+            {
+                var constructorInfo = (ConstructorInfo)info;
+                if (constructorInfo.IsStatic)
+                {
+                    throw new InvalidProgramException("cannot call a static constructor");
+                }
+
+                var parameters = constructorInfo.GetParameters();
+                var paramInfoBox = new ParameterInfoBox(parameters, state, instructions);
+                var value = constructorInfo.Invoke(paramInfoBox.Args);
+                state.Stack.Push(value);
+                paramInfoBox.WriteBack(state, instructions);
+            })
+        ];
+
+        public static readonly List<KeyValuePair<Type, RefHandler>> RefHandlers =
+        [
+            new(typeof(Interpreter.VariableInfo), new RefHandler(
+                static (state, instructions, original) =>
                 {
                     var variable = (Interpreter.VariableInfo)original;
                     return variable.GetValue(state);
                 },
-                (state, original, newValue) =>
+                static (state, instructions, original, newValue) =>
                 {
                     var variable = (Interpreter.VariableInfo)original;
                     variable.SetValue(state, newValue);
-                }
-            )
-        };
+                }))
+        ];
 
         internal class ParameterInfoBox
         {
             internal object?[] Args;
             internal object?[] Orig;
             internal bool[] ByRef;
-            public ParameterInfoBox(ParameterInfo[] parameters, Interpreter.MethodState state)
+
+            public ParameterInfoBox(
+                ParameterInfo[] parameters,
+                Interpreter.MethodState state,
+                List<BaseInstruction> instructions)
             {
                 Args = new object?[parameters.Length];
                 Orig = new object?[parameters.Length];
                 ByRef = new bool[parameters.Length];
+
                 for (int i = parameters.Length - 1; i >= 0; i--)
                 {
                     if (!state.Stack.TryPop(out var arg))
                     {
                         throw new InvalidProgramException("stack imbalance, failed to obtain method args");
                     }
+
+                    var original = arg;
                     var parameter = parameters[i];
                     ByRef[i] = parameter.ParameterType.IsByRef || parameter.IsOut || parameter.IsIn;
-                    if (arg?.GetType() is { } type)
+
+                    if (arg is not null && TryReadRef(state, instructions, arg, out var readValue))
                     {
-                        foreach (var kv in RefHandlers)
-                        {
-                            if (type.IsAssignableTo(kv.Key))
-                            {
-                                var refRead = kv.Value.Read(state, arg);
-                                arg = refRead;
-                                return;
-                            }
-                        }
+                        arg = readValue;
                     }
-                    Orig[i] = Args[i] = arg;
+
+                    Orig[i] = original;
+                    Args[i] = arg;
                 }
             }
 
-            public void WriteBack(Interpreter.MethodState state)
+            public void WriteBack(Interpreter.MethodState state, List<BaseInstruction> instructions)
             {
                 for (int i = 0; i < Args.Length; i++)
                 {
-                    if (ByRef[i])
+                    if (!ByRef[i])
                     {
-                        var arg = Args[i];
-                        var orig = Orig[i];
-                        if (orig?.GetType() is { } type)
-                        {
-                            foreach (var kv in RefHandlers)
-                            {
-                                if (type.IsAssignableTo(kv.Key))
-                                {
-                                    kv.Value.Write(state, orig, arg);
-                                    break;
-                                }
-                            }
-                        }
+                        continue;
+                    }
+
+                    var arg = Args[i];
+                    var orig = Orig[i];
+
+                    if (orig is not null && TryWriteRef(state, instructions, orig, arg))
+                    {
+                        continue;
                     }
                 }
+
                 Args = null!;
                 Orig = null!;
                 ByRef = null!;
             }
         }
+
+        private static bool TryInvokeRegistered(
+            Interpreter.MethodState state,
+            List<BaseInstruction> instructions,
+            object info)
+        {
+            var runtimeType = info.GetType();
+
+            foreach (var kv in InvokeHandlers)
+            {
+                if (runtimeType.IsAssignableTo(kv.Key))
+                {
+                    kv.Value(state, instructions, info);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool TryReadRef(
+            Interpreter.MethodState state,
+            List<BaseInstruction> instructions,
+            object original,
+            out object? value)
+        {
+            var runtimeType = original.GetType();
+
+            foreach (var kv in RefHandlers)
+            {
+                if (runtimeType.IsAssignableTo(kv.Key))
+                {
+                    value = kv.Value.Read(state, instructions, original);
+                    return true;
+                }
+            }
+
+            value = null;
+            return false;
+        }
+
+        private static bool TryWriteRef(
+            Interpreter.MethodState state,
+            List<BaseInstruction> instructions,
+            object original,
+            object? value)
+        {
+            var runtimeType = original.GetType();
+
+            foreach (var kv in RefHandlers)
+            {
+                if (runtimeType.IsAssignableTo(kv.Key))
+                {
+                    kv.Value.Write(state, instructions, original, value);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public override void Execute(Interpreter.MethodState state, List<BaseInstruction> instructions)
         {
             if (!state.Stack.TryPop(out var infoBoxed))
             {
                 throw new InvalidProgramException("stack imbalance, failed to obtain method info to invoke");
             }
+
             if (infoBoxed is null)
             {
                 throw new InvalidProgramException("type mismatch, method info was null");
             }
-            switch (infoBoxed)
+
+            if (!TryInvokeRegistered(state, instructions, infoBoxed))
             {
-                case MethodInfo methodInfo:
-                    {
-                        var parameters = methodInfo.GetParameters();
-                        var paramInfoBox = new ParameterInfoBox(parameters, state);
-                        object? instance = null;
-                        if (!methodInfo.IsStatic)
-                        {
-                            if (!state.Stack.TryPop(out instance))
-                            {
-                                throw new InvalidProgramException("stack imbalance, failed to obtain method instance");
-                            }
-                        }
-                        var value = methodInfo.Invoke(instance, paramInfoBox.Args);
-                        if (methodInfo.ReturnType != typeof(void))
-                        {
-                            state.Stack.Push(value);
-                        }
-                        paramInfoBox.WriteBack(state);
-                    }
-                    break;
-                case Interpreter.DynamicMethodInfo dynamicMethodInfo:
-                    {
-                        var hasReturn = state.Interpreter.InvokeDynamicMethod(dynamicMethodInfo.Name, out var returnValue, null, state);
-                        if (hasReturn)
-                        {
-                            state.Stack.Push(returnValue);
-                        }
-                    }
-                    break;
-                case ConstructorInfo constructorInfo:
-                    {
-                        if (constructorInfo.IsStatic)
-                        {
-                            throw new InvalidProgramException("cannot call a static constructor");
-                        }
-                        var parameters = constructorInfo.GetParameters();
-                        var paramInfoBox = new ParameterInfoBox(parameters, state);
-                        var value = constructorInfo.Invoke(paramInfoBox.Args);
-                        state.Stack.Push(value);
-                        paramInfoBox.WriteBack(state);
-                    }
-                    break;
-                default:
-                    {
-                        var type = infoBoxed.GetType();
-                        foreach (var kv in CustomHandlers)
-                        {
-                            if (type.IsAssignableTo(kv.Key))
-                            {
-                                var value = kv.Value(state, instructions, infoBoxed);
-                                state.Stack.Push(value);
-                                return;
-                            }
-                        }
-                        throw new InvalidProgramException($"type mismatch, object of type {type.FullName} is not readable");
-                    }
+                throw new InvalidProgramException(
+                    $"type mismatch, object of type {infoBoxed.GetType().FullName} is not invokable");
             }
         }
     }
