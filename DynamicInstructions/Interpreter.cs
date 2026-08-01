@@ -135,10 +135,10 @@ namespace DynamicInstructions
             public readonly ReadOnlyCollection<BaseInstruction> Body;
             public readonly int ArgCount;
             internal readonly List<BaseInstruction> _body;
-            public DynamicMethodDefinition(List<BaseInstruction> body, int argCount)
+            public DynamicMethodDefinition(IEnumerable<BaseInstruction> body, int argCount)
             {
                 _body = [.. body];
-                Body = new ReadOnlyCollection<BaseInstruction>(body);
+                Body = new ReadOnlyCollection<BaseInstruction>(_body);
                 ArgCount = argCount;
                 if (argCount < 0)
                 {
@@ -158,7 +158,7 @@ namespace DynamicInstructions
         internal readonly Dictionary<string, DynamicMethodDefinition> _dynamicMethods = [];
         public ReadOnlyDictionary<string, DynamicMethodDefinition> DynamicMethods => new(_dynamicMethods);
 
-        public bool RegisterDynamicMethod(string methodName, List<BaseInstruction> instructions, int argCount = 0)
+        public bool RegisterDynamicMethod(string methodName, IEnumerable<BaseInstruction> instructions, int argCount = 0)
         {
             return _dynamicMethods.TryAdd(methodName, new DynamicMethodDefinition(instructions, argCount));
         }
