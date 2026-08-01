@@ -27,22 +27,12 @@ namespace DynamicInstructions.Instructions.Complex
             {
                 throw new InvalidProgramException("Stack imbalance, failed to evaluate conditional branch");
             }
-            if (value is bool flag)
+            return value.IsTrue() switch
             {
-                return flag ? TruePath : null;
-            }
-            try
-            {
-                if (value is null || (value.GetType().IsValueType && (dynamic)value == 0))
-                {
-                    return null;
-                }
-                return TruePath;
-            }
-            catch (Exception)
-            {
-                throw new InvalidProgramException("Unsupported type in conditional branch");
-            }
+                true => TruePath,
+                false => null,
+                _ => throw new InvalidProgramException("type mismatch in conditional branch"),
+            };
         }
 
         public ConditionalInstruction(BaseInstruction truePath)

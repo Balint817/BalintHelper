@@ -5,6 +5,25 @@ namespace DynamicInstructions.Instructions
 {
     public static class InstructionUtils
     {
+        public static bool? IsTrue(this object? value)
+        {
+            if (value is bool flag)
+            {
+                return flag;
+            }
+            try
+            {
+                if (value is null || (value.GetType().IsValueType && (dynamic)value == 0))
+                {
+                    return false;
+                }
+                return true;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
         public static int[] GetArrayIntsFromStack(Interpreter.MethodState state, int dimensions)
         {
             return GetArrayIntsFromStack(state, dimensions, out _);
