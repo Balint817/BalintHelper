@@ -1,4 +1,5 @@
 ﻿using System.Reflection;
+using System.Text;
 
 namespace DynamicInstructions.Instructions
 {
@@ -124,6 +125,96 @@ namespace DynamicInstructions.Instructions
                     throw new InvalidProgramException("expected integer for array reference");
                 }
             }
+        }
+        public static string Unescape(this string input)
+        {
+            var sb = new StringBuilder(input.Length);
+            int i = 0;
+
+            while (i < input.Length)
+            {
+                char c = input[i];
+
+                if (c != '\\')
+                {
+                    sb.Append(c);
+                    i++;
+                    continue;
+                }
+
+                i++;
+                if (i >= input.Length)
+                {
+                    // Trailing backslash
+                    sb.Append('\\');
+                    break;
+                }
+
+                char next = input[i];
+                switch (next)
+                {
+                    case '\\': sb.Append('\\'); i++; break;
+                    case '0': sb.Append('\0'); i++; break;
+                    case 'a': sb.Append('\a'); i++; break;
+                    case 'b': sb.Append('\b'); i++; break;
+                    case 'f': sb.Append('\f'); i++; break;
+                    case 'n': sb.Append('\n'); i++; break;
+                    case 'r': sb.Append('\r'); i++; break;
+                    case 't': sb.Append('\t'); i++; break;
+                    case 'v': sb.Append('\v'); i++; break;
+
+                    case 'u': // \uXXXX exactly 4 hex digits
+                        {
+                            i++;
+                            string hex = ReadHex(input, ref i, 4, 4);
+                            sb.Append((char)Convert.ToInt32(hex, 16));
+                            break;
+                        }
+
+                    case 'U': // \UXXXXXXXX exactly 8 hex digits
+                        {
+                            i++;
+                            string hex = ReadHex(input, ref i, 8, 8);
+                            int codePoint = Convert.ToInt32(hex, 16);
+                            sb.Append(char.ConvertFromUtf32(codePoint));
+                            break;
+                        }
+
+                    case 'x': // \xH[H][H][H] greedy
+                        {
+                            i++;
+                            string hex = ReadHex(input, ref i, 1, 4);
+                            sb.Append((char)Convert.ToInt32(hex, 16));
+                            break;
+                        }
+
+                    default:
+                        // keep instead of erroring
+                        sb.Append('\\');
+                        sb.Append(next);
+                        i++;
+                        break;
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static string ReadHex(string input, ref int i, int minDigits, int maxDigits)
+        {
+            int start = i;
+            int count = 0;
+            while (count < maxDigits && i < input.Length && Uri.IsHexDigit(input[i]))
+            {
+                i++;
+                count++;
+            }
+
+            if (count < minDigits)
+                throw new FormatException(
+                    $"Expected at least {minDigits} hex digit(s) at position {start}, found {count}.");
+
+            return input.Substring(start, count);
         }
     }
 }
