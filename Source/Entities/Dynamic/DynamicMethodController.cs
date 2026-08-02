@@ -80,6 +80,12 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         private Type? _returnInstructionType;
 
+        public override void Awake(Scene scene)
+        {
+            base.Awake(scene);
+            LoadAll();
+        }
+
         public void LoadAll()
         {
             var instructionTriggers = Scene.Tracker.GetEntities<BaseInstructionTrigger>()
