@@ -11,12 +11,9 @@ namespace Celeste.Mod.BalintHelper.Record
     {
         public readonly HashSet<int> IDs = [];
         public readonly HashSet<Type> Types = [];
-        public readonly Level Level;
         public bool Any => IDs.Count > 0 || Types.Count > 0;
-        public EntityInfo(string types, IEnumerable<Assembly> assemblies, Level level)
+        public EntityInfo(string types, IEnumerable<Assembly> assemblies)
         {
-            Level = level;
-            ArgumentNullException.ThrowIfNull(level, nameof(level));
             ArgumentNullException.ThrowIfNull(types, nameof(types));
             var split = types.Split(';').ToList();
             while (split.Count > 0)
