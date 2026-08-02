@@ -1,6 +1,7 @@
 ﻿using Celeste.Mod.Entities;
 using DynamicInstructions.Instructions;
 using Microsoft.Xna.Framework;
+using Monocle;
 using System;
 using System.Globalization;
 
@@ -33,6 +34,8 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
             NativeUInt,
             Char,
             String,
+            Vector2,
+            Color,
             Null
         }
         public override object? ParseConstantValue(EntityData data)
@@ -172,6 +175,28 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                 case ConstantType.String:
                     {
                         return value.Unescape();
+                    }
+                case ConstantType.Vector2:
+                    {
+                        var parts = value.Split(';');
+                        if (parts.Length != 2
+                            || !float.TryParse(parts[0].Trim(), CultureInfo.InvariantCulture, out var x)
+                            || !float.TryParse(parts[1].Trim(), CultureInfo.InvariantCulture, out var y))
+                        {
+                            throw new ArgumentException("invalid vector2 value, expected format \"x;y\"", nameof(data));
+                        }
+                        return new Vector2(x, y);
+                    }
+                case ConstantType.Color:
+                    {
+                        try
+                        {
+                            return Calc.HexToColor(value.Trim());
+                        }
+                        catch (Exception)
+                        {
+                            throw new ArgumentException("invalid color value, expected a hex color string", nameof(data));
+                        }
                     }
                 case ConstantType.Null:
                     return null;

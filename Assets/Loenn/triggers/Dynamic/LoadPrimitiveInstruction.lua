@@ -31,6 +31,8 @@ local enumValues = {
             "NativeUInt",
             "Char",
             "String",
+            "Vector2",
+            "Color",
             "Null"
 }
 
@@ -41,8 +43,8 @@ trigger.fieldInformation = {
         description = "The type of the constant."
     },
 	value = {
-	    fieldType = "string",
-		description = "The actual value to load."
+		fieldType = "string",
+		description = "The actual value to load. For Vector2, use format 'x;y'. For Color, use a hex color string."
 	}
 }
 
