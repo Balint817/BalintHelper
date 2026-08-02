@@ -19,7 +19,7 @@ trigger.fieldInformation = {
     flag = {
         fieldType = "string",
         description = "Optional session flag check. Use flagName or !flagName. Empty means always run."
-    }
+    },
     global = {
         fieldType = "boolean",
         description = "If true, the trigger will run globally instead of while the player is inside."

@@ -20,7 +20,7 @@ trigger.fieldInformation = {
     methodName = {
         fieldType = "string",
         description = "The name of the dynamic method."
-    }
+    },
     argCount = {
         fieldType = "number",
         description = "Number of arguments the method expects."
