@@ -8,8 +8,9 @@ using System.Linq;
 
 namespace Celeste.Mod.BalintHelper.Utils.Dynamic
 {
-    public class EntityFilterHandler : IReadHandler
+    public class EntityFilterHandler : IReadHandler, IInvokeHandler
     {
+        public void Invoke(Interpreter.MethodState state, List<BaseInstruction> instructions, object infoBoxed) => Read(state, instructions, infoBoxed);
         public object? Read(Interpreter.MethodState state, List<BaseInstruction> instructions, object infoBoxed)
         {
             if (infoBoxed is not EntityInfo info)
