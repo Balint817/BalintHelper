@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/TryCatchFinallyInstructionTrigger/TryCatchFinallyInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Try/Catch/Finally)",

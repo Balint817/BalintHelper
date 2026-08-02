@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/TypedInstructionTrigger/ReadPointerInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Read Pointer)",

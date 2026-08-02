@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/BaseInstructionTrigger/ArrayGetLengthInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Get Array Rank Length)",

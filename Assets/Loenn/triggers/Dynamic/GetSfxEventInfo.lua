@@ -2,6 +2,8 @@ local trigger = {}
 
 trigger.name = "BalintHelper/GetSfxEventInfoTrigger/LoadConstantInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
 	{
 		name = "Instruction (Get Sfx Event Info)",

@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/TypedInstructionTrigger/IsTypeInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Is Object Of Type)",

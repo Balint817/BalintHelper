@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/BaseInstructionTrigger/StructCopyInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Copy Struct)",

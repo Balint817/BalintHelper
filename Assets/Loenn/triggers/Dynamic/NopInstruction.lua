@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/BaseInstructionTrigger/NopInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Noop)",

@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/GetSceneTrigger/NopInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Get Scene)",

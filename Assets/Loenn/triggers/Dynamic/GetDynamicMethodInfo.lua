@@ -2,6 +2,8 @@ local trigger = {}
 
 trigger.name = "BalintHelper/GetDynamicMethodInfoTrigger/LoadConstantInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
 	{
 		name = "Instruction (Get Dynamic Method Info)",

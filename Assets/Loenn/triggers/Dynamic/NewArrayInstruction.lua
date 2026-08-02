@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/NewArrayInstructionTrigger/NewArrayInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (New Array)",

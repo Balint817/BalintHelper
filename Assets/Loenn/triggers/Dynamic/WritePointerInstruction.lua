@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/TypedInstructionTrigger/WritePointerInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Write Pointer)",

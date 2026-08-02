@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/CastInstructionTrigger/CastInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Cast)",

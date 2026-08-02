@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/GetVariableInfoTrigger/LoadConstantInstruction"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Get Variable Info)",

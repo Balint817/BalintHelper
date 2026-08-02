@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/CompareInstructionTrigger"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "Instruction (Comparison)",
