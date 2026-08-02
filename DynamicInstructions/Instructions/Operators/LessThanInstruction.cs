@@ -2,7 +2,7 @@
 
 namespace DynamicInstructions.Instructions.Operators
 {
-    public class LessThan : BaseDynamicBinaryOperationInstruction
+    public class LessThanInstruction : BaseDynamicBinaryOperationInstruction
     {
         override public string OperationName => "x<y";
         public override object? ExecuteOperation(object? left, object? right)

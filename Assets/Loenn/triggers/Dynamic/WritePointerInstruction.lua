@@ -1,0 +1,27 @@
+﻿local trigger = {}
+
+trigger.name = "BalintHelper/TypedInstructionTrigger/WritePointerInstruction"
+
+trigger.placements = {
+    {
+        name = "Instruction (Write Pointer)",
+        data = {
+            width = 16,
+            height = 16,
+			type = "",
+        }
+    }
+}
+
+trigger.fieldInformation = {
+    type = {
+        fieldType = "string",
+        description = "The type to write the pointer as."
+    }
+}
+
+trigger.fieldOrder = {
+    "x", "y", "width", "height", "type"
+}
+
+return trigger

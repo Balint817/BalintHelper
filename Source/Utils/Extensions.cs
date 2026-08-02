@@ -1,12 +1,24 @@
 ﻿using Celeste.Mod.BalintHelper.Components;
 using Monocle;
 using MonoMod.Utils;
+using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 
 namespace Celeste.Mod.BalintHelper.Utils
 {
     internal static class Extensions
     {
+        public static int TypeDepth(this Type t)
+        {
+            int depth = 0;
+            while (t.BaseType != null)
+            {
+                depth++;
+                t = t.BaseType;
+            }
+            return depth;
+        }
         public static bool IsInLookout(this Scene scene)
         {
             return scene?.Entities.FindFirst<Lookout.Hud>() != null;

@@ -52,7 +52,7 @@ namespace DynamicInstructions.Instructions
             return type;
         }
 
-        public static IReadOnlyList<Type> ParseTypeList(string input, IEnumerable<Assembly> searchAssemblies)
+        public static IReadOnlyList<Type?> ParseTypeList(string input, IEnumerable<Assembly> searchAssemblies)
         {
             if (string.IsNullOrWhiteSpace(input))
                 return [];

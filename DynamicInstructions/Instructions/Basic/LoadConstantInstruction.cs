@@ -2,22 +2,9 @@
 
 namespace DynamicInstructions.Instructions.Basic
 {
-    // LoadPrimitiveTrigger
-    // SizeofTrigger
-    // DefaultTrigger
-    // TypeofTrigger
-    // GetFieldInfo
-    // GetPropertyInfo
-    // GetMethodInfo
-    // GetConstructorInfo
-    // GetVariableInfo
-    // GetDynamicMethodInfo
-
     // TODO:
     // GetEventInfo
-    // GetFlagInfo
-    // GetCounterInfo
-    // GetSliderInfo
+	// GetChannel => channelutils.cs => Dictionary<string, ChannelVal> state = new (); or _getVal(string ch) might be better
     public class LoadConstantInstruction : BaseInstruction
     {
         public readonly object? Value;

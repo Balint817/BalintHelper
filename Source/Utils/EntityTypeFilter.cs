@@ -2,6 +2,7 @@
 using Monocle;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace Celeste.Mod.BalintHelper.Utils
@@ -31,7 +32,7 @@ namespace Celeste.Mod.BalintHelper.Utils
                     continue;
                 }
 
-                if (int.TryParse(token, out int entityId))
+                if (int.TryParse(token, CultureInfo.InvariantCulture, out int entityId))
                 {
                     entityIds.Add(entityId);
                 }

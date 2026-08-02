@@ -1,6 +1,7 @@
 using Celeste.Mod.BalintHelper.Components;
 using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.BalintHelper.Triggers;
+using Celeste.Mod.BalintHelper.Utils.Dynamic;
 using Celeste.Mod.Registry;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
@@ -35,6 +36,11 @@ namespace Celeste.Mod.BalintHelper
             On.Celeste.Player.Pickup += Player_Pickup;
 
             On.Celeste.Solid.GetPlayerRider += Solid_GetPlayerRider;
+
+            foreach (var item in CustomInstructionValueHandler.AllInstances)
+            {
+                item.Load();
+            }
         }
 
         public override void Unload()
@@ -50,6 +56,11 @@ namespace Celeste.Mod.BalintHelper
             On.Celeste.Player.Pickup -= Player_Pickup;
 
             On.Celeste.Solid.GetPlayerRider -= Solid_GetPlayerRider;
+
+            foreach (var item in CustomInstructionValueHandler.AllInstances)
+            {
+                item.Unload();
+            }
 
             Instance = null!;
         }

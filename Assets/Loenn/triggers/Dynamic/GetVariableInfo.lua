@@ -1,0 +1,39 @@
+﻿local trigger = {}
+
+trigger.name = "BalintHelper/GetVariableInfoTrigger/LoadConstantInstruction"
+
+trigger.placements = {
+    {
+        name = "Instruction (Get Variable Info)",
+        data = {
+            width = 16,
+            height = 16,
+			type = "Local",
+			name = "",
+        }
+    }
+}
+
+local enumValues = {
+"Local",
+"Global",
+"Argument"
+}
+
+trigger.fieldInformation = {
+    type = {
+        options = enumValues,
+        editable = false,
+        description = "The type of variable to fetch"
+    },
+	name = {
+	    fieldType = "string",
+		description = "The actual name of the variable"
+	}
+}
+
+trigger.fieldOrder = {
+    "x", "y", "width", "height", "type", "name"
+}
+
+return trigger

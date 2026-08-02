@@ -2,6 +2,7 @@
 using DynamicInstructions.Instructions.Pointers;
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using System.Runtime.InteropServices;
 
 namespace DynamicInstructions
@@ -28,7 +29,7 @@ namespace DynamicInstructions
                 private init
                 {
                     _name = value;
-                    if (int.TryParse(_name, out var n) && n >= 0)
+                    if (int.TryParse(_name, CultureInfo.InvariantCulture, out var n) && n >= 0)
                     {
                         Index = n;
                     }
