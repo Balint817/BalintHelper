@@ -1,4 +1,5 @@
 ﻿using DynamicInstructions.Instructions.Abstract;
+using System.Collections;
 using System.Reflection;
 
 namespace DynamicInstructions.Instructions.Write
@@ -55,6 +56,59 @@ namespace DynamicInstructions.Instructions.Write
                 }
 
                 setMethod.Invoke(instance, args);
+            }),
+
+            new(typeof(IList), static (state, instructions, info) =>
+            {
+                var list = (IList)info;
+
+                if (!state.Stack.TryPop(out var value))
+                {
+                    throw new InvalidProgramException(
+                        "stack imbalance, failed to obtain value for list write");
+                }
+
+                if (!state.Stack.TryPop(out var indexBoxed))
+                {
+                    throw new InvalidProgramException(
+                        "stack imbalance, failed to obtain index for list write");
+                }
+
+                int index;
+                try
+                {
+                    index = Convert.ToInt32(indexBoxed);
+                }
+                catch (Exception)
+                {
+                    throw new InvalidProgramException("type mismatch, failed to convert list index to int");
+                }
+
+                list[index] = value;
+            }),
+
+            new(typeof(IDictionary), static (state, instructions, info) =>
+            {
+                var dictionary = (IDictionary)info;
+
+                if (!state.Stack.TryPop(out var value))
+                {
+                    throw new InvalidProgramException(
+                        "stack imbalance, failed to obtain value for dictionary write");
+                }
+
+                if (!state.Stack.TryPop(out var key))
+                {
+                    throw new InvalidProgramException(
+                        "stack imbalance, failed to obtain key for dictionary write");
+                }
+
+                if (key is null)
+                {
+                    throw new InvalidProgramException("type mismatch, dictionary key was null");
+                }
+
+                dictionary[key] = value;
             })
         };
 
