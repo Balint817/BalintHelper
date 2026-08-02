@@ -2,6 +2,8 @@
 
 trigger.name = "BalintHelper/DefineMethodTrigger"
 
+trigger.nodeLimits = {1, -1}
+
 trigger.placements = {
     {
         name = "main",
