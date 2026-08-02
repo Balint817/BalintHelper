@@ -81,6 +81,24 @@ namespace DynamicInstructions.Instructions.Invoke
                 var value = constructorInfo.Invoke(paramInfoBox.Args);
                 state.Stack.Push(value);
                 paramInfoBox.WriteBack(state, instructions);
+            }),
+
+            new(typeof(Delegate), static (state, instructions, info) =>
+            {
+                var del = (Delegate)info;
+                var invokeMethod = del.GetType().GetMethod("Invoke")
+                    ?? throw new InvalidProgramException("type mismatch, delegate has no Invoke method");
+
+                var parameters = invokeMethod.GetParameters();
+                var paramInfoBox = new ParameterInfoBox(parameters, state, instructions);
+
+                var value = del.DynamicInvoke(paramInfoBox.Args);
+                if (invokeMethod.ReturnType != typeof(void))
+                {
+                    state.Stack.Push(value);
+                }
+
+                paramInfoBox.WriteBack(state, instructions);
             })
         ];
 
