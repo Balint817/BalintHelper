@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/SpawnEntityTrigger"
 
 trigger.placements = {
     {
-        name = "Spawn Entity Trigger",
+        name = "main",
         data = {
             width = 16,
             height = 16,

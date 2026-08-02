@@ -10,7 +10,7 @@ local texture = "scenery/debris"
 
 silentDebris.placements = {
     {
-        name = "Silent Floating Debris",
+        name = "main",
         data = {
             width = 16,
             height = 16

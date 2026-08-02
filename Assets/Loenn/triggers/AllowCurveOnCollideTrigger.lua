@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/AllowCurveOnCollideTrigger"
 
 trigger.placements = {
     {
-        name = "Allow Curve On Collide Trigger",
+        name = "main",
         data = {
             width = 16,
             height = 16,

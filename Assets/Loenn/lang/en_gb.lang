@@ -1,0 +1,127 @@
+-- triggers
+
+triggers.BalintHelper/CameraViewTrigger.placements.name.main=Camera View Trigger
+triggers.BalintHelper/DashCooldownSetTrigger.placements.name.main=Set Dash Cooldown Trigger
+triggers.BalintHelper/DefineMethodTrigger.placements.name.main=Define Method Trigger
+triggers.BalintHelper/EntityAggregateCountTrigger.placements.name.main=Entity Aggregate Count Trigger
+triggers.BalintHelper/HoldablePriorityTrigger.placements.name.main=Holdable Priority Trigger
+triggers.BalintHelper/HoldableTimerSetTrigger.placements.name.main=Holdable Grab Timer Set Trigger
+triggers.BalintHelper/InvokeMethodTrigger.placements.name.main=Invoke Method Trigger
+triggers.BalintHelper/SpawnEntityTrigger.placements.name.main=Spawn Entity Trigger
+triggers.BalintHelper/ThrowTimerSetTrigger.placements.name.main=Throw Timer Set Trigger
+triggers.BalintHelper/AllowCurveOnCollideTrigger.placements.name.main=Allow Curve On Collide Trigger
+
+triggers.BalintHelper/CameraViewTrigger.placements.description.main=A trigger that fires only when in view of the camera.
+triggers.BalintHelper/DashCooldownSetTrigger.placements.description.main=A trigger that sets the player's dash cooldown.
+triggers.BalintHelper/DefineMethodTrigger.placements.description.main=A trigger that serves as the entrypoint
+triggers.BalintHelper/EntityAggregateCountTrigger.placements.description.main=Entity Aggregate Count Trigger
+triggers.BalintHelper/HoldablePriorityTrigger.placements.description.main=Holdable Priority Trigger
+triggers.BalintHelper/HoldableTimerSetTrigger.placements.description.main=Holdable Grab Timer Set Trigger
+triggers.BalintHelper/InvokeMethodTrigger.placements.description.main=Invoke Method Trigger
+triggers.BalintHelper/SpawnEntityTrigger.placements.description.main=Spawn Entity Trigger
+triggers.BalintHelper/ThrowTimerSetTrigger.placements.description.main=Throw Timer Set Trigger
+triggers.BalintHelper/AllowCurveOnCollideTrigger.placements.description.main=Allow Curve On Collide Trigger
+
+-- entities
+
+entities.BalintHelper/CustomPedestal.placements.name.main=Custom Theo Crystal Pedestal
+entities.BalintHelper/CustomTheoGate.placements.name.any=Custom Temple Gate (Any)
+entities.BalintHelper/CustomTheoGate.placements.name.all=Custom Temple Gate (All)
+entities.BalintHelper/CustomTheoGate.placements.name.each=Custom Temple Gate (Each)
+entities.BalintHelper/CustomTheoGate.placements.name.none=Custom Temple Gate (None)
+entities.BalintHelper/SilentFloatingDebris.placements.name.main=Silent Floating Debris
+
+entities.BalintHelper/CustomPedestal.placements.description.main=Custom Theo Crystal Pedestal
+entities.BalintHelper/CustomTheoGate.placements.description.any=Custom Temple Gate (Any)
+entities.BalintHelper/CustomTheoGate.placements.description.all=Custom Temple Gate (All)
+entities.BalintHelper/CustomTheoGate.placements.description.each=Custom Temple Gate (Each)
+entities.BalintHelper/CustomTheoGate.placements.description.none=Custom Temple Gate (None)
+entities.BalintHelper/SilentFloatingDebris.placements.description.main=Silent Floating Debris
+
+-- instruction triggers
+
+triggers.BalintHelper/BaseInstructionTrigger/AllocInstruction.placements.name.main=Instruction (Allocate Memory)
+triggers.BalintHelper/ArithmeticInstructionTrigger.placements.name.main=Instruction (Arithmetic)
+triggers.BalintHelper/BaseInstructionTrigger/ArrayGetLengthInstruction.placements.name.main=Instruction (Get Array Rank Length)
+triggers.BalintHelper/BaseInstructionTrigger/ArrayRankInstruction.placements.name.main=Instruction (Get Array Rank)
+triggers.BalintHelper/BaseInstructionTrigger/ArrayVectorLengthInstruction.placements.name.main=Instruction (Get Vector Length)
+triggers.BalintHelper/CastInstructionTrigger/CastInstruction.placements.name.main=Instruction (Cast)
+triggers.BalintHelper/CompareInstructionTrigger.placements.name.main=Instruction (Comparison)
+triggers.BalintHelper/ConditionalInstructionTrigger/ConditionalInstruction.placements.name.main=Instruction (Conditional)
+triggers.BalintHelper/BaseInstructionTrigger/DupInstruction.placements.name.main=Instruction (Duplicate)
+triggers.BalintHelper/GetComponentTrigger/NopInstruction.placements.name.main=Instruction (Get Component)
+triggers.BalintHelper/GetConstructorInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Constructor Info)
+triggers.BalintHelper/GetDynamicMethodInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Dynamic Method Info)
+triggers.BalintHelper/GetEntityInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Entity Info)
+triggers.BalintHelper/GetFieldInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Field Info)
+triggers.BalintHelper/GetMethodInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Method Info)
+triggers.BalintHelper/GetPropertyInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Property Info)
+triggers.BalintHelper/GetSceneTrigger/NopInstruction.placements.name.main=Instruction (Get Scene)
+triggers.BalintHelper/GetRandomTrigger/NopInstruction.placements.name.main=Instruction (Get Random)
+triggers.BalintHelper/GetSessionInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Session Info)
+triggers.BalintHelper/GetSfxEventInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Sfx Event Info)
+triggers.BalintHelper/BaseInstructionTrigger/GetTypeInstruction.placements.name.main=Instruction (Get Object Type)
+triggers.BalintHelper/GetVariableInfoTrigger/LoadConstantInstruction.placements.name.main=Instruction (Get Variable Info)
+triggers.BalintHelper/BaseInstructionTrigger/InitVariableInstruction.placements.name.main=Instruction (Init Variable)
+triggers.BalintHelper/BaseInstructionTrigger/InvokeInstruction.placements.name.main=Instruction (Invoke)
+triggers.BalintHelper/BaseInstructionTrigger/IsDefinedInstruction.placements.name.main=Instruction (Is Defined)
+triggers.BalintHelper/TypedInstructionTrigger/IsTypeInstruction.placements.name.main=Instruction (Is Object Of Type)
+triggers.BalintHelper/BaseInstructionTrigger/LoadArrayElementInstruction.placements.name.main=Instruction (Load Array Element)
+triggers.BalintHelper/LoadPrimitiveInstructionTrigger/LoadConstantInstruction.placements.name.main=Instruction (Load Primitive)
+triggers.BalintHelper/NewArrayInstructionTrigger/NewArrayInstruction.placements.name.main=Instruction (New Array)
+triggers.BalintHelper/BaseInstructionTrigger/NopInstruction.placements.name.main=Instruction (Noop)
+triggers.BalintHelper/BaseInstructionTrigger/PopInstruction.placements.name.main=Instruction (Pop)
+triggers.BalintHelper/BaseInstructionTrigger/ReadIndexerInstruction.placements.name.main=Instruction (Read Indexer)
+triggers.BalintHelper/BaseInstructionTrigger/ReadInstruction.placements.name.main=Instruction (Read)
+triggers.BalintHelper/TypedInstructionTrigger/ReadPointerInstruction.placements.name.main=Instruction (Read Pointer)
+triggers.BalintHelper/BaseInstructionTrigger/ReturnInstruction.placements.name.main=Instruction (Return)
+triggers.BalintHelper/BaseInstructionTrigger/StoreArrayElementInstruction.placements.name.main=Instruction (Store Array Element)
+triggers.BalintHelper/BaseInstructionTrigger/StructCopyInstruction.placements.name.main=Instruction (Copy Struct)
+triggers.BalintHelper/TryCatchFinallyInstructionTrigger/TryCatchFinallyInstruction.placements.name.main=Instruction (Try/Catch/Finally)
+triggers.BalintHelper/TypeOfInstructionTrigger/LoadConstantInstruction.placements.name.main=Instruction (Typeof)
+triggers.BalintHelper/BaseInstructionTrigger/WriteIndexerInstruction.placements.name.main=Instruction (Write Indexer)
+triggers.BalintHelper/BaseInstructionTrigger/WriteInstruction.placements.name.main=Instruction (Write)
+triggers.BalintHelper/TypedInstructionTrigger/WritePointerInstruction.placements.name.main=Instruction (Write Pointer)
+
+triggers.BalintHelper/BaseInstructionTrigger/AllocInstruction.placements.description.main=Instruction (Allocate Memory)
+triggers.BalintHelper/ArithmeticInstructionTrigger.placements.description.main=Instruction (Arithmetic)
+triggers.BalintHelper/BaseInstructionTrigger/ArrayGetLengthInstruction.placements.description.main=Instruction (Get Array Rank Length)
+triggers.BalintHelper/BaseInstructionTrigger/ArrayRankInstruction.placements.description.main=Instruction (Get Array Rank)
+triggers.BalintHelper/BaseInstructionTrigger/ArrayVectorLengthInstruction.placements.description.main=Instruction (Get Vector Length)
+triggers.BalintHelper/CastInstructionTrigger/CastInstruction.placements.description.main=Instruction (Cast)
+triggers.BalintHelper/CompareInstructionTrigger.placements.description.main=Instruction (Comparison)
+triggers.BalintHelper/ConditionalInstructionTrigger/ConditionalInstruction.placements.description.main=Instruction (Conditional)
+triggers.BalintHelper/BaseInstructionTrigger/DupInstruction.placements.description.main=Instruction (Duplicate)
+triggers.BalintHelper/GetComponentTrigger/NopInstruction.placements.description.main=Instruction (Get Component)
+triggers.BalintHelper/GetConstructorInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Constructor Info)
+triggers.BalintHelper/GetDynamicMethodInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Dynamic Method Info)
+triggers.BalintHelper/GetEntityInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Entity Info)
+triggers.BalintHelper/GetFieldInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Field Info)
+triggers.BalintHelper/GetMethodInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Method Info)
+triggers.BalintHelper/GetPropertyInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Property Info)
+triggers.BalintHelper/GetSceneTrigger/NopInstruction.placements.description.main=Instruction (Get Scene)
+triggers.BalintHelper/GetRandomTrigger/NopInstruction.placements.description.main=Instruction (Get Random)
+triggers.BalintHelper/GetSessionInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Session Info)
+triggers.BalintHelper/GetSfxEventInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Sfx Event Info)
+triggers.BalintHelper/BaseInstructionTrigger/GetTypeInstruction.placements.description.main=Instruction (Get Object Type)
+triggers.BalintHelper/GetVariableInfoTrigger/LoadConstantInstruction.placements.description.main=Instruction (Get Variable Info)
+triggers.BalintHelper/BaseInstructionTrigger/InitVariableInstruction.placements.description.main=Instruction (Init Variable)
+triggers.BalintHelper/BaseInstructionTrigger/InvokeInstruction.placements.description.main=Instruction (Invoke)
+triggers.BalintHelper/BaseInstructionTrigger/IsDefinedInstruction.placements.description.main=Instruction (Is Defined)
+triggers.BalintHelper/TypedInstructionTrigger/IsTypeInstruction.placements.description.main=Instruction (Is Object Of Type)
+triggers.BalintHelper/BaseInstructionTrigger/LoadArrayElementInstruction.placements.description.main=Instruction (Load Array Element)
+triggers.BalintHelper/LoadPrimitiveInstructionTrigger/LoadConstantInstruction.placements.description.main=Instruction (Load Primitive)
+triggers.BalintHelper/NewArrayInstructionTrigger/NewArrayInstruction.placements.description.main=Instruction (New Array)
+triggers.BalintHelper/BaseInstructionTrigger/NopInstruction.placements.description.main=Instruction (Noop)
+triggers.BalintHelper/BaseInstructionTrigger/PopInstruction.placements.description.main=Instruction (Pop)
+triggers.BalintHelper/BaseInstructionTrigger/ReadIndexerInstruction.placements.description.main=Instruction (Read Indexer)
+triggers.BalintHelper/BaseInstructionTrigger/ReadInstruction.placements.description.main=Instruction (Read)
+triggers.BalintHelper/TypedInstructionTrigger/ReadPointerInstruction.placements.description.main=Instruction (Read Pointer)
+triggers.BalintHelper/BaseInstructionTrigger/ReturnInstruction.placements.description.main=Instruction (Return)
+triggers.BalintHelper/BaseInstructionTrigger/StoreArrayElementInstruction.placements.description.main=Instruction (Store Array Element)
+triggers.BalintHelper/BaseInstructionTrigger/StructCopyInstruction.placements.description.main=Instruction (Copy Struct)
+triggers.BalintHelper/TryCatchFinallyInstructionTrigger/TryCatchFinallyInstruction.placements.description.main=Instruction (Try/Catch/Finally)
+triggers.BalintHelper/TypeOfInstructionTrigger/LoadConstantInstruction.placements.description.main=Instruction (Typeof)
+triggers.BalintHelper/BaseInstructionTrigger/WriteIndexerInstruction.placements.description.main=Instruction (Write Indexer)
+triggers.BalintHelper/BaseInstructionTrigger/WriteInstruction.placements.description.main=Instruction (Write)
+triggers.BalintHelper/TypedInstructionTrigger/WritePointerInstruction.placements.description.main=Instruction (Write Pointer)

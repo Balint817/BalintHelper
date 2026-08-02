@@ -11,7 +11,7 @@ customPedestal.justification = {0.5, 1.0}
 
 customPedestal.placements = {
     {
-        name = "Custom Theo Crystal Pedestal",
+        name = "main",
         data = {
             returnDelay            = 2.0,
             brokenDisableDuration  = 5.0,

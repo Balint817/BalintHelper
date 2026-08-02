@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/CameraViewTrigger"
 
 trigger.placements = {
     {
-        name = "Camera View Trigger",
+        name = "main",
         data = {
             width = 16,
             height = 16,

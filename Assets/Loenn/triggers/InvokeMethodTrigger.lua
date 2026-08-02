@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/InvokeMethodTrigger"
 
 trigger.placements = {
 	{
-		name = "Invoke Method Trigger",
+		name = "main",
 		data = {
 			width = 16,
 			height = 16,

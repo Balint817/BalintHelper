@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/EntityAggregateCountTrigger"
 
 trigger.placements = {
     {
-        name = "Entity Aggregate Count Trigger",
+        name = "main",
         data = {
             width = 16,
             height = 16,

@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/DefineMethodTrigger"
 
 trigger.placements = {
     {
-        name = "Define Method Trigger",
+        name = "main",
         data = {
             width = 16,
             height = 16,

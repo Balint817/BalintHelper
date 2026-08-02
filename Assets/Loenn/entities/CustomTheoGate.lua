@@ -11,7 +11,7 @@ customTheoGate.justification = { 0.0, 0.0 }
 
 customTheoGate.placements = {
     {
-        name = "Custom Temple Gate (Any)",
+        name = "any",
         data = {
             height = 48,
             direction = "Down",
@@ -25,7 +25,7 @@ customTheoGate.placements = {
         }
     },
     {
-        name = "Custom Temple Gate (All)",
+        name = "all",
         data = {
             height = 48,
             direction = "Down",
@@ -39,7 +39,7 @@ customTheoGate.placements = {
         }
     },
     {
-        name = "Custom Temple Gate (Each)",
+        name = "each",
         data = {
             height = 48,
             direction = "Down",
@@ -53,7 +53,7 @@ customTheoGate.placements = {
         }
     },
     {
-        name = "Custom Temple Gate (None)",
+        name = "none",
         data = {
             height = 48,
             direction = "Down",

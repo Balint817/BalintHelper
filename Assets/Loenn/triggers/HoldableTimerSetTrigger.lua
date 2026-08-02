@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/HoldableTimerSetTrigger"
 
 trigger.placements = {
     {
-        name = "Holdable Grab Timer Set Trigger",
+        name = "main",
         data = {
             width = 16,
             height = 16,

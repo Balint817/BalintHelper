@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/DashCooldownSetTrigger"
 
 trigger.placements = {
     {
-        name = "Set Dash Cooldown Trigger",
+        name = "main",
         data = {
             width  = 16,
             height = 16,

@@ -4,7 +4,7 @@ trigger.name = "BalintHelper/ThrowTimerSetTrigger"
 
 trigger.placements = {
     {
-        name = "Throw Timer Set Trigger",
+        name = "main",
         data = {
             width = 16,
             height = 16,

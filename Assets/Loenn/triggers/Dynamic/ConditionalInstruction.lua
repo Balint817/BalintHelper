@@ -6,7 +6,7 @@ trigger.nodeLimits = {2, -1}
 
 trigger.placements = {
 	{
-		name = "Instruction (Conditional)",
+		name = "main",
 		data = {
 			width = 16,
 			height = 16,
