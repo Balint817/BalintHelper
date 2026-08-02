@@ -19,6 +19,11 @@ namespace Celeste.Mod.BalintHelper.Record
             while (split.Count > 0)
             {
                 var s = split[^1].Trim();
+                if (s.Length == 0)
+                {
+                    split.RemoveAt(split.Count - 1);
+                    continue;
+                }
                 if (int.TryParse(s, CultureInfo.InvariantCulture, out var id))
                 {
                     IDs.Add(id);
