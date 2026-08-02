@@ -25,11 +25,12 @@ trigger.fieldInformation = {
 	    fieldType = "number",
 		description = "The number of dimensions the array should have (or the array's rank)"
 	}
-	
 }
 
 trigger.fieldOrder = {
     "x", "y", "width", "height", "type"
 }
+
+-- TODO
 
 return trigger

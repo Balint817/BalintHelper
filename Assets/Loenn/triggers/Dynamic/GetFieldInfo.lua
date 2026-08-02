@@ -36,4 +36,6 @@ trigger.fieldOrder = {
 	"x", "y", "width", "height", "className", "fieldName", "fieldType"
 }
 
+-- TODO
+
 return trigger

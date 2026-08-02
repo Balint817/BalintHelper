@@ -41,4 +41,6 @@ trigger.fieldOrder = {
 	"x", "y", "width", "height", "className", "propertyName", "returnType", "indexerTypes"
 }
 
+-- TODO
+
 return trigger
