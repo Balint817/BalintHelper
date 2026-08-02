@@ -17,6 +17,14 @@ namespace DynamicInstructions.Instructions.Complex
         }
         public override void Execute(Interpreter.MethodState state, List<BaseInstruction> instructions)
         {
+            if (!state.Interpreter._dynamicMethods.TryGetValue(TryMethod, out var tryMethod))
+            {
+                throw new InvalidProgramException($"attempted to invoke undefined dynamic method {TryMethod}");
+            }
+            if (tryMethod.ArgCount > state.Stack.Count)
+            {
+                throw new InvalidProgramException($"stack imbalance, failed to invoke dynamic method {TryMethod}");
+            }
             try
             {
                 state.Interpreter.InvokeDynamicMethod(TryMethod, out _, null, state);
