@@ -16,22 +16,22 @@ trigger.placements = {
 }
 
 trigger.fieldInformation = {
-    tryMethodName = {
-        fieldType = "string",
-        description = "The dynamic method's name to execute in the try block"
-    }
-    catchMethodName = {
-        fieldType = "string",
-        description = "The dynamic method's name to execute in the catch block, optional."
-    }
-    finallyMethodName = {
-        fieldType = "string",
-        description = "The dynamic method's name to execute in the finally block, optional."
-    }
+	tryMethodName = {
+		fieldType = "string",
+		description = "The dynamic method's name to execute in the try block"
+	},
+	catchMethodName = {
+		fieldType = "string",
+		description = "The dynamic method's name to execute in the catch block, optional."
+	},
+	finallyMethodName = {
+		fieldType = "string",
+		description = "The dynamic method's name to execute in the finally block, optional."
+	}
 }
 
 trigger.fieldOrder = {
-    "x", "y", "width", "height", "type",
+	"x", "y", "width", "height",
 	"tryMethodName", "catchMethodName", "finallyMethodName"
 }
 

@@ -12,7 +12,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
     {
         public override object? ParseConstantValue(EntityData data)
         {
-            var methodName = data.String("methodName") ?? throw new ArgumentException("no method name was provided", nameof(data));
+            var methodName = data.String("name") ?? throw new ArgumentException("no method name was provided", nameof(data));
             return new Interpreter.DynamicMethodInfo(methodName);
         }
         public GetDynamicMethodInfoTrigger(EntityData data, Vector2 offset) : base(data, offset)
