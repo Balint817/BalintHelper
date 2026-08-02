@@ -1,5 +1,6 @@
 ﻿using Celeste.Mod.Entities;
 using Celeste.Mod.Registry;
+using DynamicInstructions.Instructions;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System;
@@ -104,7 +105,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             if (knownTypes.Count == 0)
             {
                 knownTypes = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(assembly => assembly.GetTypes())
+                    .SelectMany(TypeNameCodec.GetLoadableTypes)
                     .Where(type => type.IsAssignableTo(typeof(Entity)) && type.Name == entityName)
                     .ToHashSet();
             }
@@ -112,7 +113,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             if (knownTypes.Count == 0)
             {
                 knownTypes = AppDomain.CurrentDomain.GetAssemblies()
-                    .SelectMany(assembly => assembly.GetTypes())
+                    .SelectMany(TypeNameCodec.GetLoadableTypes)
                     .Where(type => type.IsAssignableTo(typeof(Entity)) && type.FullName == entityName)
                     .ToHashSet();
             }

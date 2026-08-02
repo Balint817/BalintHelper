@@ -131,7 +131,7 @@ namespace DynamicInstructions.Instructions
             };
         }
 
-        private static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
+        public static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
         {
             try
             {

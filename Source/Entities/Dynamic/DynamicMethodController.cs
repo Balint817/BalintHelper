@@ -1,5 +1,6 @@
 ﻿using Celeste.Mod.BalintHelper.Triggers.Dynamic;
 using DynamicInstructions;
+using DynamicInstructions.Instructions;
 using DynamicInstructions.Instructions.Abstract;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -68,13 +69,13 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         }
         public readonly Interpreter Interpreter;
         public readonly ReadOnlyCollection<Assembly> Assemblies;
-        public readonly ReadOnlyCollection<TypeInfo> AllTypes;
-        public readonly ReadOnlyCollection<TypeInfo> InstructionTypes;
+        public readonly ReadOnlyCollection<Type> AllTypes;
+        public readonly ReadOnlyCollection<Type> InstructionTypes;
         public DynamicMethodController(EntityData data, Vector2 offset) : base(offset)
         {
             Interpreter = new();
             Assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList().AsReadOnly();
-            AllTypes = Assemblies.SelectMany(x => x.DefinedTypes).ToList().AsReadOnly();
+            AllTypes = Assemblies.SelectMany(TypeNameCodec.GetLoadableTypes).ToList().AsReadOnly();
             InstructionTypes = AllTypes.Where(type => type.IsAssignableTo(typeof(BaseInstruction))).ToList().AsReadOnly();
         }
 
