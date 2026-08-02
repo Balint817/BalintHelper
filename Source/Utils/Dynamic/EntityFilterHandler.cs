@@ -1,6 +1,7 @@
 using Celeste.Mod.BalintHelper.Record;
 using DynamicInstructions;
 using DynamicInstructions.Instructions.Abstract;
+using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,9 +18,9 @@ namespace Celeste.Mod.BalintHelper.Utils.Dynamic
             }
             if (!info.Any)
             {
-                return info.Level.Entities.ToArray();
+                return Engine.Scene.Entities.ToArray();
             }
-            return info.Level.Entities.Where(entity =>
+            return Engine.Scene.Entities.Where(entity =>
             (entity.SourceData?.ID is { } id && info.IDs.Contains(id))
             || info.Types.Any(t => entity.GetType() == t)
             ).ToArray();
