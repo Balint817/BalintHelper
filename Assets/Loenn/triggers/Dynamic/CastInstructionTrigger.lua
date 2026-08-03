@@ -28,7 +28,7 @@ trigger.fieldInformation = {
 }
 
 trigger.fieldOrder = {
-    "x", "y", "width", "height", "type"
+    "x", "y", "width", "height", "type", "sourceType"
 }
 
 local languageRegistry = require("language_registry")
