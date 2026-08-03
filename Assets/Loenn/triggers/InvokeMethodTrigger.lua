@@ -9,7 +9,7 @@ trigger.placements = {
 			width = 16,
 			height = 16,
 			methodName = "",
-			onlyOnce = true,
+			onlyOnce = false,
 			argumentMode = "None",
 		}
 	}
