@@ -82,6 +82,7 @@ triggers.BalintHelper/TypeOfInstructionTrigger/LoadConstantInstruction.placement
 triggers.BalintHelper/BaseInstructionTrigger/WriteIndexerInstruction.placements.name.main=Instruction (Write Indexer)
 triggers.BalintHelper/BaseInstructionTrigger/WriteInstruction.placements.name.main=Instruction (Write)
 triggers.BalintHelper/TypedInstructionTrigger/WritePointerInstruction.placements.name.main=Instruction (Write Pointer)
+triggers.BalintHelper/LogInstructionTrigger.placements.name.main=Instruction (Log Value)
 
 triggers.BalintHelper/BaseInstructionTrigger/AllocInstruction.placements.description.main=- nuint 'size' is pushed onto the stack\n- 'size' is popped from the stack and a zeroed native memory of the specified size is allocated\n- pushes the UIntPtr result onto the stack.\nNote: The memory is freed when the method exits.
 triggers.BalintHelper/ArithmeticInstructionTrigger.placements.description.main=- object 'X' (or for binary operations 'X' and 'Y') is pushed onto the stack\n- The object(s) are popped from the stack, converted to dynamic, and the specified operation is performed.\n- The result is pushed onto the stack.
@@ -125,3 +126,4 @@ triggers.BalintHelper/TypeOfInstructionTrigger/LoadConstantInstruction.placement
 triggers.BalintHelper/BaseInstructionTrigger/WriteIndexerInstruction.placements.description.main=- an object instance 'X' is pushed onto the stack (if required)\n- indices 1 through N are pushed onto the stack\n- value 'Y' is pushed onto the stack\n- indexer 'I' is pushed onto the stack\n- the indexer, value, indices, and instance are popped from the stack and the value at the specified index is set to 'Y'.
 triggers.BalintHelper/BaseInstructionTrigger/WriteInstruction.placements.description.main=- an object instance 'X' is pushed onto the stack (if required)\n- value 'Y' is pushed onto the stack\n- the target specifier 'F' (field/property/etc) is pushed onto the stack\n- 'F', 'Y', and 'X' are popped from the stack and the value is set to 'Y'.
 triggers.BalintHelper/TypedInstructionTrigger/WritePointerInstruction.placements.description.main=- a UIntPtr 'P' is pushed onto the stack\n- an object 'X' is pushed onto the stack\n- 'X' and 'P' are popped from the stack, and the 'P' is written with 'X' as the type specified in the instruction
+triggers.BalintHelper/LogInstructionTrigger.placements.description.main=- an object instance 'X' is pushed onto the stack\n- 'X' is popped from the stack and written to the log file
