@@ -22,10 +22,17 @@ namespace Celeste.Mod.BalintHelper.Utils.Dynamic
             {
                 return Engine.Scene.Entities.ToArray();
             }
-            return Engine.Scene.Entities.Where(entity =>
-            (entity.SourceData?.ID is { } id && info.IDs.Contains(id))
-            || info.Types.Any(t => entity.GetType() == t)
+
+            var result = Engine.Scene.Entities.Where(entity =>
+            (info.IDs.Count == 0 || (entity.SourceData?.ID is { } id && info.IDs.Contains(id)))
+            || (info.Types.Count == 0 || info.Types.Any(t => entity.GetType() == t))
             ).ToArray();
+            return info.Mode switch
+            {
+                EntityInfo.FilterMode.First => result.FirstOrDefault(),
+                EntityInfo.FilterMode.All => result,
+                _ => throw new InvalidProgramException($"invalid entity filter mode {info.Mode}"),
+            };
         }
     }
 }

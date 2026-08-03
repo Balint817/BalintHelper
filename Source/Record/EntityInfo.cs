@@ -9,11 +9,26 @@ namespace Celeste.Mod.BalintHelper.Record
 {
     public class EntityInfo
     {
+        public enum FilterMode
+        {
+            None,
+            First,
+            All
+        }
         public readonly HashSet<int> IDs = [];
         public readonly HashSet<Type> Types = [];
+        public readonly FilterMode Mode = FilterMode.None;
         public bool Any => IDs.Count > 0 || Types.Count > 0;
-        public EntityInfo(string types, IEnumerable<Assembly> assemblies)
+        public EntityInfo(string types, IEnumerable<Assembly> assemblies, FilterMode mode)
         {
+            switch (mode)
+            {
+                case FilterMode.First:
+                case FilterMode.All:
+                    break;
+                default:
+                    throw new ArgumentException("invalid entity filter mode", nameof(mode));
+            }
             ArgumentNullException.ThrowIfNull(types, nameof(types));
             var split = types.Split(';').ToList();
             while (split.Count > 0)
@@ -40,6 +55,8 @@ namespace Celeste.Mod.BalintHelper.Record
                 }
                 split.RemoveAt(split.Count - 1);
             }
+
+            Mode = mode;
         }
     }
 }

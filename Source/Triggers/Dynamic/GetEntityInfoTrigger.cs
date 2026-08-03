@@ -13,7 +13,8 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         public override object? ParseConstantValue(EntityData data)
         {
             var types = data.String("types", "");
-            return new EntityInfo(types, AppDomain.CurrentDomain.GetAssemblies());
+            var mode = data.Enum("mode", EntityInfo.FilterMode.None);
+            return new EntityInfo(types, AppDomain.CurrentDomain.GetAssemblies(), mode);
         }
         public GetEntityInfoTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
