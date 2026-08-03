@@ -73,7 +73,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid sbyte value", nameof(data));
                     }
                 case ConstantType.Int16:
                     {
@@ -81,7 +81,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid short value", nameof(data));
                     }
                 case ConstantType.Int32:
                     {
@@ -89,7 +89,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid int value", nameof(data));
                     }
                 case ConstantType.Int64:
                     {
@@ -97,7 +97,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid long value", nameof(data));
                     }
                 case ConstantType.UInt16:
                     {
@@ -105,7 +105,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid ushort value", nameof(data));
                     }
                 case ConstantType.UInt32:
                     {
@@ -113,7 +113,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid uint value", nameof(data));
                     }
                 case ConstantType.UInt64:
                     {
@@ -121,7 +121,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid ulong value", nameof(data));
                     }
                 case ConstantType.Decimal:
                     {
@@ -129,7 +129,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid decimal value", nameof(data));
                     }
                 case ConstantType.Double:
                     {
@@ -137,7 +137,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid double value", nameof(data));
                     }
                 case ConstantType.Float:
                     {
@@ -145,7 +145,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid float value", nameof(data));
                     }
                 case ConstantType.NativeInt:
                     {
@@ -153,7 +153,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid nint value", nameof(data));
                     }
                 case ConstantType.NativeUInt:
                     {
@@ -161,7 +161,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                         {
                             return parsedValue;
                         }
-                        throw new ArgumentException("invalid byte value", nameof(data));
+                        throw new ArgumentException("invalid nuint value", nameof(data));
                     }
                 case ConstantType.Char:
                     {
