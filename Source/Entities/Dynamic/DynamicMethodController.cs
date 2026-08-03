@@ -139,7 +139,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             // Block leaders that still have to be appended (true paths of conditionals).
             var pending = new Queue<BaseInstructionTrigger>();
 
-            var entry = FirstTargetOf(define.SourceData, define.Position, allTriggers)
+            var entry = FirstTargetOf(define, allTriggers)
                 ?? throw new InvalidOperationException(
                     $"DefineMethodTrigger '{define.MethodName}' at {define.Position} has no node pointing at an instruction.");
 
@@ -358,27 +358,14 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         }
 
         private static BaseInstructionTrigger? FirstTargetOf(
-            EntityData data,
-            Vector2 position,
+            Trigger trigger,
             List<BaseInstructionTrigger> allTriggers)
         {
-            if (data?.Nodes is null)
-            {
-                return null;
-            }
-            foreach (var node in data.NodesOffset(position))
-            {
-                var hit = allTriggers.FirstOrDefault(t => t.CollidePoint(node));
-                if (hit is not null)
-                {
-                    return hit;
-                }
-            }
-            return null;
+            return TargetsOf(trigger, allTriggers).FirstOrDefault();
         }
 
         private static List<BaseInstructionTrigger> TargetsOf(
-            BaseInstructionTrigger trigger,
+            Trigger trigger,
             List<BaseInstructionTrigger> allTriggers)
         {
             var targets = new List<BaseInstructionTrigger>();
@@ -387,7 +374,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             {
                 return targets;
             }
-            foreach (var node in data.NodesOffset(trigger.Position))
+            foreach (var node in data.NodesOffset(-data.Position + trigger.Position))
             {
                 var hit = allTriggers.FirstOrDefault(t => t.CollidePoint(node));
                 if (hit is not null)
