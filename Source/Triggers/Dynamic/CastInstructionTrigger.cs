@@ -30,7 +30,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
             base.Added(scene);
             var controller = DynamicMethodController.GetOrCreate(Scene);
 
-            if (string.IsNullOrWhiteSpace(_sourceTypeName))
+            if (!string.IsNullOrWhiteSpace(_sourceTypeName))
             {
                 SourceType = TypeNameCodec.ParseType(_sourceTypeName, controller.Assemblies)
                     ?? throw new ArgumentException("could not find matching type", "data");
