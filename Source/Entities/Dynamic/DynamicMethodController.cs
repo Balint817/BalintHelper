@@ -39,7 +39,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         {
             var returnTrigger = new LoadPrimitiveInstructionTrigger(new EntityData()
             {
-                Name = "BalintHelper/LoadPrimitiveInstructionTrigger/LoadConstant",
+                Name = "BalintHelper/LoadPrimitiveInstructionTrigger/LoadConstantInstruction",
                 Values = new()
                 {
                     ["type"] = "Bool",
