@@ -103,31 +103,29 @@ namespace DynamicInstructions.Instructions
                 .SelectMany(GetLoadableTypes)
                 .ToArray();
 
+            var fullNameMatches = types
+                .Where(t => string.Equals(t.FullName, name, comparison))
+                .Distinct()
+                .ToArray();
+
+            if (fullNameMatches.Length == 1)
+                return fullNameMatches[0];
+
+            if (fullNameMatches.Length > 1)
+                throw new InvalidOperationException(
+                    $"Ambiguous type '{simpleOrFullName}'. Matches: {string.Join(", ", fullNameMatches.Select(t => t.FullName))}");
+
             var nameMatches = types
                 .Where(t => string.Equals(t.Name, name, comparison))
                 .Distinct()
                 .ToArray();
 
-            if (nameMatches.Length == 1)
-            {
-                return nameMatches[0];
-            }
-
-            var fullNameMatches = nameMatches
-                .Where(t => string.Equals(t.FullName, name, comparison))
-                .ToArray();
-
-            if (fullNameMatches.Length == 1)
-            {
-                return fullNameMatches[0];
-            }
-
-            return fullNameMatches.Length switch
+            return nameMatches.Length switch
             {
                 0 => null,
-                1 => fullNameMatches[0],
+                1 => nameMatches[0],
                 _ => throw new InvalidOperationException(
-                    $"Ambiguous type '{simpleOrFullName}'. Matches: {string.Join(", ", fullNameMatches.Select(t => t.FullName))}")
+                    $"Ambiguous type '{simpleOrFullName}'. Matches: {string.Join(", ", nameMatches.Select(t => t.FullName))}")
             };
         }
 
