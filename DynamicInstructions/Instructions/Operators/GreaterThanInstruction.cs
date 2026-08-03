@@ -7,7 +7,7 @@ namespace DynamicInstructions.Instructions.Operators
         override public string OperationName => "x>y";
         public override object? ExecuteOperation(object? left, object? right)
         {
-            return (dynamic?)left > (dynamic?)right;
+            return ((dynamic?)left) > ((dynamic?)right);
         }
     }
 }

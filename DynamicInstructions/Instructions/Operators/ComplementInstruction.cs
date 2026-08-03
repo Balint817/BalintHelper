@@ -7,7 +7,7 @@ namespace DynamicInstructions.Instructions.Operators
         override public string OperationName => "~x";
         public override object? ExecuteOperation(object? operand)
         {
-            return ~(dynamic?)operand;
+            return ~((dynamic?)operand);
         }
     }
 }
