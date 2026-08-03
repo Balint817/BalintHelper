@@ -85,16 +85,16 @@ namespace DynamicInstructions.Instructions.Write
 
         public override void Execute(Interpreter.MethodState state, List<BaseInstruction> instructions)
         {
-            if (!state.Stack.TryPop(out var value))
-            {
-                throw new InvalidProgramException(
-                    "stack imbalance, failed to obtain value to write");
-            }
-
             if (!state.Stack.TryPop(out var infoBoxed))
             {
                 throw new InvalidProgramException(
                     "stack imbalance, failed to obtain variable info to write");
+            }
+
+            if (!state.Stack.TryPop(out var value))
+            {
+                throw new InvalidProgramException(
+                    "stack imbalance, failed to obtain value to write");
             }
 
             if (infoBoxed is null)
