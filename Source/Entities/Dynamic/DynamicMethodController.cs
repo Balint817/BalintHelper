@@ -89,7 +89,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         public void LoadAll()
         {
-            var instructionTriggers = Scene.Tracker.GetEntities<BaseInstructionTrigger>()
+            var instructionTriggers = Scene.Entities.Where(x => x is BaseInstructionTrigger)
                 .Cast<BaseInstructionTrigger>()
                 .ToList();
 
