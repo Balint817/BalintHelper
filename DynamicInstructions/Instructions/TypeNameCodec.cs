@@ -41,8 +41,6 @@ namespace DynamicInstructions.Instructions
             var assemblies = searchAssemblies.Distinct().ToArray();
             var normalized = NormalizeFriendlySyntax(input.Trim());
 
-            Console.WriteLine(normalized);
-
             var type = Type.GetType(
                 normalized,
                 assemblyResolver: name => ResolveAssembly(name, assemblies),
