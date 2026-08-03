@@ -42,7 +42,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 Name = "BalintHelper/LoadPrimitiveInstructionTrigger/LoadConstant",
                 Values = new()
                 {
-                    ["constantType"] = "Bool",
+                    ["type"] = "Bool",
                     ["value"] = "true"
                 }
             }, Vector2.Zero);
