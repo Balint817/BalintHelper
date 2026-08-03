@@ -18,20 +18,28 @@ namespace Celeste.Mod.BalintHelper.Utils.Dynamic
             {
                 throw new InvalidProgramException("type mismatch, failed to get entity info to read");
             }
+
             if (!info.Any)
             {
                 return Engine.Scene.Entities.ToArray();
             }
 
             var result = Engine.Scene.Entities.Where(entity =>
-            (info.IDs.Count == 0 || (entity.SourceData?.ID is { } id && info.IDs.Contains(id)))
-            || (info.Types.Count == 0 || info.Types.Any(t => entity.GetType() == t))
-            ).ToArray();
+            {
+                var idMatch = info.IDs.Count == 0
+                    || (entity.SourceData?.ID is { } id && info.IDs.Contains(id));
+
+                var typeMatch = info.Types.Count == 0
+                    || info.Types.Any(t => entity.GetType() == t);
+
+                return idMatch && typeMatch;
+            }).ToArray();
+
             return info.Mode switch
             {
                 EntityInfo.FilterMode.First => result.FirstOrDefault(),
                 EntityInfo.FilterMode.All => result,
-                _ => throw new InvalidProgramException($"invalid entity filter mode {info.Mode}"),
+                _ => throw new InvalidProgramException($"invalid entity filter mode {info.Mode}")
             };
         }
     }
