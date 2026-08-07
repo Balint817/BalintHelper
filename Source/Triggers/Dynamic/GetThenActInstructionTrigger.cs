@@ -28,6 +28,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         protected GetThenActInstructionTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
             ActionType = data.Enum("action", GetAction.Raw);
+            ConstantValue = ParseConstantValue(data);
         }
         public sealed override IEnumerable<BaseInstruction> GetCompoundInstructions()
         {
