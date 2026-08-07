@@ -12,8 +12,19 @@ trigger.placements = {
 			height = 16,
 			className = "",
 			argumentTypes = "",
+			action = "Raw"
 		}
 	}
+}
+
+
+local actionValues = {
+            "Raw",
+            "Read",
+            "ReadIndexer",
+            "Write",
+            "WriteIndexer",
+            "Invoke"
 }
 
 trigger.fieldInformation = {
@@ -23,12 +34,17 @@ trigger.fieldInformation = {
 	},
 	argumentTypes = {
 		fieldType = "string",
-		description = "Optional. A comma separated list of the constructor's parameter types."
+		description = "Optional. A semicolon separated list of the constructor's parameter types."
+	},
+	action = {
+		options = actionValues,
+		editable = false,
+		description = "The action to perform on the constructor."
 	}
 }
 
 trigger.fieldOrder = {
-	"x", "y", "width", "height", "className", "argumentTypes"
+	"x", "y", "width", "height", "className", "argumentTypes", "action"
 }
 
 local languageRegistry = require("language_registry")

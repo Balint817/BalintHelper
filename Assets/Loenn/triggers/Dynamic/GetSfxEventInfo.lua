@@ -13,8 +13,19 @@ trigger.placements = {
 			eventPath = "",
 			parameters = "",
 			loop = false,
+			action = "Raw"
 		}
 	}
+}
+
+
+local actionValues = {
+            "Raw",
+            "Read",
+            "ReadIndexer",
+            "Write",
+            "WriteIndexer",
+            "Invoke"
 }
 
 trigger.fieldInformation = {
@@ -29,11 +40,16 @@ trigger.fieldInformation = {
 	loop = {
 		fieldType = "boolean",
 		description = "Whether the event instance should keep playing/looping instead of being released immediately after starting."
+	},
+	action = {
+		options = actionValues,
+		editable = false,
+		description = "The action to perform on the constructor."
 	}
 }
 
 trigger.fieldOrder = {
-	"x", "y", "width", "height", "eventPath", "parameters", "loop"
+	"x", "y", "width", "height", "eventPath", "parameters", "loop", "action"
 }
 
 local languageRegistry = require("language_registry")

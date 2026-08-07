@@ -15,8 +15,19 @@ trigger.placements = {
 			genericTypes = "",
 			argumentTypes = "",
 			returnType = "",
+			action = "Raw"
 		}
 	}
+}
+
+
+local actionValues = {
+            "Raw",
+            "Read",
+            "ReadIndexer",
+            "Write",
+            "WriteIndexer",
+            "Invoke"
 }
 
 trigger.fieldInformation = {
@@ -30,20 +41,25 @@ trigger.fieldInformation = {
 	},
 	genericTypes = {
 		fieldType = "string",
-		description = "Optional. A comma separated list of the generic type arguments to use, if the method is generic."
+		description = "Optional. A semicolon separated list of the generic type arguments to use, if the method is generic."
 	},
 	argumentTypes = {
 		fieldType = "string",
-		description = "Optional. A comma separated list of the method's parameter types."
+		description = "Optional. A semicolon separated list of the method's parameter types."
 	},
 	returnType = {
 		fieldType = "string",
 		description = "Optional. The method's return type, used to disambiguate between methods with the same name and parameters."
+	},
+	action = {
+		options = actionValues,
+		editable = false,
+		description = "The action to perform on the constructor."
 	}
 }
 
 trigger.fieldOrder = {
-	"x", "y", "width", "height", "className", "methodName", "genericTypes", "argumentTypes", "returnType"
+	"x", "y", "width", "height", "className", "methodName", "genericTypes", "argumentTypes", "returnType", "action"
 }
 
 local languageRegistry = require("language_registry")

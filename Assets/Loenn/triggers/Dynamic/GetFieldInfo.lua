@@ -13,8 +13,19 @@ trigger.placements = {
 			className = "",
 			fieldName = "",
 			fieldType = "",
+			action = "Raw"
 		}
 	}
+}
+
+
+local actionValues = {
+            "Raw",
+            "Read",
+            "ReadIndexer",
+            "Write",
+            "WriteIndexer",
+            "Invoke"
 }
 
 trigger.fieldInformation = {
@@ -29,11 +40,16 @@ trigger.fieldInformation = {
 	fieldType = {
 		fieldType = "string",
 		description = "Optional. The field's type, used to disambiguate between fields with the same name."
+	},
+	action = {
+		options = actionValues,
+		editable = false,
+		description = "The action to perform on the constructor."
 	}
 }
 
 trigger.fieldOrder = {
-	"x", "y", "width", "height", "className", "fieldName", "fieldType"
+	"x", "y", "width", "height", "className", "fieldName", "fieldType", "action"
 }
 
 local languageRegistry = require("language_registry")

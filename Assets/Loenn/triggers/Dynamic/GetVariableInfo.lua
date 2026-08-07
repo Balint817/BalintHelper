@@ -12,8 +12,19 @@ trigger.placements = {
             height = 16,
 			type = "Local",
 			name = "",
+			action = "Raw"
         }
     }
+}
+
+
+local actionValues = {
+            "Raw",
+            "Read",
+            "ReadIndexer",
+            "Write",
+            "WriteIndexer",
+            "Invoke"
 }
 
 local enumValues = {
@@ -31,11 +42,16 @@ trigger.fieldInformation = {
 	name = {
 	    fieldType = "string",
 		description = "The actual name of the variable"
+	},
+	action = {
+		options = actionValues,
+		editable = false,
+		description = "The action to perform on the constructor."
 	}
 }
 
 trigger.fieldOrder = {
-    "x", "y", "width", "height", "type", "name"
+    "x", "y", "width", "height", "type", "name", "action"
 }
 
 local languageRegistry = require("language_registry")

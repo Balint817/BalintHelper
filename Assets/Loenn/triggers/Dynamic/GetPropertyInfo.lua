@@ -14,8 +14,19 @@ trigger.placements = {
 			propertyName = "",
 			returnType = "",
 			indexerTypes = "",
+			action = "Raw"
 		}
 	}
+}
+
+
+local actionValues = {
+            "Raw",
+            "Read",
+            "ReadIndexer",
+            "Write",
+            "WriteIndexer",
+            "Invoke"
 }
 
 trigger.fieldInformation = {
@@ -33,12 +44,17 @@ trigger.fieldInformation = {
 	},
 	indexerTypes = {
 		fieldType = "string",
-		description = "Optional. A comma separated list of the property's indexer parameter types, if it is an indexer."
+		description = "Optional. A semicolon separated list of the property's indexer parameter types, if it is an indexer."
+	},
+	action = {
+		options = actionValues,
+		editable = false,
+		description = "The action to perform on the constructor."
 	}
 }
 
 trigger.fieldOrder = {
-	"x", "y", "width", "height", "className", "propertyName", "returnType", "indexerTypes"
+	"x", "y", "width", "height", "className", "propertyName", "returnType", "indexerTypes", "action"
 }
 
 local languageRegistry = require("language_registry")

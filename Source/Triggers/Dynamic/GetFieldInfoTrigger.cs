@@ -13,7 +13,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
     [CustomEntity(
         "BalintHelper/GetFieldInfoTrigger/LoadConstantInstruction"
         )]
-    public class GetFieldInfoTrigger : LoadConstantInstructionTrigger
+    public class GetFieldInfoTrigger : GetThenActInstructionTrigger
     {
         public override object? ParseConstantValue(EntityData data)
         {

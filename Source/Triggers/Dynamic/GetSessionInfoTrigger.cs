@@ -8,7 +8,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
     [CustomEntity(
         "BalintHelper/GetSessionInfoTrigger/LoadConstantInstruction"
         )]
-    public class GetSessionInfoTrigger : LoadConstantInstructionTrigger
+    public class GetSessionInfoTrigger : GetThenActInstructionTrigger
     {
         public enum SessionInfoType
         {
