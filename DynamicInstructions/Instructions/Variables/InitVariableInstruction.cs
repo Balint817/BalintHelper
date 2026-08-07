@@ -6,7 +6,7 @@ namespace DynamicInstructions.Instructions.Variables
     {
         public override void Execute(Interpreter.MethodState state, List<BaseInstruction> instructions)
         {
-            if (!state.Stack.TryPop(out var initValue) || !state.Stack.TryPop(out var variableBoxed))
+            if (!state.Stack.TryPop(out var variableBoxed) || !state.Stack.TryPop(out var initValue))
             {
                 throw new InvalidProgramException("stack imbalance, failed to initialize variable");
             }
