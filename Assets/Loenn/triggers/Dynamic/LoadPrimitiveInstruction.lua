@@ -54,16 +54,11 @@ trigger.fieldOrder = {
     "x", "y", "width", "height", "type", "value"
 }
 
-local languageRegistry = require("language_registry")
-
 trigger.triggerText = function(room, trigger)
-    local language = languageRegistry.getLanguage()
-    local result = language.triggers[trigger._name].placements.name.main
-
-    if result._exists then
-        return tostring(result)
+    if trigger.type == "Null" then
+        return "Primitive (Null)"
     else
-        return trigger._name
+        return "Primitive (" .. trigger.type .. " " .. trigger.value .. ")"
     end
 end
 

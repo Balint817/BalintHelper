@@ -62,17 +62,8 @@ trigger.fieldOrder = {
 	"x", "y", "width", "height", "className", "methodName", "genericTypes", "argumentTypes", "returnType", "action"
 }
 
-local languageRegistry = require("language_registry")
-
 trigger.triggerText = function(room, trigger)
-    local language = languageRegistry.getLanguage()
-    local result = language.triggers[trigger._name].placements.name.main
-
-    if result._exists then
-        return tostring(result)
-    else
-        return trigger._name
-    end
+	return "Method (" .. trigger.methodName .. ")"
 end
 
 -- TODO

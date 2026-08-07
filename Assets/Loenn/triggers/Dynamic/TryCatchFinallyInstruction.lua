@@ -37,17 +37,15 @@ trigger.fieldOrder = {
 	"tryMethodName", "catchMethodName", "finallyMethodName"
 }
 
-local languageRegistry = require("language_registry")
-
 trigger.triggerText = function(room, trigger)
-    local language = languageRegistry.getLanguage()
-    local result = language.triggers[trigger._name].placements.name.main
-
-    if result._exists then
-        return tostring(result)
-    else
-        return trigger._name
-    end
+	local finalTriggerText = "Try (" .. trigger.tryMethodName .. ")"
+	if trigger.catchMethodName ~= "" then
+		finalTriggerText = finalTriggerText .. " Catch (" .. trigger.catchMethodName .. ")"
+	end
+	if trigger.finallyMethodName ~= "" then
+		finalTriggerText = finalTriggerText .. " Finally (" .. trigger.finallyMethodName .. ")"
+	end
+	return finalTriggerText
 end
 
 -- TODO
