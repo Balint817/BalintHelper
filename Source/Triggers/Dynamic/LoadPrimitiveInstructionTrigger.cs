@@ -49,11 +49,11 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                     {
 
                         value = value.Trim().ToLowerInvariant();
-                        if (value == "1" || value == "true")
+                        if (value == "1" || value.Equals("true", StringComparison.OrdinalIgnoreCase))
                         {
                             return true;
                         }
-                        if (value == "0" || value == "false")
+                        if (value == "0" || value.Equals("false", StringComparison.OrdinalIgnoreCase))
                         {
                             return false;
                         }
