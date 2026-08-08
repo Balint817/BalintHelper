@@ -62,6 +62,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             if (instance == null)
             {
                 instance = [];
+                scene.Tracker.EntityAdded(instance);
                 scene.Add(instance);
             }
             return instance;
@@ -81,7 +82,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         public override void Added(Scene scene)
         {
             var existing = scene.Tracker.GetEntity<DynamicMethodController>();
-            if (existing != null)
+            if (existing != null && existing != this)
             {
                 throw new InvalidOperationException($"attempted to add a new {nameof(DynamicMethodController)} when one was already present!");
             }

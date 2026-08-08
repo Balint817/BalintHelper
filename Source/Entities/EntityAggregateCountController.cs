@@ -64,6 +64,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
 
             EntityAggregateCountController created = new(counterId, mode);
+            scene.Tracker.EntityAdded(created);
             scene.Add(created);
             return created;
         }

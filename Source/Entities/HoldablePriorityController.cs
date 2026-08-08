@@ -17,6 +17,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             if (ctrl == null)
             {
                 ctrl = new HoldablePriorityController();
+                scene.Tracker.EntityAdded(ctrl);
                 scene.Add(ctrl);
             }
             return ctrl;
@@ -24,7 +25,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         public override void Added(Scene scene)
         {
             var existing = scene.Tracker.GetEntity<HoldablePriorityController>();
-            if (existing != null)
+            if (existing != null && existing != this)
             {
                 throw new InvalidOperationException($"attempted to add a new {nameof(HoldablePriorityController)} when one was already present!");
             }
