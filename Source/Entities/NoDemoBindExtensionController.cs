@@ -8,8 +8,8 @@ namespace Celeste.Mod.BalintHelper.Entities
     [CustomEntity("BalintHelper/NoDemoBindExtensionController")]
     public class NoDemoBindExtensionController : Entity
     {
-        public NoDemoBindExtensionController(EntityData data, Vector2 offset)
-            : base(offset)
+        public NoDemoBindExtensionController()
+            : base()
         {
 
 

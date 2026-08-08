@@ -955,13 +955,12 @@ namespace Celeste.Mod.BalintHelper.Entities
                 return [];
             }
 
-            return Scene.Tracker
+            return [.. Scene.Tracker
                 .GetEntities<CustomPedestal>()
                 .Cast<CustomPedestal>()
                 .Where(p => CanTargetPedestal(entity, p))
                 .OrderBy(p => Vector2.DistanceSquared(entity.Center, SnapPosition(p)))
-                .ThenBy(GetStableId)
-                .ToList();
+                .ThenBy(GetStableId)];
         }
 
         private static bool CanTargetPedestal(Entity entity, CustomPedestal pedestal)

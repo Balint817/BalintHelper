@@ -22,17 +22,12 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         {
             var variableName = data.String("name") ?? throw new ArgumentException("no variable name was provided", nameof(data));
             var variableType = data.Enum("type", (VariableType)(-1));
-            switch (variableType)
+            return variableType switch
             {
-                case VariableType.Local:
-                case VariableType.Global:
-                case VariableType.Argument:
-                    return new Interpreter.VariableInfo(variableName, (Interpreter.VariableType)variableType);
-                case VariableType.Static:
-                    return new StaticVariableController.Info(variableName);
-                default:
-                    throw new ArgumentException("invalid variable type", nameof(data));
-            }
+                VariableType.Local or VariableType.Global or VariableType.Argument => new Interpreter.VariableInfo(variableName, (Interpreter.VariableType)variableType),
+                VariableType.Static => new StaticVariableController.Info(variableName),
+                _ => throw new ArgumentException("invalid variable type", nameof(data)),
+            };
         }
         public GetVariableInfoTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {

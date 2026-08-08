@@ -61,7 +61,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             var instance = scene.Tracker.GetEntity<DynamicMethodController>();
             if (instance == null)
             {
-                instance = new DynamicMethodController();
+                instance = [];
                 scene.Add(instance);
             }
             return instance;

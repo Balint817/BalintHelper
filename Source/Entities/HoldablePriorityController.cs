@@ -72,11 +72,10 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private static List<Holdable> GetPickupCandidates(Player player)
         {
-            return player.Scene.Tracker
+            return [.. player.Scene.Tracker
                 .GetComponents<Holdable>()
                 .Cast<Holdable>()
-                .Where(h => player.Holding != h && h.cannotHoldTimer <= 0 && h.Check(player))
-                .ToList();
+                .Where(h => player.Holding != h && h.cannotHoldTimer <= 0 && h.Check(player))];
         }
 
         private readonly MRUSet<Holdable> holdableOrder = [];
