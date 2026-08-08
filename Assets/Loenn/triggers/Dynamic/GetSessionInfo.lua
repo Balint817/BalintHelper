@@ -27,7 +27,8 @@ local actionValues = {
 local enumValues = {
 "Flag",
 "Counter",
-"Slider"
+"Slider",
+"String"
 }
 
 trigger.fieldInformation = {
