@@ -2,7 +2,7 @@
 
 namespace DynamicInstructions.Instructions.Variables
 {
-    public delegate object IsDefinedHandler(
+    public delegate bool IsDefinedHandler(
         Interpreter.MethodState state,
         List<BaseInstruction> instructions,
         object info);
