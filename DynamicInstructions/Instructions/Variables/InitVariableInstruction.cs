@@ -21,7 +21,7 @@ namespace DynamicInstructions.Instructions.Variables
             var targetDict = state.LocalVariables;
             if (variableInfo.Type == Interpreter.VariableType.Global)
             {
-                targetDict = state.Interpreter.GlobalVariables;
+                targetDict = state.Interpreter._globalVariables;
             }
             if (targetDict.ContainsKey(variableInfo.Name))
             {

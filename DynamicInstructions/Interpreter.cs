@@ -4,12 +4,17 @@ using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.InteropServices;
+using static DynamicInstructions.Interpreter;
 
 namespace DynamicInstructions
 {
+    public delegate void OnGlobalHandler(VariableInfo variableInfo, object? value);
     public sealed class Interpreter : IDisposable
     {
-        public readonly Dictionary<string, object?> GlobalVariables = [];
+        public event OnGlobalHandler? OnGlobalHandler;
+        internal readonly Dictionary<string, object?> _globalVariables = [];
+        internal ReadOnlyDictionary<string, object?>? _globalVariablesReadonly;
+        public ReadOnlyDictionary<string, object?> GlobalVariables => _globalVariablesReadonly ??= new(_globalVariables);
         public enum VariableType
         {
             Local,
@@ -57,7 +62,7 @@ namespace DynamicInstructions
                         }
                         throw new InvalidProgramException($"attempted to access undefined local variable {Name}");
                     case VariableType.Global:
-                        if (state.Interpreter.GlobalVariables.TryGetValue(Name, out var globalValue))
+                        if (state.Interpreter._globalVariables.TryGetValue(Name, out var globalValue))
                         {
                             return globalValue;
                         }
@@ -80,7 +85,8 @@ namespace DynamicInstructions
                         state.LocalVariables[Name] = value;
                         break;
                     case VariableType.Global:
-                        state.Interpreter.GlobalVariables[Name] = value;
+                        state.Interpreter._globalVariables[Name] = value;
+                        NotifyGlobalChange(state, value);
                         break;
                     case VariableType.Argument:
                         if (Index >= 0 && Index < state.Args.Length)
@@ -91,6 +97,13 @@ namespace DynamicInstructions
                         throw new InvalidProgramException($"attempted to access undefined argument at index {Index}");
                     default:
                         throw new InvalidProgramException($"critical error: unknown variable type: {Type}");
+                }
+            }
+            internal void NotifyGlobalChange(MethodState state, object? value)
+            {
+                if (Type == VariableType.Global)
+                {
+                    state.Interpreter.OnGlobalHandler?.Invoke(this, value);
                 }
             }
         }
@@ -246,7 +259,7 @@ namespace DynamicInstructions
 
         public void Dispose()
         {
-            GlobalVariables.Clear();
+            _globalVariables.Clear();
             // clear events here once implemented
         }
     }

@@ -18,7 +18,7 @@ namespace DynamicInstructions.Instructions.Variables
                         switch (variableInfo.Type)
                         {
                             case Interpreter.VariableType.Local:
-                                flag = state.Interpreter.GlobalVariables.ContainsKey(variableInfo.Name);
+                                flag = state.Interpreter._globalVariables.ContainsKey(variableInfo.Name);
                                 break;
                             case Interpreter.VariableType.Global:
                                 flag = state.LocalVariables.ContainsKey(variableInfo.Name);
