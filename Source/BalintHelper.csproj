@@ -32,15 +32,21 @@
 <Reference Include="$(CelestePrefix)\FNA.dll" Private="false" />
 </ItemGroup>
 
-<Target Name="CopyFiles" AfterTargets="Build" Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb" Outputs="..\bin\$(AssemblyName).dll;..\bin\$(AssemblyName).pdb">
-<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll" DestinationFolder="..\bin" />
-<Copy SourceFiles="$(OutputPath)\$(AssemblyName).pdb" DestinationFolder="..\bin" />
-</Target>
+	<Target Name="CopyFiles" AfterTargets="Build"
+			Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb"
+			Outputs="..\bin\$(AssemblyName).dll;..\bin\$(AssemblyName).pdb;..\bin\DynamicInstructions.dll;..\bin\DynamicInstructions.pdb">
+		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb"
+			  DestinationFolder="..\bin" />
+	</Target>
 
 <Target Name="StageModFolder" AfterTargets="CopyFiles">
 <PropertyGroup>
 <ModStageDir>..\BalintHelper\</ModStageDir>
 </PropertyGroup>
+
+
+	<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb"
+		  DestinationFolder="$(ModStageDir)bin" />
 
 <Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll" DestinationFolder="$(ModStageDir)bin" />
 <Copy SourceFiles="$(OutputPath)\$(AssemblyName).pdb" DestinationFolder="$(ModStageDir)bin" />
