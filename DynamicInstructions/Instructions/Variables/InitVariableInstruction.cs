@@ -2,32 +2,81 @@
 
 namespace DynamicInstructions.Instructions.Variables
 {
+    public delegate void InitVariableHandler(
+        Interpreter.MethodState state,
+        List<BaseInstruction> instructions,
+        object info,
+        object? initValue);
+
     public class InitVariableInstruction : BaseInstruction
     {
+        public static readonly List<KeyValuePair<Type, InitVariableHandler>> InitHandlers =
+        [
+            new(typeof(Interpreter.VariableInfo), static (state, instructions, info, initValue) =>
+            {
+                var variableInfo = (Interpreter.VariableInfo)info;
+
+                if (variableInfo.Type == Interpreter.VariableType.Argument)
+                {
+                    // nothing to initialize.
+                    return;
+                }
+
+                var targetDict = variableInfo.Type == Interpreter.VariableType.Global
+                    ? state.Interpreter._globalVariables
+                    : state.LocalVariables;
+
+                if (!targetDict.ContainsKey(variableInfo.Name))
+                {
+                    targetDict[variableInfo.Name] = initValue;
+                }
+            })
+        ];
+
+        private static bool TryInitRegistered(
+            Interpreter.MethodState state,
+            List<BaseInstruction> instructions,
+            object info,
+            object? initValue)
+        {
+            var runtimeType = info.GetType();
+
+            foreach (var kv in InitHandlers)
+            {
+                if (runtimeType.IsAssignableTo(kv.Key))
+                {
+                    kv.Value(state, instructions, info, initValue);
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         public override void Execute(Interpreter.MethodState state, List<BaseInstruction> instructions)
         {
-            if (!state.Stack.TryPop(out var variableBoxed) || !state.Stack.TryPop(out var initValue))
+            if (!state.Stack.TryPop(out var variableBoxed))
             {
-                throw new InvalidProgramException("stack imbalance, failed to initialize variable");
+                throw new InvalidProgramException(
+                    "stack imbalance, failed to obtain variable reference to initialize");
             }
-            if (variableBoxed is not Interpreter.VariableInfo variableInfo)
+
+            if (!state.Stack.TryPop(out var initValue))
             {
-                throw new InvalidProgramException("type mismatch, expected a variable reference to initialize, but got " + variableBoxed?.GetType().Name);
+                throw new InvalidProgramException(
+                    "stack imbalance, failed to obtain initial value");
             }
-            if (variableInfo.Type == Interpreter.VariableType.Argument)
+
+            if (variableBoxed is null)
             {
-                return;
+                throw new InvalidProgramException("type mismatch, variable reference was null");
             }
-            var targetDict = state.LocalVariables;
-            if (variableInfo.Type == Interpreter.VariableType.Global)
+
+            if (!TryInitRegistered(state, instructions, variableBoxed, initValue))
             {
-                targetDict = state.Interpreter._globalVariables;
+                throw new InvalidProgramException(
+                    $"type mismatch, object of type {variableBoxed.GetType().FullName} is not initializable");
             }
-            if (targetDict.ContainsKey(variableInfo.Name))
-            {
-                return;
-            }
-            targetDict[variableInfo.Name] = initValue;
         }
     }
 }
