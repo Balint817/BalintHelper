@@ -23,7 +23,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             CounterId = counterId;
             Mode = mode;
-            Tag = Tags.Global;
         }
 
         public void UpdateCounter()
