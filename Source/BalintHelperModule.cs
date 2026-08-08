@@ -17,9 +17,14 @@ using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper
 {
+    public class BalintHelperModuleSession : EverestModuleSession
+    {
+        public Dictionary<string, string?> SessionsStrings = new Dictionary<string, string?>();
+    }
     public class BalintHelperModule : EverestModule
     {
         public static BalintHelperModule Instance { get; private set; } = null!;
+        public static BalintHelperModuleSession Session => (BalintHelperModuleSession)Instance._Session!;
         public override void Load()
         {
             Instance = this;

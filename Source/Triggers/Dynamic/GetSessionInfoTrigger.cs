@@ -16,6 +16,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
             Flag,
             Counter,
             Slider,
+            String,
         }
         public override object? ParseConstantValue(EntityData data)
         {
@@ -26,11 +27,20 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                 SessionInfoType.Flag => new FlagInfo(name),
                 SessionInfoType.Counter => new CounterInfo(name),
                 SessionInfoType.Slider => new SliderInfo(name),
+                SessionInfoType.String => new SessionStringInfo(name),
                 _ => throw new ArgumentException($"Unknown session variable type {type}", nameof(data)),
             };
         }
         public GetSessionInfoTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
+        }
+    }
+    public class SessionStringInfo
+    {
+        public readonly string Name;
+        public SessionStringInfo(string name)
+        {
+            Name = name;
         }
     }
 }

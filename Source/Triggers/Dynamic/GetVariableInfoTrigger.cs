@@ -15,8 +15,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         {
             Local,
             Global,
-            Argument,
-            Static
+            Argument
         }
         public override object? ParseConstantValue(EntityData data)
         {
@@ -25,7 +24,6 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
             return variableType switch
             {
                 VariableType.Local or VariableType.Global or VariableType.Argument => new Interpreter.VariableInfo(variableName, (Interpreter.VariableType)variableType),
-                VariableType.Static => new StaticVariableController.Info(variableName),
                 _ => throw new ArgumentException("invalid variable type", nameof(data)),
             };
         }
