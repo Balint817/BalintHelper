@@ -21,10 +21,7 @@ trigger.placements = {
 local actionValues = {
             "Raw",
             "Read",
-            "ReadIndexer",
             "Write",
-            "WriteIndexer",
-            "Invoke"
 }
 
 local enumValues = {

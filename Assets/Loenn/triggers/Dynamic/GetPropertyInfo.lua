@@ -26,7 +26,6 @@ local actionValues = {
             "ReadIndexer",
             "Write",
             "WriteIndexer",
-            "Invoke"
 }
 
 trigger.fieldInformation = {

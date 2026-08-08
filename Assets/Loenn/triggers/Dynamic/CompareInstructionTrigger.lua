@@ -41,6 +41,4 @@ trigger.triggerText = function(room, trigger)
     return "Compare (" .. trigger.type .. ")"
 end
 
--- TODO
-
 return trigger

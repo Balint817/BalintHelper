@@ -53,6 +53,4 @@ trigger.triggerText = function(room, trigger)
     return "Arithmetic (" .. trigger.type .. ")"
 end
 
--- TODO
-
 return trigger
