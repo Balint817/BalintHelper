@@ -24,6 +24,7 @@ namespace Celeste.Mod.BalintHelper
     public class BalintHelperModule : EverestModule
     {
         public static BalintHelperModule Instance { get; private set; } = null!;
+        public override Type SessionType => typeof(BalintHelperModuleSession);
         public static BalintHelperModuleSession Session => (BalintHelperModuleSession)Instance._Session!;
         public override void Load()
         {
