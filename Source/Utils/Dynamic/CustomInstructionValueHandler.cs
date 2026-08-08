@@ -119,4 +119,9 @@ namespace Celeste.Mod.BalintHelper.Utils.Dynamic
     {
         void WriteIndexer(Interpreter.MethodState state, List<BaseInstruction> instructions, object infoBoxed);
     }
+    public interface IVariableHandler : IReadHandler, IWriteHandler, IRefHandler
+    {
+        bool IsDefined(Interpreter.MethodState state, List<BaseInstruction> instructions, object infoBoxed);
+        void InitVariable(Interpreter.MethodState state, List<BaseInstruction> instructions, object infoBoxed, object? valueBoxed);
+    }
 }
