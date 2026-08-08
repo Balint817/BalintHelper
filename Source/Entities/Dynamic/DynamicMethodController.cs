@@ -1,4 +1,5 @@
 ﻿using Celeste.Mod.BalintHelper.Triggers.Dynamic;
+using Celeste.Mod.BalintHelper.Utils;
 using DynamicInstructions;
 using DynamicInstructions.Instructions;
 using DynamicInstructions.Instructions.Abstract;
@@ -58,14 +59,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         }
         public static DynamicMethodController GetOrCreate(Scene scene)
         {
-            var instance = scene.Tracker.GetEntity<DynamicMethodController>();
-            if (instance == null)
-            {
-                instance = [];
-                scene.Tracker.EntityAdded(instance);
-                scene.Add(instance);
-            }
-            return instance;
+            return scene.GetOrCreateTrackedSingleton<DynamicMethodController>();
         }
         public readonly Interpreter Interpreter;
         public readonly ReadOnlyCollection<Assembly> Assemblies;
@@ -81,11 +75,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         public override void Added(Scene scene)
         {
-            var existing = scene.Tracker.GetEntity<DynamicMethodController>();
-            if (existing != null && existing != this)
-            {
-                throw new InvalidOperationException($"attempted to add a new {nameof(DynamicMethodController)} when one was already present!");
-            }
+            this.DuplicateCheck(scene);
 
             base.Added(scene);
         }

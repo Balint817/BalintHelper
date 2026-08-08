@@ -13,26 +13,15 @@ namespace Celeste.Mod.BalintHelper.Entities
     {
         public static HoldablePriorityController GetOrCreate(Scene scene)
         {
-            var ctrl = scene.Tracker.GetEntity<HoldablePriorityController>();
-            if (ctrl == null)
-            {
-                ctrl = new HoldablePriorityController();
-                scene.Tracker.EntityAdded(ctrl);
-                scene.Add(ctrl);
-            }
-            return ctrl;
+            return scene.GetOrCreateTrackedSingleton<HoldablePriorityController>();
         }
         public override void Added(Scene scene)
         {
-            var existing = scene.Tracker.GetEntity<HoldablePriorityController>();
-            if (existing != null && existing != this)
-            {
-                throw new InvalidOperationException($"attempted to add a new {nameof(HoldablePriorityController)} when one was already present!");
-            }
+            this.DuplicateCheck(scene);
 
             base.Added(scene);
         }
-        private HoldablePriorityController()
+        public HoldablePriorityController()
         {
             Tag = Tags.Persistent | Tags.Global;
         }

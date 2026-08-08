@@ -3,11 +3,31 @@ using Monocle;
 using MonoMod.Utils;
 using System;
 using System.Diagnostics.CodeAnalysis;
+using System.Linq;
 
 namespace Celeste.Mod.BalintHelper.Utils
 {
     internal static class Extensions
     {
+        public static T GetOrCreateTrackedSingleton<T>(this Scene scene) where T : Entity, new()
+        {
+            var instance = scene.Tracker.GetEntity<T>();
+            if (instance == null)
+            {
+                instance = [];
+                scene.Tracker.EntityAdded(instance);
+                scene.Add(instance);
+            }
+            return instance;
+        }
+        public static void DuplicateCheck<T>(this T e, Scene scene) where T : Entity
+        {
+            var entities = scene.Tracker.GetEntities<T>();
+            if (entities.Count > 2 || (entities.Count != 0 && entities.First() is { } existing && existing != e))
+            {
+                throw new InvalidOperationException($"attempted to add a new {typeof(T).Name} when one was already present!");
+            }
+        }
         public static int TypeDepth(this Type t)
         {
             int depth = 0;

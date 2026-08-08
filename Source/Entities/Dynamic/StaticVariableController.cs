@@ -1,4 +1,5 @@
-﻿using Monocle;
+﻿using Celeste.Mod.BalintHelper.Utils;
+using Monocle;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -17,22 +18,11 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         }
         public static StaticVariableController GetOrCreate(Scene scene)
         {
-            var instance = scene.Tracker.GetEntity<StaticVariableController>();
-            if (instance == null)
-            {
-                instance = [];
-                scene.Tracker.EntityAdded(instance);
-                scene.Add(instance);
-            }
-            return instance;
+            return scene.GetOrCreateTrackedSingleton<StaticVariableController>();
         }
         public override void Added(Scene scene)
         {
-            var existing = scene.Tracker.GetEntity<StaticVariableController>();
-            if (existing != null && existing != this)
-            {
-                throw new InvalidOperationException($"tried to add {nameof(StaticVariableController)} when one already exists");
-            }
+            this.DuplicateCheck(scene);
 
             base.Added(scene);
         }
