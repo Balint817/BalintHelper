@@ -3,6 +3,7 @@ using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.BalintHelper.Triggers;
 using Celeste.Mod.BalintHelper.Utils.Dynamic;
 using Celeste.Mod.Registry;
+using DynamicInstructions.Instructions;
 using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
@@ -10,6 +11,7 @@ using MonoMod.Cil;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 using System.Reflection;
 
@@ -41,6 +43,8 @@ namespace Celeste.Mod.BalintHelper
             {
                 item.Load();
             }
+
+            TypeNameCodec.ResolveAmbiguousType += AmbiguousTypeResolver;
         }
 
         public override void Unload()
@@ -62,9 +66,28 @@ namespace Celeste.Mod.BalintHelper
                 item.Unload();
             }
 
+            TypeNameCodec.ResolveAmbiguousType -= AmbiguousTypeResolver;
+
             Instance = null!;
         }
-
+        private bool AmbiguousTypeResolver(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)] out Type resolvedType)
+        {
+            var sorted = matches.OrderBy(t => t.FullName!.Length).ToArray();
+            resolvedType = sorted[0];
+            var excludeNames = new HashSet<string>()
+            {
+                "On." + resolvedType.FullName,
+                "IL." + resolvedType.FullName,
+            };
+            foreach (var item in sorted[1..])
+            {
+                if (!excludeNames.Contains(item.FullName!))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         private static Player Solid_GetPlayerRider(On.Celeste.Solid.orig_GetPlayerRider orig, Solid self)
         {
             if (self.Scene?.Tracker?.GetEntity<Player>() is not { } player
