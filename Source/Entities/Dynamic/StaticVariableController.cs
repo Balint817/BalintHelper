@@ -30,12 +30,13 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         }
         public override void Added(Scene scene)
         {
-            base.Added(scene);
             var existing = scene.Tracker.GetEntity<StaticVariableController>();
-            if (existing != null && existing != this)
+            if (existing != null)
             {
                 throw new InvalidOperationException($"tried to add {nameof(StaticVariableController)} when one already exists");
             }
+
+            base.Added(scene);
         }
         public class Info
         {

@@ -2,6 +2,7 @@
 using Celeste.Mod.BalintHelper.Utils;
 using Microsoft.Xna.Framework;
 using Monocle;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -20,7 +21,16 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
             return ctrl;
         }
+        public override void Added(Scene scene)
+        {
+            var existing = scene.Tracker.GetEntity<HoldablePriorityController>();
+            if (existing != null)
+            {
+                throw new InvalidOperationException($"attempted to add a new {nameof(HoldablePriorityController)} when one was already present!");
+            }
 
+            base.Added(scene);
+        }
         private HoldablePriorityController()
         {
             Tag = Tags.Persistent | Tags.Global;
