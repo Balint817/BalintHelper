@@ -55,6 +55,4 @@ trigger.triggerText = function(room, trigger)
     return "Session (" .. trigger.type .. " " .. trigger.name .. ")"
 end
 
--- TODO
-
 return trigger

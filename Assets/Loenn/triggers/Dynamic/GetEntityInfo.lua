@@ -53,6 +53,4 @@ trigger.triggerText = function(room, trigger)
 	return "Entity (" .. trigger.mode .. ")"
 end
 
--- TODO
-
 return trigger

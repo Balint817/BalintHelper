@@ -52,6 +52,4 @@ trigger.triggerText = function(room, trigger)
 	return "SFX Event (" .. trigger.eventPath .. ")"
 end
 
--- TODO
-
 return trigger

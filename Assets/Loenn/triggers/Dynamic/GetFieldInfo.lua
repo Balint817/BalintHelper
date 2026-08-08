@@ -53,6 +53,4 @@ trigger.triggerText = function(room, trigger)
 	return "Field (" .. trigger.fieldName .. ")"
 end
 
--- TODO
-
 return trigger

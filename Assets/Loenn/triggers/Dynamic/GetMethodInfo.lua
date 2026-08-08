@@ -62,6 +62,4 @@ trigger.triggerText = function(room, trigger)
 	return "Method (" .. trigger.methodName .. ")"
 end
 
--- TODO
-
 return trigger

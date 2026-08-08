@@ -60,6 +60,4 @@ trigger.triggerText = function(room, trigger)
 	return "Property (" .. trigger.propertyName .. ")"
 end
 
--- TODO
-
 return trigger

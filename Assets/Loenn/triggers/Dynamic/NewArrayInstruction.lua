@@ -44,6 +44,4 @@ trigger.triggerText = function(room, trigger)
     end
 end
 
--- TODO
-
 return trigger

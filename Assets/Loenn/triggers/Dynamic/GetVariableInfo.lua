@@ -55,6 +55,4 @@ trigger.triggerText = function(room, trigger)
     return "Variable (" .. trigger.type .. " " .. trigger.name .. ")"
 end
 
--- TODO
-
 return trigger
