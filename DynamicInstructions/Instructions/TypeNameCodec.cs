@@ -1,11 +1,13 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
 using System.Text;
 
 namespace DynamicInstructions.Instructions
 {
-
     public static class TypeNameCodec
     {
+        public delegate bool ResolveAmbiguousTypeHandler(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)]out Type resolvedType);
+        public static event ResolveAmbiguousTypeHandler? ResolveAmbiguousType;
         private static readonly Dictionary<string, string> Aliases = new(StringComparer.Ordinal)
         {
             ["bool"] = "System.Boolean",
@@ -123,6 +125,10 @@ namespace DynamicInstructions.Instructions
 
             if (fullNameMatches.Length > 1)
             {
+                if (TryResolveAmbiguousType(name, fullNameMatches, out var resolvedType))
+                {
+                    return resolvedType;
+                }
                 throw new InvalidOperationException(
                     $"Ambiguous type '{simpleOrFullName}'. Matches: {string.Join(", ", fullNameMatches.Select(t => t.FullName))}");
             }
@@ -132,13 +138,38 @@ namespace DynamicInstructions.Instructions
                 .Distinct()
                 .ToArray();
 
-            return nameMatches.Length switch
+            switch (nameMatches.Length)
             {
-                0 => null,
-                1 => nameMatches[0],
-                _ => throw new InvalidOperationException(
-                    $"Ambiguous type '{simpleOrFullName}'. Matches: {string.Join(", ", nameMatches.Select(t => t.FullName))}")
-            };
+                case 0:
+                    return null;
+                case 1:
+                    return nameMatches[0];
+                default:
+                    if (TryResolveAmbiguousType(name, nameMatches, out var resolvedType))
+                    {
+                        return resolvedType;
+                    }
+                    throw new InvalidOperationException(
+                        $"Ambiguous type '{simpleOrFullName}'. Matches: {string.Join(", ", nameMatches.Select(t => t.FullName))}");
+            }
+        }
+
+        static bool TryResolveAmbiguousType(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)]out Type resolvedType)
+        {
+            resolvedType = null;
+            if (ResolveAmbiguousType == null)
+            {
+                return false;
+            }
+            foreach (var item in ResolveAmbiguousType.GetInvocationList())
+            {
+                var handler = (ResolveAmbiguousTypeHandler)item;
+                if (handler(typeName, matches, out resolvedType))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
 
         public static IEnumerable<Type> GetLoadableTypes(Assembly assembly)
