@@ -79,6 +79,17 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             InstructionTypes = AllTypes.Where(type => type.IsAssignableTo(typeof(BaseInstruction))).ToList().AsReadOnly();
         }
 
+        public override void Added(Scene scene)
+        {
+            base.Added(scene);
+
+            var existing = scene.Tracker.GetEntity<DynamicMethodController>();
+            if (existing is not null)
+            {
+                throw new InvalidOperationException($"attempted to add a new {nameof(DynamicMethodController)} when one was already present!");
+            }
+        }
+
         private Type? _returnInstructionType;
 
         public override void Awake(Scene scene)
