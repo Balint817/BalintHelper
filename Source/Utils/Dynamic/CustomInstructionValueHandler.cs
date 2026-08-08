@@ -2,6 +2,7 @@ using DynamicInstructions;
 using DynamicInstructions.Instructions.Abstract;
 using DynamicInstructions.Instructions.Invoke;
 using DynamicInstructions.Instructions.Read;
+using DynamicInstructions.Instructions.Variables;
 using DynamicInstructions.Instructions.Write;
 using System;
 using System.Collections.Generic;
@@ -63,6 +64,11 @@ namespace Celeste.Mod.BalintHelper.Utils.Dynamic
             {
                 WriteIndexerInstruction.WriteIndexerHandlers.Add(new(TargetType, writeIndexerHandler.WriteIndexer));
             }
+            if (this is IVariableHandler variableHandler)
+            {
+                IsDefinedInstruction.IsDefinedHandlers.Add(new(TargetType, variableHandler.IsDefined));
+                InitVariableInstruction.InitHandlers.Add(new(TargetType, variableHandler.InitVariable));
+            }
         }
 
         public void Unload()
@@ -90,6 +96,11 @@ namespace Celeste.Mod.BalintHelper.Utils.Dynamic
             if (this is IWriteIndexerHandler writeIndexerHandler)
             {
                 WriteIndexerInstruction.WriteIndexerHandlers.RemoveAll(x => x.Key == TargetType && x.Value == writeIndexerHandler.WriteIndexer);
+            }
+            if (this is IVariableHandler variableHandler)
+            {
+                IsDefinedInstruction.IsDefinedHandlers.RemoveAll(x => x.Key == TargetType && x.Value == variableHandler.IsDefined);
+                InitVariableInstruction.InitHandlers.RemoveAll(x => x.Key == TargetType && x.Value == variableHandler.InitVariable);
             }
         }
 
