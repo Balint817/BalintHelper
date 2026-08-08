@@ -1,5 +1,5 @@
 - Name: BalintHelper
-  Version: 2.1.1
+  Version: 2.2.0
   DLL: bin/BalintHelper.dll
   DependsOn:
     - Name: Everest
