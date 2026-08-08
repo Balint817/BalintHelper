@@ -9,7 +9,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
     [CustomEntity(
         "BalintHelper/GetVariableInfoTrigger/LoadConstantInstruction"
         )]
-    public class GetVariableInfoTrigger: GetThenActInstructionTrigger
+    public class GetVariableInfoTrigger : GetThenActInstructionTrigger
     {
         public enum VariableType
         {

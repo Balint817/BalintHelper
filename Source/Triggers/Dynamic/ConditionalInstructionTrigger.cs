@@ -10,7 +10,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         )]
     public sealed class ConditionalInstructionTrigger : BaseInstructionTrigger
     {
-        static readonly Type[] _params = [typeof(BaseInstruction)];
+        private static readonly Type[] _params = [typeof(BaseInstruction)];
         public override object?[] GetConstructorParameters()
         {
             return [TruePathCompiled ?? throw new InvalidOperationException("TruePath is not set")];

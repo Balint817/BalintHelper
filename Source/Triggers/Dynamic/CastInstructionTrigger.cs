@@ -15,7 +15,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         private readonly string _sourceTypeName;
         public Type? SourceType { get; private set; }
 
-        static readonly Type[] _typeParams = new[] { typeof(Type), typeof(Type) };
+        private static readonly Type[] _typeParams = new[] { typeof(Type), typeof(Type) };
         public override Type[] ConstructorParameterTypes => _typeParams;
         public override object?[] GetConstructorParameters()
         {

@@ -2,7 +2,6 @@ using FMOD.Studio;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Linq;
 
 namespace Celeste.Mod.BalintHelper.Record
 {

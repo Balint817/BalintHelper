@@ -8,7 +8,7 @@ using System.Collections.Generic;
 
 namespace Celeste.Mod.BalintHelper.Utils.Dynamic
 {
-    public class FlagInfoHandler: CustomInstructionValueHandler, IReadHandler, IWriteHandler, IRefHandler
+    public class FlagInfoHandler : CustomInstructionValueHandler, IReadHandler, IWriteHandler, IRefHandler
     {
         public override Type TargetType => typeof(FlagInfo);
 

@@ -12,7 +12,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
     [CustomEntity("BalintHelper/GetRandomTrigger/NopInstruction")]
     public class GetRandomTrigger : CompoundInstructionTrigger
     {
-        static readonly FieldInfo randomField = typeof(Calc).GetField(nameof(Calc.Random), BindingFlags.Public | BindingFlags.Static)!;
+        private static readonly FieldInfo randomField = typeof(Calc).GetField(nameof(Calc.Random), BindingFlags.Public | BindingFlags.Static)!;
         public GetRandomTrigger(EntityData data, Vector2 offset) : base(data, offset) { }
         override public IEnumerable<BaseInstruction> GetCompoundInstructions()
         {

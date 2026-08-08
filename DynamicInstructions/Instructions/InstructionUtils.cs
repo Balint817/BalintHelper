@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using System.Text;
+﻿using System.Text;
 
 namespace DynamicInstructions.Instructions
 {
@@ -230,8 +229,10 @@ namespace DynamicInstructions.Instructions
             }
 
             if (count < minDigits)
+            {
                 throw new FormatException(
                     $"Expected at least {minDigits} hex digit(s) at position {start}, found {count}.");
+            }
 
             return input.Substring(start, count);
         }

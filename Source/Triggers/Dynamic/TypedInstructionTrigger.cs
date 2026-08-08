@@ -14,7 +14,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         )]
     public class TypedInstructionTrigger : BaseInstructionTrigger
     {
-        static readonly Type[] _params = [typeof(Type)];
+        private static readonly Type[] _params = [typeof(Type)];
         public override object?[] GetConstructorParameters()
         {
             return [TypeParameter ?? throw new InvalidOperationException("TypeParameter is not set")];

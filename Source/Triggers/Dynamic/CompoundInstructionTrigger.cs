@@ -1,5 +1,4 @@
-﻿using Celeste.Mod.Entities;
-using DynamicInstructions.Instructions.Abstract;
+﻿using DynamicInstructions.Instructions.Abstract;
 using Microsoft.Xna.Framework;
 using System.Collections.Generic;
 

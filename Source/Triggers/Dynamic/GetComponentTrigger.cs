@@ -16,7 +16,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         )]
     public class GetComponentTrigger : CompoundInstructionTrigger
     {
-        static readonly MethodInfo getMethod = typeof(Entity).GetMethod(nameof(Entity.Get), BindingFlags.Public | BindingFlags.Instance)!;
+        private static readonly MethodInfo getMethod = typeof(Entity).GetMethod(nameof(Entity.Get), BindingFlags.Public | BindingFlags.Instance)!;
         public readonly MethodInfo GenericGetMethod;
         public GetComponentTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {

@@ -53,7 +53,9 @@ namespace DynamicInstructions.Instructions
         public static IReadOnlyList<Type?> ParseTypeList(string input, IEnumerable<Assembly> searchAssemblies)
         {
             if (string.IsNullOrWhiteSpace(input))
+            {
                 return [];
+            }
 
             return [.. SplitTopLevel(input, ';')
                 .Select(x => x.Trim())
@@ -72,7 +74,10 @@ namespace DynamicInstructions.Instructions
         private static Assembly? ResolveAssembly(AssemblyName name, Assembly[] assemblies)
         {
             var full = assemblies.FirstOrDefault(a => string.Equals(a.FullName, name.FullName, StringComparison.Ordinal));
-            if (full != null) return full;
+            if (full != null)
+            {
+                return full;
+            }
 
             var simpleMatches = assemblies
                 .Where(a => string.Equals(a.GetName().Name, name.Name, StringComparison.Ordinal))
@@ -92,10 +97,15 @@ namespace DynamicInstructions.Instructions
             var name = NormalizeAliasOnly(simpleOrFullName);
 
             if (asm != null)
+            {
                 return asm.GetType(name, throwOnError: false, ignoreCase: ignoreCase);
+            }
 
             var direct = Type.GetType(name, throwOnError: false, ignoreCase: ignoreCase);
-            if (direct != null) return direct;
+            if (direct != null)
+            {
+                return direct;
+            }
 
             var types = assemblies
                 .SelectMany(GetLoadableTypes)
@@ -107,11 +117,15 @@ namespace DynamicInstructions.Instructions
                 .ToArray();
 
             if (fullNameMatches.Length == 1)
+            {
                 return fullNameMatches[0];
+            }
 
             if (fullNameMatches.Length > 1)
+            {
                 throw new InvalidOperationException(
                     $"Ambiguous type '{simpleOrFullName}'. Matches: {string.Join(", ", fullNameMatches.Select(t => t.FullName))}");
+            }
 
             var nameMatches = types
                 .Where(t => string.Equals(t.Name, name, comparison))
@@ -141,7 +155,11 @@ namespace DynamicInstructions.Instructions
 
         private static string NormalizeFriendlySyntax(string input)
         {
-            if (string.IsNullOrWhiteSpace(input)) return input;
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                return input;
+            }
+
             var parser = new FriendlyTypeParser(input);
             return NormalizeAliasTokens(parser.ParseType());
         }
@@ -151,7 +169,10 @@ namespace DynamicInstructions.Instructions
         private static string NormalizeAliasTokens(string input)
         {
             foreach (var kvp in Aliases.OrderByDescending(x => x.Key.Length))
+            {
                 input = ReplaceStandaloneToken(input, kvp.Key, kvp.Value);
+            }
+
             return input;
         }
 
@@ -210,10 +231,22 @@ namespace DynamicInstructions.Instructions
                     continue;
                 }
 
-                if (ch == '<') angleDepth++;
-                else if (ch == '>') angleDepth--;
-                else if (ch == '[') bracketDepth++;
-                else if (ch == ']') bracketDepth--;
+                if (ch == '<')
+                {
+                    angleDepth++;
+                }
+                else if (ch == '>')
+                {
+                    angleDepth--;
+                }
+                else if (ch == '[')
+                {
+                    bracketDepth++;
+                }
+                else if (ch == ']')
+                {
+                    bracketDepth--;
+                }
 
                 if (ch == separator && angleDepth == 0 && bracketDepth == 0)
                 {
@@ -267,7 +300,9 @@ namespace DynamicInstructions.Instructions
 
                 SkipWs();
                 if (_i != _text.Length)
+                {
                     throw new FormatException($"Unexpected trailing characters at position {_i}.");
+                }
 
                 return s;
             }
@@ -355,7 +390,9 @@ namespace DynamicInstructions.Instructions
                     if (c == '\\')
                     {
                         if (_i + 1 >= _text.Length)
+                        {
                             throw new FormatException("Dangling escape at end of input.");
+                        }
 
                         sb.Append(_text[_i + 1]);
                         _i += 2;
@@ -364,7 +401,9 @@ namespace DynamicInstructions.Instructions
                     }
 
                     if (IsTerminator(c))
+                    {
                         break;
+                    }
 
                     sb.Append(c);
                     _i++;
@@ -373,7 +412,9 @@ namespace DynamicInstructions.Instructions
 
                 var name = sb.ToString().Trim();
                 if (!any || name.Length == 0)
+                {
                     throw new FormatException($"Expected type name at position {_i}.");
+                }
 
                 return name;
             }
@@ -383,7 +424,10 @@ namespace DynamicInstructions.Instructions
 
             private void SkipWs()
             {
-                while (_i < _text.Length && char.IsWhiteSpace(_text[_i])) _i++;
+                while (_i < _text.Length && char.IsWhiteSpace(_text[_i]))
+                {
+                    _i++;
+                }
             }
 
             private bool Peek(char c) => _i < _text.Length && _text[_i] == c;

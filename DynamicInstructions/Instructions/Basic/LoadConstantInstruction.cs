@@ -4,7 +4,7 @@ namespace DynamicInstructions.Instructions.Basic
 {
     // TODO:
     // GetEventInfo
-	// GetChannel => channelutils.cs => Dictionary<string, ChannelVal> state = new (); or _getVal(string ch) might be better
+    // GetChannel => channelutils.cs => Dictionary<string, ChannelVal> state = new (); or _getVal(string ch) might be better
     public class LoadConstantInstruction : BaseInstruction
     {
         public readonly object? Value;

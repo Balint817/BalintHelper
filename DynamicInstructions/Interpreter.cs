@@ -240,7 +240,7 @@ namespace DynamicInstructions
                 {
                     if (state.Stack.Count != 0)
                     {
-                        throw new InvalidProgramException($"stack imbalance on method return, values remaining on the stack: {string.Join(", ", state.Stack.Select(x => x is null ? "<null>": x))}");
+                        throw new InvalidProgramException($"stack imbalance on method return, values remaining on the stack: {string.Join(", ", state.Stack.Select(x => x is null ? "<null>" : x))}");
                     }
                     returnValue = finalValue;
                     return true;

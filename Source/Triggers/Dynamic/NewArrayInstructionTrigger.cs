@@ -9,7 +9,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         )]
     public class NewArrayInstructionTrigger : TypedInstructionTrigger
     {
-        static readonly Type[] _params = [typeof(Type), typeof(int)];
+        private static readonly Type[] _params = [typeof(Type), typeof(int)];
         public override object?[] GetConstructorParameters()
         {
             return [TypeParameter ?? throw new InvalidOperationException("TypeParameter is not set"), Dimensions == 0 ? throw new InvalidOperationException("Invalid dimension") : Dimensions];

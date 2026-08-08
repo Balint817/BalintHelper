@@ -3,7 +3,6 @@ using Monocle;
 using MonoMod.Utils;
 using System;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 
 namespace Celeste.Mod.BalintHelper.Utils
 {
