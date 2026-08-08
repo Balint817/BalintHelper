@@ -27,7 +27,8 @@ local actionValues = {
 local enumValues = {
 "Local",
 "Global",
-"Argument"
+"Argument",
+"Static"
 }
 
 trigger.fieldInformation = {
