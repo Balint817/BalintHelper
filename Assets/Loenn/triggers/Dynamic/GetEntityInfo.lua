@@ -50,7 +50,7 @@ trigger.fieldOrder = {
 }
 
 trigger.triggerText = function(room, trigger)
-	return "Entity (" .. trigger.mode .. ")"
+	return "Entity (" .. trigger.mode .. ", " .. trigger.types .. ")"
 end
 
 return trigger
