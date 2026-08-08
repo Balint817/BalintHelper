@@ -1,5 +1,4 @@
-﻿using Celeste.Mod.BalintHelper.Entities.Dynamic;
-using Celeste.Mod.Entities;
+﻿using Celeste.Mod.Entities;
 using DynamicInstructions;
 using Microsoft.Xna.Framework;
 using System;

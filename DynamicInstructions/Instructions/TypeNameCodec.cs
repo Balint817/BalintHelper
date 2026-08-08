@@ -6,7 +6,7 @@ namespace DynamicInstructions.Instructions
 {
     public static class TypeNameCodec
     {
-        public delegate bool ResolveAmbiguousTypeHandler(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)]out Type resolvedType);
+        public delegate bool ResolveAmbiguousTypeHandler(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)] out Type resolvedType);
         public static event ResolveAmbiguousTypeHandler? ResolveAmbiguousType;
         private static readonly Dictionary<string, string> Aliases = new(StringComparer.Ordinal)
         {
@@ -154,7 +154,7 @@ namespace DynamicInstructions.Instructions
             }
         }
 
-        static bool TryResolveAmbiguousType(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)]out Type resolvedType)
+        private static bool TryResolveAmbiguousType(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)] out Type resolvedType)
         {
             resolvedType = null;
             if (ResolveAmbiguousType == null)

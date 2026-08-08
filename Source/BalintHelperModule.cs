@@ -19,7 +19,7 @@ namespace Celeste.Mod.BalintHelper
 {
     public class BalintHelperModuleSession : EverestModuleSession
     {
-        public Dictionary<string, string?> SessionsStrings = new Dictionary<string, string?>();
+        public Dictionary<string, string?> SessionsStrings = [];
     }
     public class BalintHelperModule : EverestModule
     {

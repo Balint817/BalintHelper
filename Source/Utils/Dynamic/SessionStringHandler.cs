@@ -1,4 +1,3 @@
-using Celeste.Mod.BalintHelper.Entities.Dynamic;
 using Celeste.Mod.BalintHelper.Triggers.Dynamic;
 using DynamicInstructions;
 using DynamicInstructions.Instructions.Abstract;
