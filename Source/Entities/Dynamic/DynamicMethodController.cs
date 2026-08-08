@@ -58,20 +58,19 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         }
         public static DynamicMethodController GetOrCreate(Scene scene)
         {
-            var existing = scene.Tracker.GetEntity<DynamicMethodController>();
-            if (existing is not null)
+            var instance = scene.Tracker.GetEntity<DynamicMethodController>();
+            if (instance == null)
             {
-                return existing;
+                instance = new DynamicMethodController();
+                scene.Add(instance);
             }
-            var controller = new DynamicMethodController(new(), Vector2.Zero);
-            scene.Add(controller);
-            return controller;
+            return instance;
         }
         public readonly Interpreter Interpreter;
         public readonly ReadOnlyCollection<Assembly> Assemblies;
         public readonly ReadOnlyCollection<Type> AllTypes;
         public readonly ReadOnlyCollection<Type> InstructionTypes;
-        public DynamicMethodController(EntityData data, Vector2 offset) : base(offset)
+        public DynamicMethodController() : base()
         {
             Interpreter = new();
             Assemblies = AppDomain.CurrentDomain.GetAssemblies().ToList().AsReadOnly();
