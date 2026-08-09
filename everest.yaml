@@ -1,6 +1,9 @@
 - Name: BalintHelper
   Version: 2.2.0
   DLL: bin/BalintHelper.dll
-  DependsOn:
+  Dependencies:
     - Name: Everest
       Version: 1.5577.0
+  OptionalDependencies:
+    - Name: AuspiciousHelper
+      Version: 0.4.5

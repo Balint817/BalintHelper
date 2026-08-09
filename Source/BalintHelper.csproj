@@ -17,6 +17,9 @@
 	</ItemDefinitionGroup>
 
 	<ItemGroup>
+		<PackageReference Include="ModInteropImportGenerator" Version="1.1.3">
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="MonoMod.RuntimeDetour" Version="25.3.1" PrivateAssets="all" ExcludeAssets="runtime" />
 		<PackageReference Include="MonoMod.Patcher" Version="25.0.0-prerelease.2" />
 		<PackageReference Include="CelesteAnalyzer" Version="*" />
@@ -32,11 +35,8 @@
 		<Reference Include="$(CelestePrefix)\FNA.dll" Private="false" />
 	</ItemGroup>
 
-	<Target Name="CopyFiles" AfterTargets="Build"
-			Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb"
-			Outputs="..\bin\$(AssemblyName).dll;..\bin\$(AssemblyName).pdb;..\bin\DynamicInstructions.dll;..\bin\DynamicInstructions.pdb">
-		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb"
-				DestinationFolder="..\bin" />
+	<Target Name="CopyFiles" AfterTargets="Build" Inputs="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb" Outputs="..\bin\$(AssemblyName).dll;..\bin\$(AssemblyName).pdb;..\bin\DynamicInstructions.dll;..\bin\DynamicInstructions.pdb">
+		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb" DestinationFolder="..\bin" />
 	</Target>
 
 	<Target Name="StageModFolder" AfterTargets="CopyFiles">
@@ -45,8 +45,7 @@
 		</PropertyGroup>
 
 
-		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb"
-			  DestinationFolder="$(ModStageDir)bin" />
+		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll;$(OutputPath)\$(AssemblyName).pdb;$(OutputPath)\DynamicInstructions.dll;$(OutputPath)\DynamicInstructions.pdb" DestinationFolder="$(ModStageDir)bin" />
 
 		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).dll" DestinationFolder="$(ModStageDir)bin" />
 		<Copy SourceFiles="$(OutputPath)\$(AssemblyName).pdb" DestinationFolder="$(ModStageDir)bin" />
