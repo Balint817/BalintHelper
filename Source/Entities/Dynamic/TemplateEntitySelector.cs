@@ -322,6 +322,15 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 EnsureOffset(e, state, _lastKnownVirtLoc);
                 EnsureState(e, state);
                 PollAndApplyStatus(e);
+
+                if (e is Solid solid && solid.OnDashCollide is null && e is not DreamBlock)
+                {
+                    solid.OnDashCollide = this.RegisterDashhit;
+                }
+                else if (e is Platform platform && platform.OnDashCollide is null)
+                {
+                    platform.OnDashCollide = this.RegisterDashhit;
+                }
             }
 
             public TemplateSelectorChildComponent(Entity ent) : base(false, false)
@@ -388,6 +397,15 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 foreach (var e in _selectorEntity._processed)
                 {
                     PollAndApplyStatus(e);
+
+                    if (e is Platform p)
+                    {
+                        p.LiftSpeed = getParentLiftspeed();
+                    }
+                    else if (e is Solid s)
+                    {
+                        s.LiftSpeed = getParentLiftspeed();
+                    }
                 }
             }
 
