@@ -1,5 +1,6 @@
 using Celeste.Mod.BalintHelper.Components;
 using Celeste.Mod.BalintHelper.Entities;
+using Celeste.Mod.BalintHelper.Entities.Dynamic;
 using Celeste.Mod.BalintHelper.Triggers;
 using Celeste.Mod.BalintHelper.Utils.Dynamic;
 using Celeste.Mod.Registry;
@@ -54,6 +55,21 @@ namespace Celeste.Mod.BalintHelper
 
             AuspiciousTemplateInterop.Load();
             AuspiciousChannelInterop.Load();
+
+
+            if (AuspiciousTemplateInterop.IsImported)
+            {
+                AuspiciousTemplateInterop.customClarify(
+                    "BalintHelper/TemplateEntitySelector",
+                    (level, levelData, offset, entityData) =>
+                    {
+                        var selector = new TemplateEntitySelector(entityData, offset);
+                        var comp = new TemplateEntitySelector.TemplateSelectorChildComponent(selector);
+                        selector.Add(comp);
+                        return comp;
+                    }
+                );
+            }
         }
         public override void Unload()
         {

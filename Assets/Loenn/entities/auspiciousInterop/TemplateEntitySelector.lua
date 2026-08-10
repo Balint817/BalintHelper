@@ -7,7 +7,7 @@ local entity = {}
 entity.name = "BalintHelper/TemplateEntitySelector"
 entity.depth = -13000
 
-entity.nodeLimits = {1, 1}
+entity.nodeLimits = {0, 1}
 entity.nodeLineRenderType = "line"
 
 entity.nodeVisibility = "always"
