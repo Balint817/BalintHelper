@@ -2,7 +2,7 @@ using ModInteropImportGenerator;
 
 namespace Celeste.Mod.BalintHelper
 {
-    [GenerateImports("auspicioushelper.templates", RequiredDependency = false)]
+    [GenerateImports("auspicioushelper.channels2", RequiredDependency = false)]
     public static partial class AuspiciousChannelInterop
     {
         public static partial double readChannel(string channelName);
