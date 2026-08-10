@@ -98,9 +98,8 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 .Cast<DefineMethodTrigger>()
                 .ToArray();
 
-            // Every real instruction may belong to exactly one method. Filled in while laying methods
-            // out, so a fallthrough/jump that reaches foreign code is reported instead of silently
-            // duplicating (or corrupting) instructions.
+            // Every instruction may belong to exactly one method
+            // Filled in during LayoutMethod so a fallthrough/jump that reaches foreign code is reported
             var owners = new Dictionary<BaseInstructionTrigger, DefineMethodTrigger>();
 
             var layouts = new List<BaseInstructionTrigger>[defineTriggers.Length];
@@ -111,8 +110,6 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
             for (int i = 0; i < defineTriggers.Length; i++)
             {
-                // Compile mutates the layout list (it may splice in ghost labels), so it has to run
-                // before the body array is taken.
                 var body = Compile(layouts[i], defineTriggers[i]);
                 Interpreter.RegisterDynamicMethod(defineTriggers[i].MethodName, body, defineTriggers[i].ArgCount);
             }
@@ -120,7 +117,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         /// <summary>
         /// Flattens the instruction graph reachable from <paramref name="define"/> into the linear
-        /// order the interpreter executes, inserting ghost instructions wherever the graph cannot be
+        /// order the interpreter can execute, inserting ghost instructions wherever the graph cannot be
         /// expressed by plain fallthrough:
         /// <list type="bullet">
         /// <item>a chain that runs out of successors gets a ghost <c>ReturnInstruction</c>, so the
@@ -160,9 +157,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 {
                     if (placed.Contains(current))
                     {
-                        // Unconditional edge into code that already lives somewhere else in the array
-                        // (backwards jump / re-entry). The array has no goto, so synthesise one:
-                        // push `true`, then branch on it.
+                        // Unconditional jump
                         var loadTrue = Ghost(TemporaryLoadBoolTrigger());
                         var jump = (ConditionalInstructionTrigger)Ghost(TemporaryConditionalTrigger());
                         jump.TruePath = current;
@@ -196,8 +191,8 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                         Claim(target, define, owners);
                         conditional.TruePath = target;
 
-                        // The true path is laid out as its own block; it is terminated by a ghost
-                        // return (or a ghost jump) so the preceding block cannot fall into it.
+                        // The true path is laid out as its own block
+                        // it is terminated by a ghost return (or jump) so the preceding block cannot fall into it.
                         if (!placed.Contains(target))
                         {
                             pending.Enqueue(target);

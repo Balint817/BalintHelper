@@ -49,7 +49,6 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             {
                 throw new MissingMemberException($"failed to spawn {nameof(TemplateEntitySelector)} as it could not find the relevant auspicioushelper types");
             }
-            // Loenn enforces nodeLimits = {1, 1}, so there should always be exactly one node.
             if (data.Nodes is null || data.Nodes.Length < 1)
             {
                 throw new ArgumentException($"missing node in {nameof(TemplateEntitySelector)}", nameof(data));
