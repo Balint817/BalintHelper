@@ -11,7 +11,7 @@ using System.Linq;
 namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 {
     [CustomEntity("BalintHelper/TemplateEntitySelector")]
-    public class TemplateEntitySelector : Entity, IDisposable
+    public sealed class TemplateEntitySelector : Entity, IDisposable
     {
         private readonly HashSet<Entity> _processed = [];
 
@@ -230,7 +230,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             _tcomp = null;
         }
 
-        public class TemplateSelectorChildComponent : Component, IDisposable
+        public sealed class TemplateSelectorChildComponent : Component, IDisposable
         {
             private TemplateEntitySelector _selectorEntity;
             internal Vector2 _lastKnownVirtLoc; // cached from the last SetOffsetCB
@@ -274,12 +274,12 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 _selectorEntity._processed.RemoveWhere(x => x?.Scene is null);
             }
 
-            void EnsureOffset(Entity e, EntityState state, Vector2 virtLoc)
+            static void EnsureOffset(Entity e, EntityState state, Vector2 virtLoc)
             {
                 state.Pos ??= new(e, virtLoc);
             }
 
-            void EnsureState(Entity e, EntityState state)
+            static void EnsureState(Entity e, EntityState state)
             {
                 state.Status ??= new(e);
             }
@@ -342,7 +342,8 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 }
                 _selectorEntity = t;
 
-                this.SetOffsetCB = (Vector2 templateVirtualLoc) => {
+                this.SetOffsetCB = templateVirtualLoc =>
+                {
                     _lastKnownVirtLoc = templateVirtualLoc;
                     FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
@@ -353,7 +354,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     }
                 };
 
-                this.RepositionCB = (Vector2 nloc, Vector2 liftspeed) => {
+                this.RepositionCB = (nloc, liftspeed) => {
                     FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
                     {
@@ -378,14 +379,14 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     }
                 };
 
-                this.ChangeStatusCB = (int vis, int col, int act) =>
+                this.ChangeStatusCB = (vis, col, act) =>
                 {
                     FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
                         PollAndApplyStatus(e);
                 };
 
-                this.DestroyCB = (bool allowParticles) => {
+                this.DestroyCB = (allowParticles) => {
                     foreach (var e in _selectorEntity._processed)
                         e.RemoveSelf();
                     _selectorEntity.RemoveSelf();
@@ -400,30 +401,30 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
                     if (e is Platform p)
                     {
-                        p.LiftSpeed = getParentLiftspeed();
+                        p.LiftSpeed = GetParentLiftspeed();
                     }
                     else if (e is Solid s)
                     {
-                        s.LiftSpeed = getParentLiftspeed();
+                        s.LiftSpeed = GetParentLiftspeed();
                     }
                 }
             }
 
-            internal Entity parent = null;
-            public Action<Scene> AddTo = null;
-            public Action<List<Entity>> AddSelf = null;
-            public Action<Vector2, Vector2> RepositionCB = null;
-            public Action<Vector2> SetOffsetCB = null;
-            public Action<int, int, int> ChangeStatusCB = null;
+            internal Entity parent = null!;
+            public Action<Scene> AddTo = null!;
+            public Action<List<Entity>> AddSelf = null!;
+            public Action<Vector2, Vector2> RepositionCB = null!;
+            public Action<Vector2> SetOffsetCB = null!;
+            public Action<int, int, int> ChangeStatusCB = null!;
             public bool ParentVisible = true;
             public bool ParentCollidable = true;
             public bool ParentActive = true;
-            public Action<bool> DestroyCB = null;
+            public Action<bool> DestroyCB = null!;
 
             public void TriggerParent() => AuspiciousTemplateInterop.triggerTemplate(parent, Entity);
             public DashCollisionResults RegisterDashhit(Player p, Vector2 dir) => AuspiciousTemplateInterop.registerDashhit(parent, p, dir);
             public void RegisterEntity(Entity e) => AuspiciousTemplateInterop.registerEntity(parent, e);
-            public Vector2 getParentLiftspeed() => AuspiciousTemplateInterop.getTemplateLiftspeed(parent);
+            public Vector2 GetParentLiftspeed() => AuspiciousTemplateInterop.getTemplateLiftspeed(parent);
 
             public void Dispose()
             {

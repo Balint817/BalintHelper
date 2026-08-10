@@ -5,6 +5,7 @@ using System;
 
 namespace Celeste.Mod.BalintHelper
 {
+#pragma warning disable IDE1006 // this is an interop, casing is not my choice
     [GenerateImports("auspicioushelper.templates", RequiredDependency = false)]
     public static partial class AuspiciousTemplateInterop
     {
@@ -13,6 +14,6 @@ namespace Celeste.Mod.BalintHelper
         public static partial DashCollisionResults registerDashhit(Entity template, Player p, Vector2 dir);
         public static partial Vector2 getTemplateLiftspeed(Entity template);
         public static partial void customClarify(string name, Func<Level, LevelData, Vector2, EntityData, Component> loader);
-        //public static partial void clarify(string name, int type, Level.EntityLoader loader);
     }
+#pragma warning restore IDE1006
 }
