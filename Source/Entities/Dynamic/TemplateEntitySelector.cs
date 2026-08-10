@@ -3,11 +3,14 @@ using Celeste.Mod.Entities;
 using DynamicInstructions.Instructions;
 using Microsoft.Xna.Framework;
 using Monocle;
+using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 {
@@ -64,6 +67,10 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             {
                 cachedType = TypeNameCodec.ParseType(target, AppDomain.CurrentDomain.GetAssemblies())
                     ?? throw new ArgumentException($"failed to get type {target}", nameof(data));
+                //if (cachedType.IsAssignableTo(_templateType) || cachedType.IsAssignableTo(typeof(TemplateEntitySelector)))
+                //{
+                //    throw new ArgumentException($"invalid ", nameof(data));
+                //}
             }
         }
         public override void Removed(Scene scene)
@@ -86,13 +93,18 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             return e == this || _processed.Contains(e) || _templates.Contains(e);
         }
 
-        public bool TryGetVariable(string name, [MaybeNullWhen(false)]out object value)
+        public bool TryGetVariable(string? name, [MaybeNullWhen(false)]out object value)
         {
+            if (string.IsNullOrEmpty(name))
+            {
+                value = null;
+                return false;
+            }
             return DynamicMethodController
                 .GetOrCreate(Scene)
                 .Interpreter
                 .GlobalVariables
-                .TryGetValue(name, out value);
+                .TryGetValue(name!, out value);
         }
         public void RefreshTargets()
         {
