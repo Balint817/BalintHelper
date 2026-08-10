@@ -164,9 +164,16 @@ namespace DynamicInstructions.Instructions
             foreach (var item in ResolveAmbiguousType.GetInvocationList())
             {
                 var handler = (ResolveAmbiguousTypeHandler)item;
-                if (handler(typeName, matches, out resolvedType))
+                try
                 {
-                    return true;
+                    if (handler(typeName, matches, out resolvedType))
+                    {
+                        return true;
+                    }
+                }
+                catch (Exception)
+                {
+
                 }
             }
             return false;
