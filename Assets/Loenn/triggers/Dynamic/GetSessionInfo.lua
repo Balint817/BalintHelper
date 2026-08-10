@@ -28,7 +28,8 @@ local enumValues = {
 "Flag",
 "Counter",
 "Slider",
-"String"
+"String",
+"Channel"
 }
 
 trigger.fieldInformation = {
