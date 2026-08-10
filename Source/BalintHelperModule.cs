@@ -84,7 +84,7 @@ namespace Celeste.Mod.BalintHelper
             resolvedType = sorted[0];
 
             var split = resolvedType.FullName!.Split(".");
-            var everestEventBase = string.Join("", string.Join(".", split[..^1]), ".Everest+Events+", split[^1]);
+            var everestEventBase = string.Join("", string.Join(".", split[..^1]), ".Mod.Everest+Events+", split[^1]);
 
             var excludeNames = new HashSet<string>()
             {

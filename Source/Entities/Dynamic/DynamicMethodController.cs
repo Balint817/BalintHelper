@@ -90,8 +90,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         public void LoadAll()
         {
-            var instructionTriggers = Scene.Entities.Where(x => x is BaseInstructionTrigger)
-                .Cast<BaseInstructionTrigger>()
+            var instructionTriggers = Scene.Entities.OfType<BaseInstructionTrigger>()
                 .ToList();
 
             var defineTriggers = Scene.Tracker.GetEntities<DefineMethodTrigger>()
@@ -370,7 +369,13 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             {
                 return targets;
             }
-            foreach (var node in data.NodesOffset(-data.Position + trigger.Position))
+            var nodes = data.NodesOffset(-data.Position + trigger.Position);
+
+            Logger.Log(LogLevel.Warn, "DynamicMethodController", $"Base nodes: {string.Join(", ", data.Nodes)}");
+            Logger.Log(LogLevel.Warn, "DynamicMethodController", $"Node positions: {string.Join(", ", nodes)}");
+            Logger.Log(LogLevel.Warn, "DynamicMethodController", $"Trigger bounds: {string.Join(", ", allTriggers.Select(x => new Rectangle((int)x.X, (int)x.Y, (int)x.Width, (int)x.Height)))}");
+
+            foreach (var node in nodes)
             {
                 var hit = allTriggers.FirstOrDefault(t => t.CollidePoint(node));
                 if (hit is not null)
