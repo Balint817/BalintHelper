@@ -30,7 +30,7 @@ entities.BalintHelper/CustomTheoGate.placements.name.all=Custom Temple Gate (All
 entities.BalintHelper/CustomTheoGate.placements.name.each=Custom Temple Gate (Each)
 entities.BalintHelper/CustomTheoGate.placements.name.none=Custom Temple Gate (None)
 entities.BalintHelper/SilentFloatingDebris.placements.name.main=Silent Floating Debris
-entities.BalintHelper/TemplateEntitySelector.placements.name.main=Template Entity Selector (evil jank)
+entities.BalintHelper/TemplateEntitySelector.placements.name.main=Evil Template Entity Selector (evil jank)
 
 entities.BalintHelper/CustomPedestal.placements.description.main=A version of the pedestal that will try to teleport crystals (or specified holdables) within its range to itself, and does a bunch of other stuff.
 entities.BalintHelper/CustomTheoGate.placements.description.any=A temple gate that opens when any crystal (or specified holdable) is nearby.
