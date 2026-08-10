@@ -8,7 +8,6 @@ using Microsoft.Xna.Framework;
 using Mono.Cecil.Cil;
 using Monocle;
 using MonoMod.Cil;
-using MonoMod.ModInterop;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;

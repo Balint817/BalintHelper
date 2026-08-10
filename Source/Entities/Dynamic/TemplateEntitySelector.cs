@@ -3,14 +3,10 @@ using Celeste.Mod.Entities;
 using DynamicInstructions.Instructions;
 using Microsoft.Xna.Framework;
 using Monocle;
-using MonoMod.Utils;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
-using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 {
@@ -78,7 +74,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         }
         public override void Removed(Scene scene)
         {
-            this.Dispose();
+            Dispose();
         }
         public override void Added(Scene scene)
         {
@@ -96,7 +92,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             return e == this || _processed.Contains(e) || _templates.Contains(e);
         }
 
-        public bool TryGetVariable(string? name, [MaybeNullWhen(false)]out object value)
+        public bool TryGetVariable(string? name, [MaybeNullWhen(false)] out object value)
         {
             if (string.IsNullOrEmpty(name))
             {
