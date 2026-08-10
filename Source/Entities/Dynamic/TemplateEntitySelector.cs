@@ -44,6 +44,10 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         private readonly HashSet<Entity> _templates = [];
         public TemplateEntitySelector(EntityData data, Vector2 offset) : base(data.Position + offset)
         {
+            if (!AuspiciousChannelInterop.IsImported || !AuspiciousTemplateInterop.IsImported)
+            {
+                throw new InvalidOperationException("cannot do template interop because auspicioushelper is not loaded!");
+            }
             _templateType ??= MiscUtils.GetTypeFromCurrentDomain("Celeste.Mod.auspicioushelper.Template")!;
             if (_templateType is null)
             {

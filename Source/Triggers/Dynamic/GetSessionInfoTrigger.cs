@@ -17,6 +17,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
             Counter,
             Slider,
             String,
+            Channel,
         }
         public override object? ParseConstantValue(EntityData data)
         {
@@ -28,6 +29,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                 SessionInfoType.Counter => new CounterInfo(name),
                 SessionInfoType.Slider => new SliderInfo(name),
                 SessionInfoType.String => new SessionStringInfo(name),
+                SessionInfoType.Channel => new ChannelInfo(name),
                 _ => throw new ArgumentException($"Unknown session variable type {type}", nameof(data)),
             };
         }
