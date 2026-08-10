@@ -50,7 +50,7 @@ trigger.fieldOrder = {
 }
 
 trigger.triggerText = function(room, trigger)
-	return "Field (" .. trigger.fieldName .. ")"
+	return "Field (" .. trigger.action .. " " .. trigger.fieldName .. ")"
 end
 
 return trigger

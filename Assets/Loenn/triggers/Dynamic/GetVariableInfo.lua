@@ -52,7 +52,7 @@ trigger.fieldOrder = {
 }
 
 trigger.triggerText = function(room, trigger)
-    return "Variable (" .. trigger.type .. " " .. trigger.name .. ")"
+    return "Variable (" .. trigger.action .. " " .. trigger.type .. " " .. trigger.name .. ")"
 end
 
 return trigger

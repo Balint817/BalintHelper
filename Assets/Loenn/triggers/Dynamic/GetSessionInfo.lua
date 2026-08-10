@@ -54,7 +54,7 @@ trigger.fieldOrder = {
 }
 
 trigger.triggerText = function(room, trigger)
-    return "Session (" .. trigger.type .. " " .. trigger.name .. ")"
+    return "Session (" .. trigger.action .. " " .. trigger.type .. " " .. trigger.name .. ")"
 end
 
 return trigger

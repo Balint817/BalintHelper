@@ -57,7 +57,7 @@ trigger.fieldOrder = {
 }
 
 trigger.triggerText = function(room, trigger)
-	return "Property (" .. trigger.propertyName .. ")"
+	return "Property (" .. trigger.action .. " " .. trigger.propertyName .. ")"
 end
 
 return trigger
