@@ -82,11 +82,19 @@ namespace Celeste.Mod.BalintHelper
         {
             var sorted = matches.OrderBy(t => t.FullName!.Length).ToArray();
             resolvedType = sorted[0];
+
+            var split = resolvedType.FullName!.Split(".");
+            var everestEventBase = string.Join("", string.Join(".", split[..^1]), ".Everest+Events+", split[^1]);
+
             var excludeNames = new HashSet<string>()
             {
                 "On." + resolvedType.FullName,
                 "IL." + resolvedType.FullName,
+                everestEventBase,
+                "On." + everestEventBase,
+                "IL." + everestEventBase
             };
+
             foreach (var item in sorted[1..])
             {
                 if (!excludeNames.Contains(item.FullName!))
