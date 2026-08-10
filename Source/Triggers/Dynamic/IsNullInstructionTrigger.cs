@@ -3,7 +3,6 @@ using DynamicInstructions.Instructions.Abstract;
 using DynamicInstructions.Instructions.Basic;
 using DynamicInstructions.Instructions.Operators;
 using Microsoft.Xna.Framework;
-using System;
 using System.Collections.Generic;
 
 namespace Celeste.Mod.BalintHelper.Triggers.Dynamic

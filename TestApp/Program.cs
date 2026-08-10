@@ -1,13 +1,11 @@
 ﻿using DynamicInstructions.Instructions;
-using System.Reflection;
-using System.Runtime.CompilerServices;
 
 namespace TestApp
 {
     internal class Program
     {
         public static Action? test;
-        static void Main()
+        private static void Main()
         {
             foreach (var item in typeof(Program).GetNestedTypes(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Public))
             {
@@ -24,7 +22,7 @@ namespace TestApp
             string x = "5";
             test = () => Console.WriteLine(x);
 
-            
+
         }
     }
 }

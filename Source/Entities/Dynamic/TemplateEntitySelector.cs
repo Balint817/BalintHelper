@@ -1,4 +1,3 @@
-using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using DynamicInstructions.Instructions;
 using Microsoft.Xna.Framework;
@@ -158,7 +157,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         public override void Update()
         {
-            _tcomp ??= this.Get<TemplateSelectorChildComponent>();
+            _tcomp ??= Get<TemplateSelectorChildComponent>();
             if (_tcomp is null)
             {
                 // you should kys NOW ⛈️⚡🙎⚡⛈️
@@ -269,22 +268,22 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
             internal readonly Dictionary<Entity, EntityState> _states = [];
 
-            void FilterRemoved()
+            private void FilterRemoved()
             {
                 _selectorEntity._processed.RemoveWhere(x => x?.Scene is null);
             }
 
-            static void EnsureOffset(Entity e, EntityState state, Vector2 virtLoc)
+            private static void EnsureOffset(Entity e, EntityState state, Vector2 virtLoc)
             {
                 state.Pos ??= new(e, virtLoc);
             }
 
-            static void EnsureState(Entity e, EntityState state)
+            private static void EnsureState(Entity e, EntityState state)
             {
                 state.Status ??= new(e);
             }
 
-            EntityState GetOrCreateState(Entity e)
+            private EntityState GetOrCreateState(Entity e)
             {
                 if (!_states.TryGetValue(e, out var state))
                 {
@@ -299,17 +298,39 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 EnsureState(e, state);
                 var status = state.Status!;
 
-                if (e.Visible != status.LastAppliedVisible) status.OwnVisible = e.Visible;
-                if (e.Collidable != status.LastAppliedCollidable) status.OwnCollidable = e.Collidable;
-                if (e.Active != status.LastAppliedActive) status.OwnActive = e.Active;
+                if (e.Visible != status.LastAppliedVisible)
+                {
+                    status.OwnVisible = e.Visible;
+                }
+
+                if (e.Collidable != status.LastAppliedCollidable)
+                {
+                    status.OwnCollidable = e.Collidable;
+                }
+
+                if (e.Active != status.LastAppliedActive)
+                {
+                    status.OwnActive = e.Active;
+                }
 
                 bool wantVisible = ParentVisible && status.OwnVisible;
                 bool wantCollidable = ParentCollidable && status.OwnCollidable;
                 bool wantActive = ParentActive && status.OwnActive;
 
-                if (e.Visible != wantVisible) e.Visible = wantVisible;
-                if (e.Collidable != wantCollidable) e.Collidable = wantCollidable;
-                if (e.Active != wantActive) e.Active = wantActive;
+                if (e.Visible != wantVisible)
+                {
+                    e.Visible = wantVisible;
+                }
+
+                if (e.Collidable != wantCollidable)
+                {
+                    e.Collidable = wantCollidable;
+                }
+
+                if (e.Active != wantActive)
+                {
+                    e.Active = wantActive;
+                }
 
                 status.LastAppliedVisible = e.Visible;
                 status.LastAppliedCollidable = e.Collidable;
@@ -325,11 +346,11 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
                 if (e is Solid solid && solid.OnDashCollide is null && e is not DreamBlock)
                 {
-                    solid.OnDashCollide = this.RegisterDashhit;
+                    solid.OnDashCollide = RegisterDashhit;
                 }
                 else if (e is Platform platform && platform.OnDashCollide is null)
                 {
-                    platform.OnDashCollide = this.RegisterDashhit;
+                    platform.OnDashCollide = RegisterDashhit;
                 }
             }
 
@@ -342,7 +363,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 }
                 _selectorEntity = t;
 
-                this.SetOffsetCB = templateVirtualLoc =>
+                SetOffsetCB = templateVirtualLoc =>
                 {
                     _lastKnownVirtLoc = templateVirtualLoc;
                     FilterRemoved();
@@ -354,7 +375,8 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     }
                 };
 
-                this.RepositionCB = (nloc, liftspeed) => {
+                RepositionCB = (nloc, liftspeed) =>
+                {
                     FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
                     {
@@ -371,24 +393,34 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                         Vector2 target = nloc + pos.Offset;
 
                         if (e is Platform p)
+                        {
                             p.MoveTo(target, liftspeed);
+                        }
                         else
+                        {
                             e.Position = target;
+                        }
 
                         pos.LastSetPosition = target;
                     }
                 };
 
-                this.ChangeStatusCB = (vis, col, act) =>
+                ChangeStatusCB = (vis, col, act) =>
                 {
                     FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
+                    {
                         PollAndApplyStatus(e);
+                    }
                 };
 
-                this.DestroyCB = (allowParticles) => {
+                DestroyCB = (allowParticles) =>
+                {
                     foreach (var e in _selectorEntity._processed)
+                    {
                         e.RemoveSelf();
+                    }
+
                     _selectorEntity.RemoveSelf();
                 };
             }
@@ -429,11 +461,11 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             public void Dispose()
             {
                 _states?.Clear();
-                this.DestroyCB = null!;
-                this.ChangeStatusCB = null!;
-                this.SetOffsetCB = null!;
-                this.RepositionCB = null!;
-                this._selectorEntity = null!;
+                DestroyCB = null!;
+                ChangeStatusCB = null!;
+                SetOffsetCB = null!;
+                RepositionCB = null!;
+                _selectorEntity = null!;
             }
         }
     }
