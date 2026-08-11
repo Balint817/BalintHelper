@@ -74,7 +74,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         public bool InvalidOrProcessed(Entity entity)
         {
-            return entity == this || entity == _tcomp?.parent || _processed.Contains(entity);
+            return entity == this || entity == _tcomp?.parent || _processed.Contains(entity) || entity.IsGone(Scene);
         }
 
         public bool TryGetVariable(string? name, [MaybeNullWhen(false)] out object value)
@@ -244,6 +244,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
                 SetOffsetCB = loc =>
                 {
+                    FilterRemoved();
                     _lastKnownVirtLoc = loc;
                     foreach (var e in _selectorEntity._processed)
                     {
@@ -256,7 +257,8 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
                 RepositionCB = (nloc, liftspeed) =>
                 {
-                    _selectorEntity._processed.RemoveWhere(x => x?.Scene is null);
+                    FilterRemoved();
+                    _lastKnownVirtLoc = nloc;
 
                     foreach (var e in _selectorEntity._processed)
                     {
@@ -289,6 +291,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
                 ChangeStatusCB = (vis, col, act) =>
                 {
+                    FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
                     {
                         if (!_statuses.TryGetValue(e, out var ogSt))
@@ -315,6 +318,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
                 DestroyCB = (particles) =>
                 {
+                    FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
                     {
                         e.RemoveSelf();
@@ -376,16 +380,13 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     };
                 }
             }
-
-            public override void Update()
+            bool IsGone(Entity e)
             {
-                foreach (var e in _selectorEntity._processed.ToArray())
-                {
-                    if (e.IsGone(Scene))
-                    {
-                        _selectorEntity._processed.Remove(e);
-                    }
-                }
+                return e.IsGone(this.Scene);
+            }
+            void FilterRemoved()
+            {
+                _selectorEntity._processed.RemoveWhere(IsGone);
             }
 
             private static Type? _auspiciousTemplateType;
