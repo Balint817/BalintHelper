@@ -165,14 +165,13 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         public void Dispose()
         {
-            _currentTargets.Clear();
+            _processed?.Clear();
+            _currentTargets?.Clear();
+            _tcomp?.Dispose();
             _tcomp = null;
-            // Deliberately not clearing _processed — the component
-            // keeps receiving template callbacks after this entity
-            // leaves the scene, and needs _processed intact.
         }
 
-        public class TemplateSelectorChildComponent : Component
+        public class TemplateSelectorChildComponent : Component, IDisposable
         {
             internal sealed class PosInfo
             {
@@ -195,7 +194,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
             internal readonly Dictionary<Entity, PosInfo> _positions = [];
             internal readonly Dictionary<Entity, StatusInfo> _statuses = [];
-            private readonly TemplateEntitySelector _selectorEntity;
+            private TemplateEntitySelector _selectorEntity;
             internal Vector2 _lastKnownVirtLoc;
 
             public TemplateSelectorChildComponent(Entity ent) : base(true, false)
@@ -206,7 +205,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 AddTo = (Scene s) =>
                 {
                     s.Add(_selectorEntity);
-                    Logger.Info("TemplateEntitySelector", $"AddTo fired, added to scene. parent={parent}");
+                    Logger.Info("TemplateEntitySelector", $"AddTo fired, parent={parent}");
                 };
 
                 SetOffsetCB = (Vector2 loc) =>
@@ -229,7 +228,6 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     {
                         if (!_positions.TryGetValue(e, out var pos))
                         {
-                            Logger.Warn("TemplateEntitySelector", $"No offset captured yet for {e.GetType().Name}, skipping this frame");
                             continue;
                         }
 
@@ -266,7 +264,6 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                         if (col != 0) e.Collidable = ParentCollidable && ogSt.Collidable;
                         if (act != 0) e.Active = ParentActive && ogSt.Active;
                     }
-                    Logger.Info("TemplateEntitySelector", $"ChangeStatusCB fired. vis={vis}, col={col}, act={act}");
                 };
 
                 DestroyCB = (bool particles) =>
@@ -361,6 +358,20 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             {
                 _auspiciousTemplateType ??= MiscUtils.GetTypeFromCurrentDomain("Celeste.Mod.auspicioushelper.Template");
                 return _auspiciousTemplateType is not null && e.GetType().IsAssignableTo(_auspiciousTemplateType);
+            }
+
+            public void Dispose()
+            {
+                parent = null;
+                AddTo = null;
+                AddSelf = null;
+                RepositionCB = null;
+                SetOffsetCB = null;
+                ChangeStatusCB = null;
+                DestroyCB = null;
+                _selectorEntity = null;
+                _positions?.Clear();
+                _statuses?.Clear();
             }
         }
     }
