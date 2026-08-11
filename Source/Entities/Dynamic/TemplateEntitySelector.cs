@@ -17,8 +17,19 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
         private readonly List<Entity> _currentTargets = [];
         private TemplateSelectorChildComponent? _tcomp;
 
-        public enum RunMode { None, First, All }
-        public enum TargetMode { None, Type, TypeVariable, EntityVariable }
+        public enum RunMode
+        {
+            None,
+            First,
+            All
+        }
+        public enum TargetMode
+        {
+            None,
+            Type,
+            TypeVariable,
+            EntityVariable
+        }
 
         public readonly string? activeChannel;
         public readonly string? outputChannel;
