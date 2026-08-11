@@ -19,8 +19,9 @@ namespace Celeste.Mod.BalintHelper.Record
         public readonly HashSet<Type> Types = [];
         public readonly FilterMode Mode = FilterMode.None;
         public bool Any => IDs.Count > 0 || Types.Count > 0;
-        public EntityInfo(string types, IEnumerable<Assembly> assemblies, FilterMode mode)
+        public EntityInfo(string types, FilterMode mode)
         {
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             switch (mode)
             {
                 case FilterMode.First:

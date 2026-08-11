@@ -14,7 +14,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
         {
             var types = data.String("types", "");
             var mode = data.Enum("mode", EntityInfo.FilterMode.None);
-            return new EntityInfo(types, AppDomain.CurrentDomain.GetAssemblies(), mode);
+            return new EntityInfo(types, mode);
         }
         public GetEntityInfoTrigger(EntityData data, Vector2 offset) : base(data, offset)
         {
