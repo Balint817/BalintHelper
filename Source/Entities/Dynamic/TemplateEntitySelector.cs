@@ -77,8 +77,12 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             void AddTargetsOfTypes(params IEnumerable<Type> types)
             {
                 foreach (var e in Scene.Entities)
+                {
                     if (types.Any(t => t.IsAssignableFrom(e.GetType())))
+                    {
                         _currentTargets.Add(e);
+                    }
+                }
             }
             _currentTargets.Clear();
             switch (targetMode)
@@ -89,15 +93,27 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 case TargetMode.TypeVariable:
                     if (TryGetVariable(target, out var value))
                     {
-                        if (value is Type t) AddTargetsOfTypes(t);
-                        else if (value is IEnumerable<Type> iterable) AddTargetsOfTypes(iterable);
+                        if (value is Type t)
+                        {
+                            AddTargetsOfTypes(t);
+                        }
+                        else if (value is IEnumerable<Type> iterable)
+                        {
+                            AddTargetsOfTypes(iterable);
+                        }
                     }
                     break;
                 case TargetMode.EntityVariable:
                     if (TryGetVariable(target, out var value2))
                     {
-                        if (value2 is Entity e) _currentTargets.Add(e);
-                        else if (value2 is IEnumerable<Entity> iterable) _currentTargets.AddRange(iterable);
+                        if (value2 is Entity e)
+                        {
+                            _currentTargets.Add(e);
+                        }
+                        else if (value2 is IEnumerable<Entity> iterable)
+                        {
+                            _currentTargets.AddRange(iterable);
+                        }
                     }
                     break;
                 default:
@@ -111,7 +127,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 
         public override void Update()
         {
-            _tcomp ??= this.Get<TemplateSelectorChildComponent>();
+            _tcomp ??= Get<TemplateSelectorChildComponent>();
             if (_tcomp is null)
             {
                 if (!_loggedMissingComponent)
@@ -131,11 +147,15 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             }
 
             if (!string.IsNullOrEmpty(activeChannel) && AuspiciousChannelInterop.readChannel(activeChannel) == 0)
+            {
                 return;
+            }
 
             RefreshTargets();
             if (_currentTargets.Count == 0)
+            {
                 return;
+            }
 
             switch (runMode)
             {
@@ -145,7 +165,10 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     break;
                 case RunMode.All:
                     foreach (Entity e in _currentTargets)
+                    {
                         RegisterEntityAndIncrementOutput(e);
+                    }
+
                     break;
                 default:
                     throw new InvalidOperationException($"invalid runMode {(int)runMode}");
@@ -241,11 +264,17 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                         Vector2 target = nloc + pos.Offset;
 
                         if (e is Platform p)
+                        {
                             p.MoveTo(target, liftspeed);
+                        }
                         else if (e is Solid s)
+                        {
                             s.MoveTo(target, liftspeed);
+                        }
                         else
+                        {
                             e.Position = target;
+                        }
 
                         pos.LastSetPosition = target;
                     }
@@ -260,16 +289,30 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                             Logger.Error("TemplateEntitySelector", $"No original status captured for {e.GetType().Name}! THIS IS A BUG!");
                             continue;
                         }
-                        if (vis != 0) e.Visible = ParentVisible && ogSt.Visible;
-                        if (col != 0) e.Collidable = ParentCollidable && ogSt.Collidable;
-                        if (act != 0) e.Active = ParentActive && ogSt.Active;
+                        if (vis != 0)
+                        {
+                            e.Visible = ParentVisible && ogSt.Visible;
+                        }
+
+                        if (col != 0)
+                        {
+                            e.Collidable = ParentCollidable && ogSt.Collidable;
+                        }
+
+                        if (act != 0)
+                        {
+                            e.Active = ParentActive && ogSt.Active;
+                        }
                     }
                 };
 
                 DestroyCB = (particles) =>
                 {
                     foreach (var e in _selectorEntity._processed)
+                    {
                         e.RemoveSelf();
+                    }
+
                     _selectorEntity.RemoveSelf();
                 };
             }
@@ -321,7 +364,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     solid.OnDashCollide = (player, vector) =>
                     {
                         var result = original?.Invoke(player, vector);
-                        var registerResult = this.RegisterDashhit(player, vector);
+                        var registerResult = RegisterDashhit(player, vector);
                         return result ?? registerResult;
                     };
                 }
@@ -331,7 +374,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     platform.OnDashCollide = (player, vector) =>
                     {
                         var result = original?.Invoke(player, vector);
-                        var registerResult = this.RegisterDashhit(player, vector);
+                        var registerResult = RegisterDashhit(player, vector);
                         return result ?? registerResult;
                     };
                 }
