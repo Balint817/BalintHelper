@@ -278,10 +278,6 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                         {
                             p.MoveTo(target, liftspeed);
                         }
-                        else if (e is Solid s)
-                        {
-                            s.MoveTo(target, liftspeed);
-                        }
                         else
                         {
                             e.Position = target;
@@ -369,17 +365,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 {
                     return;
                 }
-                if (e is Solid solid && e is not DreamBlock)
-                {
-                    var original = solid.OnDashCollide;
-                    solid.OnDashCollide = (player, vector) =>
-                    {
-                        var result = original?.Invoke(player, vector);
-                        var registerResult = RegisterDashhit(player, vector);
-                        return result ?? registerResult;
-                    };
-                }
-                else if (e is Platform platform)
+                else if (e is Platform platform && e is not DreamBlock)
                 {
                     var original = platform.OnDashCollide;
                     platform.OnDashCollide = (player, vector) =>
