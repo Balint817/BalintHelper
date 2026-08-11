@@ -67,7 +67,7 @@ namespace Celeste.Mod.BalintHelper.Utils
         }
         public static bool IsGone(this Entity? entity, Scene scene)
         {
-            return entity == null || entity.Scene != scene;
+            return entity == null || entity.Scene == null || entity.Scene != scene;
         }
         public static bool TryGetSafe<T>(this DynamicData data, string fieldName, [MaybeNullWhen(false)] out T? value)
         {

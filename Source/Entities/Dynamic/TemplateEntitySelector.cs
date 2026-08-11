@@ -1,3 +1,4 @@
+using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using DynamicInstructions.Instructions;
 using Microsoft.Xna.Framework;
@@ -10,41 +11,25 @@ using System.Linq;
 namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 {
     [CustomEntity("BalintHelper/TemplateEntitySelector")]
-    public sealed class TemplateEntitySelector : Entity, IDisposable
+    public class TemplateEntitySelector : Entity, IDisposable
     {
         private readonly HashSet<Entity> _processed = [];
+        private readonly List<Entity> _currentTargets = [];
+        private TemplateSelectorChildComponent? _tcomp;
 
-        public enum RunMode
-        {
-            None,
-            First,
-            All
-        }
-        public enum TargetMode
-        {
-            None,
-            Type,
-            TypeVariable,
-            EntityVariable,
-        }
+        public enum RunMode { None, First, All }
+        public enum TargetMode { None, Type, TypeVariable, EntityVariable }
+
         public readonly string? activeChannel;
         public readonly string? outputChannel;
         public readonly float outputIncrement;
         public readonly string target;
         public readonly TargetMode targetMode;
         public readonly RunMode runMode;
-        private readonly List<Entity> _currentTargets = [];
         public readonly Type? cachedType;
-
-        private TemplateSelectorChildComponent? _tcomp;
 
         public TemplateEntitySelector(EntityData data, Vector2 offset) : base(data.Position + offset)
         {
-            if (!AuspiciousChannelInterop.IsImported || !AuspiciousTemplateInterop.IsImported)
-            {
-                throw new InvalidOperationException("cannot do template interop because auspicioushelper is not loaded!");
-            }
-
             activeChannel = data.Attr("activeChannel");
             outputChannel = data.Attr("outputChannel");
             target = data.Attr("target");
@@ -59,42 +44,32 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             }
         }
 
-        public override void Removed(Scene scene)
-        {
-            Dispose();
-        }
-
         public override void Added(Scene scene)
         {
             base.Added(scene);
 
             if (string.IsNullOrWhiteSpace(target))
             {
-                Logger.Warn("TemplateEntitySelector", "No target was provided, removing!");
+                Logger.Warn("TemplateEntitySelector", "No target, removing.");
                 RemoveSelf();
                 return;
             }
         }
 
-        public bool InvalidOrProcessed(Entity e)
+        public override void Removed(Scene scene)
         {
-            return e == this
-                || e == _tcomp?.parent
-                || _processed.Contains(e);
+            Dispose();
+        }
+
+        public bool InvalidOrProcessed(Entity entity)
+        {
+            return entity == this || entity == _tcomp?.parent || _processed.Contains(entity);
         }
 
         public bool TryGetVariable(string? name, [MaybeNullWhen(false)] out object value)
         {
-            if (string.IsNullOrEmpty(name))
-            {
-                value = null;
-                return false;
-            }
-            return DynamicMethodController
-                .GetOrCreate(Scene)
-                .Interpreter
-                .GlobalVariables
-                .TryGetValue(name!, out value);
+            if (string.IsNullOrEmpty(name)) { value = null; return false; }
+            return DynamicMethodController.GetOrCreate(Scene).Interpreter.GlobalVariables.TryGetValue(name!, out value);
         }
 
         public void RefreshTargets()
@@ -102,289 +77,164 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             void AddTargetsOfTypes(params IEnumerable<Type> types)
             {
                 foreach (var e in Scene.Entities)
-                {
-                    if (!types.Any(t => t.IsAssignableFrom(e.GetType())))
-                    {
-                        continue;
-                    }
-                    _currentTargets.Add(e);
-                }
+                    if (types.Any(t => t.IsAssignableFrom(e.GetType())))
+                        _currentTargets.Add(e);
             }
             _currentTargets.Clear();
             switch (targetMode)
             {
                 case TargetMode.Type:
-                    {
-                        AddTargetsOfTypes(cachedType!);
-                    }
+                    AddTargetsOfTypes(cachedType!);
                     break;
                 case TargetMode.TypeVariable:
+                    if (TryGetVariable(target, out var value))
                     {
-                        if (TryGetVariable(target, out var value))
-                        {
-                            if (value is Type t)
-                            {
-                                AddTargetsOfTypes(t);
-                            }
-                            else if (value is IEnumerable<Type> iterable)
-                            {
-                                AddTargetsOfTypes(iterable);
-                            }
-                        }
+                        if (value is Type t) AddTargetsOfTypes(t);
+                        else if (value is IEnumerable<Type> iterable) AddTargetsOfTypes(iterable);
                     }
                     break;
                 case TargetMode.EntityVariable:
+                    if (TryGetVariable(target, out var value2))
                     {
-                        if (TryGetVariable(target, out var value))
-                        {
-                            if (value is Entity e)
-                            {
-                                _currentTargets.Add(e);
-                            }
-                            else if (value is IEnumerable<Entity> iterable)
-                            {
-                                _currentTargets.AddRange(iterable);
-                            }
-                        }
+                        if (value2 is Entity e) _currentTargets.Add(e);
+                        else if (value2 is IEnumerable<Entity> iterable) _currentTargets.AddRange(iterable);
                     }
                     break;
                 default:
                     throw new InvalidOperationException($"invalid targetMode {(int)targetMode}");
             }
-
             _currentTargets.RemoveAll(InvalidOrProcessed);
         }
 
+        private bool _loggedMissingComponent;
+        private bool hasRunOnce;
+
         public override void Update()
         {
-            _tcomp ??= Get<TemplateSelectorChildComponent>();
+            _tcomp ??= this.Get<TemplateSelectorChildComponent>();
             if (_tcomp is null)
             {
-                // you should kys NOW ⛈️⚡🙎⚡⛈️
-                Logger.Warn("TemplateEntitySelector", "Not inside a template, removing!");
+                if (!_loggedMissingComponent)
+                {
+                    Logger.Warn("TemplateEntitySelector", "No component attached at all. Not inside a template via customClarify.");
+                    _loggedMissingComponent = true;
+                }
                 RemoveSelf();
                 return;
             }
 
-            if (!string.IsNullOrEmpty(activeChannel))
-            {
-                if (AuspiciousChannelInterop.readChannel(activeChannel) == 0)
-                {
-                    return;
-                }
-            }
+            base.Update();
 
-            RefreshTargets();
-
-            if (_currentTargets.Count == 0)
+            if (hasRunOnce)
             {
                 return;
             }
 
-            var shouldRemove = false;
+            if (!string.IsNullOrEmpty(activeChannel) && AuspiciousChannelInterop.readChannel(activeChannel) == 0)
+                return;
+
+            RefreshTargets();
+            if (_currentTargets.Count == 0)
+                return;
 
             switch (runMode)
             {
                 case RunMode.First:
-                    {
-                        RegisterEntityAndIncrementOutput(_currentTargets[0]);
-                        shouldRemove = true;
-                    }
+                    RegisterEntityAndIncrementOutput(_currentTargets[0]);
+                    hasRunOnce = true;
                     break;
                 case RunMode.All:
-                    {
-                        foreach (Entity e in _currentTargets)
-                        {
-                            RegisterEntityAndIncrementOutput(e);
-                        }
-                    }
+                    foreach (Entity e in _currentTargets)
+                        RegisterEntityAndIncrementOutput(e);
                     break;
                 default:
                     throw new InvalidOperationException($"invalid runMode {(int)runMode}");
             }
-
-            if (shouldRemove)
-            {
-                RemoveSelf();
-                return;
-            }
         }
 
-        private void RegisterEntityAndIncrementOutput(Entity e)
+        private void RegisterEntityAndIncrementOutput(Entity entity)
         {
             if (!string.IsNullOrEmpty(outputChannel) && outputIncrement != 0 && float.IsFinite(outputIncrement))
             {
                 var currentValue = AuspiciousChannelInterop.readChannel(outputChannel);
                 AuspiciousChannelInterop.setChannel(outputChannel, currentValue + outputIncrement);
             }
-            _processed.Add(e);
-            _tcomp!.OnEntityRegistered(e);
-            _tcomp.RegisterEntity(e);
+
+            _tcomp!.NewEntity(entity);
         }
 
         public void Dispose()
         {
-            _processed?.Clear();
-            _tcomp?.Dispose();
+            _currentTargets.Clear();
             _tcomp = null;
+            // Deliberately not clearing _processed — the component
+            // keeps receiving template callbacks after this entity
+            // leaves the scene, and needs _processed intact.
         }
 
-        public sealed class TemplateSelectorChildComponent : Component, IDisposable
+        public class TemplateSelectorChildComponent : Component
         {
-            private TemplateEntitySelector _selectorEntity;
-            internal Vector2 _lastKnownVirtLoc; // cached from the last SetOffsetCB
-
-            internal sealed class EntityState
+            internal sealed class PosInfo
             {
-                internal sealed class PosInfo
-                {
-                    public Vector2 Offset;
-                    public Vector2 LastSetPosition;
-                    public PosInfo(Entity e, Vector2 virtLoc)
-                    {
-                        Offset = e.Position - virtLoc;
-                        LastSetPosition = e.Position;
-                    }
-                }
-                public PosInfo? Pos;
-
-                internal sealed class StatusInfo
-                {
-                    public bool OwnVisible;
-                    public bool OwnCollidable;
-                    public bool OwnActive;
-                    public bool LastAppliedVisible;
-                    public bool LastAppliedCollidable;
-                    public bool LastAppliedActive;
-                    public StatusInfo(Entity e)
-                    {
-                        LastAppliedVisible = OwnVisible = e.Visible;
-                        LastAppliedCollidable = OwnCollidable = e.Collidable;
-                        LastAppliedActive = OwnActive = e.Active;
-                    }
-                }
-                public StatusInfo? Status;
+                public Vector2 Offset;
+                public Vector2 LastSetPosition;
             }
 
-            internal readonly Dictionary<Entity, EntityState> _states = [];
-
-            private void FilterRemoved()
+            internal sealed class StatusInfo
             {
-                _selectorEntity._processed.RemoveWhere(x => x?.Scene is null);
-            }
-
-            private static void EnsureOffset(Entity e, EntityState state, Vector2 virtLoc)
-            {
-                state.Pos ??= new(e, virtLoc);
-            }
-
-            private static void EnsureState(Entity e, EntityState state)
-            {
-                state.Status ??= new(e);
-            }
-
-            private EntityState GetOrCreateState(Entity e)
-            {
-                if (!_states.TryGetValue(e, out var state))
+                public bool Visible;
+                public bool Collidable;
+                public bool Active;
+                public StatusInfo(Entity e)
                 {
-                    _states[e] = state = new();
-                }
-                return state;
-            }
-
-            internal void PollAndApplyStatus(Entity e)
-            {
-                var state = GetOrCreateState(e);
-                EnsureState(e, state);
-                var status = state.Status!;
-
-                if (e.Visible != status.LastAppliedVisible)
-                {
-                    status.OwnVisible = e.Visible;
-                }
-
-                if (e.Collidable != status.LastAppliedCollidable)
-                {
-                    status.OwnCollidable = e.Collidable;
-                }
-
-                if (e.Active != status.LastAppliedActive)
-                {
-                    status.OwnActive = e.Active;
-                }
-
-                bool wantVisible = ParentVisible && status.OwnVisible;
-                bool wantCollidable = ParentCollidable && status.OwnCollidable;
-                bool wantActive = ParentActive && status.OwnActive;
-
-                if (e.Visible != wantVisible)
-                {
-                    e.Visible = wantVisible;
-                }
-
-                if (e.Collidable != wantCollidable)
-                {
-                    e.Collidable = wantCollidable;
-                }
-
-                if (e.Active != wantActive)
-                {
-                    e.Active = wantActive;
-                }
-
-                status.LastAppliedVisible = e.Visible;
-                status.LastAppliedCollidable = e.Collidable;
-                status.LastAppliedActive = e.Active;
-            }
-
-            internal void OnEntityRegistered(Entity e)
-            {
-                var state = GetOrCreateState(e);
-                EnsureOffset(e, state, _lastKnownVirtLoc);
-                EnsureState(e, state);
-                PollAndApplyStatus(e);
-
-                if (e is Solid solid && solid.OnDashCollide is null && e is not DreamBlock)
-                {
-                    solid.OnDashCollide = RegisterDashhit;
-                }
-                else if (e is Platform platform && platform.OnDashCollide is null)
-                {
-                    platform.OnDashCollide = RegisterDashhit;
+                    Visible = e.Visible;
+                    Collidable = e.Collidable;
+                    Active = e.Active;
                 }
             }
 
-            public TemplateSelectorChildComponent(Entity ent) : base(false, false)
+            internal readonly Dictionary<Entity, PosInfo> _positions = [];
+            internal readonly Dictionary<Entity, StatusInfo> _statuses = [];
+            private readonly TemplateEntitySelector _selectorEntity;
+            internal Vector2 _lastKnownVirtLoc;
+
+            public TemplateSelectorChildComponent(Entity ent) : base(true, false)
             {
                 Entity = ent;
-                if (ent is not TemplateEntitySelector t)
-                {
-                    throw new ArgumentException($"invalid entity type {ent.GetType().FullName} for {nameof(TemplateSelectorChildComponent)}", nameof(ent));
-                }
-                _selectorEntity = t;
+                _selectorEntity = (TemplateEntitySelector)ent;
 
-                SetOffsetCB = templateVirtualLoc =>
+                AddTo = (Scene s) =>
                 {
-                    _lastKnownVirtLoc = templateVirtualLoc;
-                    FilterRemoved();
+                    s.Add(_selectorEntity);
+                    Logger.Info("TemplateEntitySelector", $"AddTo fired, added to scene. parent={parent}");
+                };
+
+                SetOffsetCB = (Vector2 loc) =>
+                {
+                    _lastKnownVirtLoc = loc;
                     foreach (var e in _selectorEntity._processed)
                     {
-                        var state = GetOrCreateState(e);
-                        EnsureOffset(e, state, templateVirtualLoc);
-                        EnsureState(e, state);
+                        if (!_positions.ContainsKey(e))
+                        {
+                            _positions[e] = new PosInfo { Offset = e.Position - loc, LastSetPosition = e.Position };
+                        }
                     }
                 };
 
-                RepositionCB = (nloc, liftspeed) =>
+                RepositionCB = (Vector2 nloc, Vector2 liftspeed) =>
                 {
-                    FilterRemoved();
+                    _selectorEntity._processed.RemoveWhere(x => x?.Scene is null);
+
                     foreach (var e in _selectorEntity._processed)
                     {
-                        var state = GetOrCreateState(e);
-                        EnsureOffset(e, state, _lastKnownVirtLoc);
-                        var pos = state.Pos!;
+                        if (!_positions.TryGetValue(e, out var pos))
+                        {
+                            Logger.Warn("TemplateEntitySelector", $"No offset captured yet for {e.GetType().Name}, skipping this frame");
+                            continue;
+                        }
 
-                        // detect independent movement and dont discard it!
+                        // Fold any independent movement since our last write
+                        // into the offset, instead of discarding it.
                         if (e.Position != pos.LastSetPosition)
                         {
                             pos.Offset += e.Position - pos.LastSetPosition;
@@ -393,79 +243,124 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                         Vector2 target = nloc + pos.Offset;
 
                         if (e is Platform p)
-                        {
                             p.MoveTo(target, liftspeed);
-                        }
+                        else if (e is Solid s)
+                            s.MoveTo(target, liftspeed);
                         else
-                        {
                             e.Position = target;
-                        }
 
                         pos.LastSetPosition = target;
                     }
                 };
 
-                ChangeStatusCB = (vis, col, act) =>
+                ChangeStatusCB = (int vis, int col, int act) =>
                 {
-                    FilterRemoved();
                     foreach (var e in _selectorEntity._processed)
                     {
-                        PollAndApplyStatus(e);
+                        if (!_statuses.TryGetValue(e, out var ogSt))
+                        {
+                            Logger.Error("TemplateEntitySelector", $"No original status captured for {e.GetType().Name}! THIS IS A BUG!");
+                            continue;
+                        }
+                        if (vis != 0) e.Visible = ParentVisible && ogSt.Visible;
+                        if (col != 0) e.Collidable = ParentCollidable && ogSt.Collidable;
+                        if (act != 0) e.Active = ParentActive && ogSt.Active;
                     }
+                    Logger.Info("TemplateEntitySelector", $"ChangeStatusCB fired. vis={vis}, col={col}, act={act}");
                 };
 
-                DestroyCB = (allowParticles) =>
+                DestroyCB = (bool particles) =>
                 {
                     foreach (var e in _selectorEntity._processed)
-                    {
                         e.RemoveSelf();
-                    }
-
                     _selectorEntity.RemoveSelf();
                 };
             }
 
-            public override void Update()
+            internal void CaptureOffsetNow(Entity e)
             {
-                foreach (var e in _selectorEntity._processed)
+                if (!_positions.ContainsKey(e))
                 {
-                    PollAndApplyStatus(e);
-
-                    if (e is Platform p)
+                    _positions[e] = new PosInfo
                     {
-                        p.LiftSpeed = GetParentLiftspeed();
-                    }
-                    else if (e is Solid s)
-                    {
-                        s.LiftSpeed = GetParentLiftspeed();
-                    }
+                        Offset = e.Position - _lastKnownVirtLoc,
+                        LastSetPosition = e.Position
+                    };
+                    Logger.Info("TemplateEntitySelector", $"Captured offset {_positions[e].Offset} for {e.GetType().Name} at registration (virtLoc={_lastKnownVirtLoc})");
                 }
             }
 
-            internal Entity parent = null!;
-            public Action<Scene> AddTo = null!;
-            public Action<List<Entity>> AddSelf = null!;
-            public Action<Vector2, Vector2> RepositionCB = null!;
-            public Action<Vector2> SetOffsetCB = null!;
-            public Action<int, int, int> ChangeStatusCB = null!;
+            public Entity parent = null;
+            public Action<Scene> AddTo = null;
+            public Action<List<Entity>> AddSelf = null;
+            public Action<Vector2, Vector2> RepositionCB = null;
+            public Action<Vector2> SetOffsetCB = null;
+            public Action<int, int, int> ChangeStatusCB = null;
             public bool ParentVisible = true;
             public bool ParentCollidable = true;
             public bool ParentActive = true;
-            public Action<bool> DestroyCB = null!;
+            public Action<bool> DestroyCB = null;
 
             public void TriggerParent() => AuspiciousTemplateInterop.triggerTemplate(parent, Entity);
             public DashCollisionResults RegisterDashhit(Player p, Vector2 dir) => AuspiciousTemplateInterop.registerDashhit(parent, p, dir);
             public void RegisterEntity(Entity e) => AuspiciousTemplateInterop.registerEntity(parent, e);
-            public Vector2 GetParentLiftspeed() => AuspiciousTemplateInterop.getTemplateLiftspeed(parent);
+            public Vector2 getParentLiftspeed() => AuspiciousTemplateInterop.getTemplateLiftspeed(parent);
 
-            public void Dispose()
+            internal void NewEntity(Entity entity)
             {
-                _states?.Clear();
-                DestroyCB = null!;
-                ChangeStatusCB = null!;
-                SetOffsetCB = null!;
-                RepositionCB = null!;
-                _selectorEntity = null!;
+                Logger.Info("TemplateEntitySelector", $"Registering {entity.GetType().Name} at {entity.Position} to parent {parent}");
+                _selectorEntity._processed.Add(entity);
+                _statuses.Add(entity, new(entity));
+                RegisterEntity(entity);
+                CaptureOffsetNow(entity);
+                RegisterDashColliders(entity);
+            }
+
+            private void RegisterDashColliders(Entity e)
+            {
+                if (IsAuspiciousTemplate(e))
+                {
+                    return;
+                }
+                if (e is Solid solid && e is not DreamBlock)
+                {
+                    var original = solid.OnDashCollide;
+                    solid.OnDashCollide = (player, vector) =>
+                    {
+                        var result = original?.Invoke(player, vector);
+                        var registerResult = this.RegisterDashhit(player, vector);
+                        return result ?? registerResult;
+                    };
+                }
+                else if (e is Platform platform)
+                {
+                    var original = platform.OnDashCollide;
+                    platform.OnDashCollide = (player, vector) =>
+                    {
+                        var result = original?.Invoke(player, vector);
+                        var registerResult = this.RegisterDashhit(player, vector);
+                        return result ?? registerResult;
+                    };
+                }
+            }
+
+            public override void Update()
+            {
+                foreach (var e in _selectorEntity._processed.ToArray())
+                {
+                    if (e.IsGone(Scene))
+                    {
+                        _selectorEntity._processed.Remove(e);
+                    }
+                }
+            }
+
+            private static Type? _auspiciousTemplateType;
+
+            private static bool IsAuspiciousTemplate(Entity e)
+            {
+                _auspiciousTemplateType ??= MiscUtils.GetTypeFromCurrentDomain("Celeste.Mod.auspicioushelper.Template");
+                return _auspiciousTemplateType is not null && e.GetType().IsAssignableTo(_auspiciousTemplateType);
             }
         }
     }
