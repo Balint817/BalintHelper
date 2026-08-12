@@ -341,6 +341,19 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                 }
             }
 
+            public override void Update()
+            {
+                base.Update();
+                var templateLift = getTemplateLiftspeed();
+                foreach (var e in _selectorEntity._processed)
+                {
+                    if (e is Platform p)
+                    {
+                        p.LiftSpeed = templateLift;
+                    }
+                }
+            }
+
             public Entity parent = null!;
             public Action<Scene> AddTo = null!;
             public Action<List<Entity>> AddSelf = null!;
@@ -351,6 +364,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             public bool ParentCollidable = true;
             public bool ParentActive = true;
             public Action<bool> DestroyCB = null!;
+            public Vector2 getTemplateLiftspeed() => AuspiciousTemplateInterop.getTemplateLiftspeed(parent);
             public DashCollisionResults RegisterDashhit(Player p, Vector2 dir) => AuspiciousTemplateInterop.registerDashhit(parent, p, dir);
             public void RegisterEntity(Entity e) => AuspiciousTemplateInterop.registerEntity(parent, e);
             internal void NewEntity(Entity entity)
