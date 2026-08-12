@@ -1,9 +1,13 @@
 ﻿using Celeste.Mod.BalintHelper.Components;
+using Celeste.Mod.Registry;
+using DynamicInstructions.Instructions;
 using Monocle;
 using MonoMod.Utils;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Linq;
+using System.Reflection;
 
 namespace Celeste.Mod.BalintHelper.Utils
 {
@@ -15,8 +19,8 @@ namespace Celeste.Mod.BalintHelper.Utils
             if (instance == null)
             {
                 instance = [];
-                scene.Tracker.EntityAdded(instance);
                 scene.Add(instance);
+                scene.Tracker.EntityAdded(instance);
             }
             return instance;
         }
@@ -65,9 +69,51 @@ namespace Celeste.Mod.BalintHelper.Utils
             }
             player.Add(new PlayerAddRider(staticMover));
         }
+        public static List<Type> ParseSIDAndTypeIgnoreNone(this string token, IEnumerable<Assembly>? assemblies = null)
+        {
+            assemblies ??= AppDomain.CurrentDomain.GetAssemblies();
+            var knownTypes = EntityRegistry.GetKnownTypesFromSid(token).ToHashSet();
+            try
+            {
+                var type = TypeNameCodec.ParseType(token, assemblies);
+                knownTypes.Add(type);
+            }
+            catch (Exception)
+            {
+                // can only be true inside the catch block.
+                if (knownTypes.Count == 0)
+                {
+                    Logger.Warn("BalintHelper/ParseSIDAndType", $"Failed to parse any type from token '{token}'");
+                }
+            }
+            return [.. knownTypes];
+        }
+        public static List<Type> ParseSIDAndType(this string token, IEnumerable<Assembly>? assemblies = null)
+        {
+            assemblies ??= AppDomain.CurrentDomain.GetAssemblies();
+            var knownTypes = EntityRegistry.GetKnownTypesFromSid(token).ToHashSet();
+            try
+            {
+                var type = TypeNameCodec.ParseType(token, assemblies);
+                knownTypes.Add(type);
+            }
+            catch (Exception)
+            {
+                // can only be true inside the catch block.
+                if (knownTypes.Count == 0)
+                {
+                    throw;
+                }
+            }
+            return [.. knownTypes];
+        }
         public static bool IsGone(this Entity? entity, Scene scene)
         {
             return entity == null || entity.Scene == null || entity.Scene != scene;
+        }
+        public static bool IsGone(this Component? component, Scene scene)
+        {
+            return component == null || component.Scene == null || component.Scene != scene || component.Entity.IsGone(scene);
         }
         public static bool TryGetSafe<T>(this DynamicData data, string fieldName, [MaybeNullWhen(false)] out T? value)
         {
