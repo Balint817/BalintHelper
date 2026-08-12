@@ -394,11 +394,11 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     };
                 }
             }
-            bool IsGone(Entity e)
+            private bool IsGone(Entity e)
             {
-                return e.IsGone(this.Scene);
+                return e.IsGone(Scene);
             }
-            void FilterRemoved()
+            private void FilterRemoved()
             {
                 _selectorEntity._processed.RemoveWhere(IsGone);
             }
