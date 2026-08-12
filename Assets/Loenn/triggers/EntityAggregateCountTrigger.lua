@@ -9,9 +9,9 @@ trigger.placements = {
             width = 16,
             height = 16,
 
-            counterId = "entityCount",
+            counterId = "entityCounter",
             aggregateMode = "Maximum",
-            entityTypes = "TheoCrystal,ExtendedVariantMode/TheoCrystal",
+            entityTypes = "",
         }
     }
 }

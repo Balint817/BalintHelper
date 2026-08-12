@@ -15,7 +15,8 @@ namespace Celeste.Mod.BalintHelper.Utils
         public IReadOnlyCollection<string> TypeNames => typeNames;
         public IReadOnlyCollection<int> EntityIds => entityIds;
 
-        private static readonly char[] separator = [','];
+        private const char separatorChar = ';';
+        private static readonly char[] separatorArr = [separatorChar];
         public bool Any => typeNames.Count != 0 || entityIds.Count != 0;
         public EntityTypeFilter(string raw)
         {
@@ -24,7 +25,7 @@ namespace Celeste.Mod.BalintHelper.Utils
                 return;
             }
 
-            foreach (string piece in raw.Split(separator, StringSplitOptions.RemoveEmptyEntries))
+            foreach (string piece in raw.Split(separatorArr, StringSplitOptions.RemoveEmptyEntries))
             {
                 string token = piece.Trim();
                 if (token.Length == 0)
@@ -48,15 +49,15 @@ namespace Celeste.Mod.BalintHelper.Utils
             var sb = new StringBuilder();
             if (typeNames.Count != 0)
             {
-                sb.Append(string.Join(",", typeNames));
+                sb.Append(string.Join(separatorChar, typeNames));
             }
             if (entityIds.Count != 0)
             {
                 if (sb.Length != 0)
                 {
-                    sb.Append(',');
+                    sb.Append(separatorChar);
                 }
-                sb.Append(string.Join(",", entityIds));
+                sb.Append(string.Join(separatorChar, entityIds));
             }
             return sb.ToString();
         }

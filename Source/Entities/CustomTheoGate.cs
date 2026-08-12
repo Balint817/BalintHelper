@@ -107,7 +107,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             direction = data.Enum("direction", GateDirection.Down);
             closedLength = Math.Max(data.Height, GateThickness);
             theoMode = data.Enum("theoMode", TheoModes.Any);
-            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal"));
+            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal;ExtendedVariantMode/TheoCrystal"));
             playerMode = data.Enum("playerMode", PlayerMode.Ignored);
             closeOnNone = data.Bool("closeOnNone", false);
             killDream = data.Bool("killDream", true);
