@@ -31,6 +31,7 @@ entities.BalintHelper/CustomTheoGate.placements.name.each=Custom Temple Gate (Ea
 entities.BalintHelper/CustomTheoGate.placements.name.none=Custom Temple Gate (None)
 entities.BalintHelper/SilentFloatingDebris.placements.name.main=Silent Floating Debris
 entities.BalintHelper/TemplateEntitySelector.placements.name.main=Evil Template Entity Selector (evil jank)
+entities.BalintHelper/MusicSliderController.placements.name.main=Music Slider Controller
 
 entities.BalintHelper/CustomPedestal.placements.description.main=A version of the pedestal that will try to teleport crystals (or specified holdables) within its range to itself, and does a bunch of other stuff.
 entities.BalintHelper/CustomTheoGate.placements.description.any=A temple gate that opens when any crystal (or specified holdable) is nearby.
@@ -39,6 +40,7 @@ entities.BalintHelper/CustomTheoGate.placements.description.each=A temple gate t
 entities.BalintHelper/CustomTheoGate.placements.description.none=A temple gate that opens only when NO crystals (or specified holdables) are nearby.
 entities.BalintHelper/SilentFloatingDebris.placements.description.main=For debugging purposes.
 entities.BalintHelper/TemplateEntitySelector.placements.description.main=It's evil AND jank.
+entities.BalintHelper/MusicSliderController.placements.description.main=A controller that takes the current time of the music and stores it in a slider.
 
 -- instruction triggers
 
