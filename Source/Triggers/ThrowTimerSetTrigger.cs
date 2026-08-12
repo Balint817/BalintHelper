@@ -1,4 +1,4 @@
-﻿using Celeste.Mod.BalintHelper.Utils;
+﻿using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 
@@ -21,13 +21,11 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private readonly bool onlyOnce;
         private readonly bool waitForSuccess;
 
-        private readonly EntityTypeFilter managedEntities;
-
         public ThrowTimerSetTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
         {
             timerValue = data.Float("value", 0f);
-            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal"));
+            Add(new EntityTypeFilterComponent(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal")));
 
             playerTriggerMode = data.Enum("playerTriggerMode", TriggerModes.Stay);
             onlyOnce = data.Bool("onlyOnce", true);
@@ -62,7 +60,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
         }
         private void FireTrigger(Player player)
         {
-            var match = player.Holding is { } holdable && managedEntities.Matches(holdable.Entity);
+            var match = player.Holding is { } holdable && Get<EntityTypeFilterComponent>().Matches(holdable.Entity);
             if (match)
             {
                 player.minHoldTimer = timerValue;

@@ -1,7 +1,9 @@
-﻿using Celeste.Mod.BalintHelper.Utils;
+﻿using Celeste.Mod.BalintHelper.Entities;
+using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
+using System;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
@@ -30,6 +32,8 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 RemoveSelf();
                 Logger.Warn("BalintHelper", $"{nameof(CameraViewTrigger)} with empty flag at {Position}");
             }
+
+            Add(new EntityTypeFilterComponent("Celeste.Lookout+Hud"));
         }
 
         public override void Added(Scene scene)
@@ -38,6 +42,16 @@ namespace Celeste.Mod.BalintHelper.Triggers
             if (resetFlag)
             {
                 scene.TrySetFlag(flag, false);
+            }
+        }
+
+        public override void Awake(Scene scene)
+        {
+            base.Awake(scene);
+
+            if (needsBino && !this.Get<EntityTypeFilterComponent>().AnyRegistered)
+            {
+                throw new InvalidOperationException("Failed to get lookout type");
             }
         }
 
@@ -56,7 +70,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 return;
             }
 
-            var binoOk = !needsBino || level.IsInLookout();
+            var binoOk = !needsBino || this.Get<EntityTypeFilterComponent>().AnyFound;
             // don't use PlayerIsInside to avoid Update order issues (Player might call OnEntry AFTER we've already updated)
             // which might cause us to fire a frame late (or not fire at all if the interaction lasted for one frame)
             var playerSource = triggerOnPlayer && CollideCheck<Player>();

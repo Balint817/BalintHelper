@@ -1,5 +1,4 @@
 ﻿using Celeste.Mod.BalintHelper.Entities;
-using Celeste.Mod.BalintHelper.Utils;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
@@ -13,7 +12,6 @@ namespace Celeste.Mod.BalintHelper.Triggers
     {
         internal readonly string counterId;
         private readonly EntityAggregateCountController.AggregateMode aggregateMode;
-        private readonly EntityTypeFilter managedEntities;
 
         private EntityAggregateCountController? controller;
 
@@ -24,7 +22,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
         {
             counterId = data.Attr("counterId", "entityCount");
             aggregateMode = data.Enum("aggregateMode", EntityAggregateCountController.AggregateMode.Maximum);
-            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", ""));
+            Add(new EntityTypeFilterComponent(data.Attr("entityTypes", "")));
         }
 
         public override void Added(Scene scene)
@@ -47,23 +45,16 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
             if (Scene != null)
             {
-                foreach (Entity entity in Scene.Entities)
+                foreach (Entity entity in Get<EntityTypeFilterComponent>().GetMatches())
                 {
                     if (entity == this)
                     {
                         continue;
                     }
-
                     if (entity.Collider == null)
                     {
                         continue;
                     }
-
-                    if (!managedEntities.Matches(entity))
-                    {
-                        continue;
-                    }
-
                     if (CollideCheck(entity))
                     {
                         newCount++;
@@ -74,8 +65,13 @@ namespace Celeste.Mod.BalintHelper.Triggers
             if (newCount != CurrentCount)
             {
                 CurrentCount = newCount;
-                controller?.UpdateCounter();
+                UpdateCounter();
             }
+        }
+
+        public void UpdateCounter()
+        {
+            controller?.UpdateCounter();
         }
     }
 }

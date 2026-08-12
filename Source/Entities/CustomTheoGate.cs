@@ -4,6 +4,7 @@ using Microsoft.Xna.Framework;
 using Monocle;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.BalintHelper.Entities
 {
@@ -55,8 +56,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
         private readonly Vector2 closedCenter;
 
-        private readonly EntityTypeFilter managedEntities;
-        private readonly HashSet<string> foundTypeNames = new(StringComparer.Ordinal);
+        private readonly HashSet<Type> foundTypes = [];
         private readonly HashSet<int> foundEntityIds = [];
 
         private float drawLength;
@@ -107,7 +107,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             direction = data.Enum("direction", GateDirection.Down);
             closedLength = Math.Max(data.Height, GateThickness);
             theoMode = data.Enum("theoMode", TheoModes.Any);
-            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal"));
+            Add(new EntityTypeFilterComponent(data.Attr("entityTypes", "TheoCrystal;ExtendedVariantMode/TheoCrystal")));
             playerMode = data.Enum("playerMode", PlayerMode.Ignored);
             closeOnNone = data.Bool("closeOnNone", false);
             killDream = data.Bool("killDream", true);
@@ -313,83 +313,57 @@ namespace Celeste.Mod.BalintHelper.Entities
                 }
             }
 
-            var foundRelevantHoldable = false;
-
             if (theoMode == TheoModes.Each)
             {
-                foundTypeNames.Clear();
+                foundTypes.Clear();
                 foundEntityIds.Clear();
             }
 
-            foreach (Entity entity in GetManagedHoldables())
+            var holdables = GetManagedHoldables().ToArray();
+
+            if (holdables.Length > 0)
             {
-                foundRelevantHoldable = true;
-                var isNearby = IsEntityWithinGateRange(entity, maxDistanceSq);
-
-                if (theoMode == TheoModes.None)
+                switch (theoMode)
                 {
-                    // Any entity nearby means we should NOT open.
-                    if (isNearby)
-                    {
-                        return false;
-                    }
-                }
-                else if (theoMode == TheoModes.Any)
-                {
-                    if (isNearby)
-                    {
-                        return true;
-                    }
-                }
-                else if (theoMode == TheoModes.All)
-                {
-                    if (!isNearby)
-                    {
-                        return false;
-                    }
-                }
-                else // Each
-                {
-                    if (isNearby && managedEntities.Matches(entity, out string? matchedTypeOrSid, out int? matchedEntityId))
-                    {
-                        if (matchedTypeOrSid != null)
+                    case TheoModes.Any:
+                        return holdables.Any(e => IsEntityWithinGateRange(e, maxDistanceSq));
+                    case TheoModes.All:
+                        return holdables.All(e => IsEntityWithinGateRange(e, maxDistanceSq));
+                    case TheoModes.Each:
+                        var managedEntities = Get<EntityTypeFilterComponent>();
+                        foreach (Entity entity in holdables)
                         {
-                            foundTypeNames.Add(matchedTypeOrSid);
-                        }
+                            var isNearby = IsEntityWithinGateRange(entity, maxDistanceSq);
 
-                        if (matchedEntityId.HasValue)
-                        {
-                            foundEntityIds.Add(matchedEntityId.Value);
-                        }
+                            if (isNearby && managedEntities.Matches(entity, out Type? matchedType, out int? matchedEntityId))
+                            {
+                                if (matchedType != null)
+                                {
+                                    foundTypes.Add(matchedType);
+                                }
 
-                        if (foundTypeNames.Count == managedEntities.TypeNames.Count &&
-                            foundEntityIds.Count == managedEntities.EntityIds.Count)
-                        {
-                            return true;
+                                if (matchedEntityId.HasValue)
+                                {
+                                    foundEntityIds.Add(matchedEntityId.Value);
+                                }
+
+                                if (foundTypes.Count == managedEntities.EntityTypeDict.Count &&
+                                    foundEntityIds.Count == managedEntities.EntityIdDict.Count)
+                                {
+                                    return true;
+                                }
+                            }
                         }
-                    }
+                        break;
+                    case TheoModes.None:
+                        return !holdables.Any(e => IsEntityWithinGateRange(e, maxDistanceSq));
+                    default:
+                        break;
                 }
             }
-
-            if (!foundRelevantHoldable)
+            else
             {
                 return !closeOnNone;
-            }
-
-            if (theoMode == TheoModes.None)
-            {
-                return true;  // No managed entity was nearby -> open
-            }
-
-            if (theoMode == TheoModes.All)
-            {
-                return true;
-            }
-
-            if (theoMode == TheoModes.Each)
-            {
-                return foundTypeNames.Count == managedEntities.TypeNames.Count &&
-                       foundEntityIds.Count == managedEntities.EntityIds.Count;
             }
             return false;
         }
@@ -465,28 +439,11 @@ namespace Celeste.Mod.BalintHelper.Entities
                 lockState = false;
             }
         }
-
-        private bool IsManagedEntity(Entity entity)
-        {
-            return managedEntities.Matches(entity);
-        }
-
         private IEnumerable<Entity> GetManagedHoldables()
         {
-            if (Scene == null)
-            {
-                yield break;
-            }
-
-            foreach (Entity entity in Scene.Entities)
-            {
-                if (entity.Get<Holdable>() != null && IsManagedEntity(entity))
-                {
-                    yield return entity;
-                }
-            }
+            var managedEntities = Get<EntityTypeFilterComponent>();
+            return managedEntities.GetMatches().Where(e => e.Get<Holdable>() != null);
         }
-
         private void RenderCapRect()
         {
             switch (direction)

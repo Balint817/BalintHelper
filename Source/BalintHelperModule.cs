@@ -48,6 +48,33 @@ namespace Celeste.Mod.BalintHelper
             }
 
             TypeNameCodec.ResolveAmbiguousType += AmbiguousTypeResolver;
+
+            Everest.Events.Level.OnBeforeUpdate += BeforeUpdate;
+        }
+        public override void Unload()
+        {
+            On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
+            On.Celeste.OuiOptions.Update -= OuiOptions_Update;
+
+            IL.Celeste.Player.OnCollideV -= PatchOnCollideV;
+            IL.Celeste.Player.OnCollideH -= PatchOnCollideH;
+
+            Everest.Events.CustomBirdTutorial.OnParseCommand -= CustomBirdTutorial_OnParseCommand;
+
+            On.Celeste.Player.Pickup -= Player_Pickup;
+
+            On.Celeste.Solid.GetPlayerRider -= Solid_GetPlayerRider;
+
+            foreach (var item in CustomInstructionValueHandler.AllInstances)
+            {
+                item.Unload();
+            }
+
+            TypeNameCodec.ResolveAmbiguousType -= AmbiguousTypeResolver;
+
+            Everest.Events.Level.OnBeforeUpdate -= BeforeUpdate;
+
+            Instance = null!;
         }
         public override void Initialize()
         {
@@ -71,28 +98,12 @@ namespace Celeste.Mod.BalintHelper
                 );
             }
         }
-        public override void Unload()
+        public static void BeforeUpdate(Level level)
         {
-            On.Celeste.FloatingDebris.OnExplode -= OnFloatingDebrisExplode;
-            On.Celeste.OuiOptions.Update -= OuiOptions_Update;
-
-            IL.Celeste.Player.OnCollideV -= PatchOnCollideV;
-            IL.Celeste.Player.OnCollideH -= PatchOnCollideH;
-
-            Everest.Events.CustomBirdTutorial.OnParseCommand -= CustomBirdTutorial_OnParseCommand;
-
-            On.Celeste.Player.Pickup -= Player_Pickup;
-
-            On.Celeste.Solid.GetPlayerRider -= Solid_GetPlayerRider;
-
-            foreach (var item in CustomInstructionValueHandler.AllInstances)
+            foreach (EntityTypeFilterComponent item in level.Tracker.GetComponents<EntityTypeFilterComponent>())
             {
-                item.Unload();
+                item.BeforeUpdate(level);
             }
-
-            TypeNameCodec.ResolveAmbiguousType -= AmbiguousTypeResolver;
-
-            Instance = null!;
         }
         private bool AmbiguousTypeResolver(string typeName, IEnumerable<Type> matches, [MaybeNullWhen(false)] out Type resolvedType)
         {

@@ -11,7 +11,7 @@ trigger.placements = {
 
             counterId = "entityCount",
             aggregateMode = "Maximum",
-            entityTypes = "TheoCrystal,ExtendedVariantMode/TheoCrystal",
+            entityTypes = "TheoCrystal;ExtendedVariantMode/TheoCrystal",
         }
     }
 }

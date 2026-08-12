@@ -1,8 +1,9 @@
-﻿using Celeste.Mod.BalintHelper.Utils;
+﻿using Celeste.Mod.BalintHelper.Entities;
 using Celeste.Mod.Entities;
 using Microsoft.Xna.Framework;
 using Monocle;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Celeste.Mod.BalintHelper.Triggers
 {
@@ -34,14 +35,12 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private readonly bool onlyOnce;
         private readonly bool waitForSuccess;
 
-        private readonly EntityTypeFilter managedEntities;
-
         private HashSet<Entity> insideLastFrame = [];
         public HoldableTimerSetTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
         {
             timerValue = data.Float("value", 0f);
-            managedEntities = new EntityTypeFilter(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal"));
+            Add(new EntityTypeFilterComponent(data.Attr("entityTypes", "TheoCrystal,ExtendedVariantMode/TheoCrystal")));
 
             playerTriggerMode = data.Enum("playerTriggerMode", TriggerModes.Never);
             entityTriggerMode = data.Enum("entityTriggerMode", TriggerModes.Never);
@@ -174,30 +173,9 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 RemoveSelf();
             }
         }
-        private bool IsManagedEntity(Entity entity)
-        {
-            return managedEntities.Matches(entity);
-        }
-
         private IEnumerable<Entity> GetManagedHoldables()
         {
-            if (Scene == null)
-            {
-                yield break;
-            }
-
-            foreach (Entity entity in Scene.Entities)
-            {
-                if (entity.Get<Holdable>() == null)
-                {
-                    continue;
-                }
-
-                if (IsManagedEntity(entity))
-                {
-                    yield return entity;
-                }
-            }
+            return Get<EntityTypeFilterComponent>().GetMatches().Where(e => e.Get<Holdable>() != null);
         }
     }
 }
