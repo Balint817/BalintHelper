@@ -34,7 +34,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool instantReturnInBounds;
         private readonly float maxDistance;
         private readonly EntityTypeFilter managedEntities;
-        private readonly Dictionary<Type, FieldInfo?> speedFieldInfos = [];
         private readonly bool breakable;
         private readonly float brokenDisableDuration;
         private readonly bool showReturnLine;
@@ -168,12 +167,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         private readonly bool cancelDash;
 
         private readonly bool canGrab;
-        private static readonly FieldInfo HoldableCannotHoldTimer =
-            typeof(Holdable).GetField("cannotHoldTimer",
-                BindingFlags.Instance | BindingFlags.NonPublic)!;
-        private static readonly FieldInfo HoldableCannotHoldDelay =
-            typeof(Holdable).GetField("cannotHoldDelay",
-                BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         public CustomPedestal(EntityData data, Vector2 offset)
             : base(data.Position + offset, 32f, 32f, safe: false)
@@ -481,7 +474,6 @@ namespace Celeste.Mod.BalintHelper.Entities
                     if (ped.WantsEntity(e))
                     {
                         wanted = true;
-                        ped.EnsureSpeedFieldCached(e.GetType());
                     }
                 }
 
@@ -515,7 +507,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                     {
                         if (claimingPedestal.ClaimedEntity != null)
                         {
-                            SetHoldableTimer(claimingPedestal.ClaimedEntity.Get<Holdable>(), 0);
+                            claimingPedestal.ClaimedEntity.Get<Holdable>().cannotHoldTimer = 0f;
                         }
                         claimingPedestal.ClaimedEntity = null;
                     }
@@ -631,28 +623,8 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (!canGrab && holdable != null)
             {
-                SetHoldableTimer(holdable);
+                holdable.cannotHoldTimer = holdable.cannotHoldDelay;
             }
-        }
-
-        private static void SetHoldableTimer(Holdable? holdable, float delay)
-        {
-            if (holdable == null)
-            {
-                return;
-            }
-
-            HoldableCannotHoldTimer.SetValue(holdable, delay);
-        }
-
-        private static void SetHoldableTimer(Holdable? holdable)
-        {
-            if (holdable == null)
-            {
-                return;
-            }
-
-            SetHoldableTimer(holdable, (float)HoldableCannotHoldDelay.GetValue(holdable)!);
         }
 
         private void OnDebrisExploded(Vector2 from)
@@ -733,7 +705,8 @@ namespace Celeste.Mod.BalintHelper.Entities
             var entity = ClaimedEntity;
             ClaimedEntity = null;
 
-            SetHoldableTimer(entity.Get<Holdable>(), 0);
+            var holdable = entity.Get<Holdable>();
+            holdable.cannotHoldTimer = 0f;
 
             var speed = Vector2.Zero;
 
@@ -757,11 +730,7 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             if (speed != Vector2.Zero)
             {
-                EnsureSpeedFieldCached(entity.GetType());
-                if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField) && speedField != null)
-                {
-                    speedField.SetValue(entity, Vector2.Zero);
-                }
+                holdable.SetSpeed(speed);
             }
         }
 
@@ -777,23 +746,20 @@ namespace Celeste.Mod.BalintHelper.Entities
                 var verticalSpeedOffset = 0.1f;
                 var verticalSpeedMultiplier = 150f * multiplier;
 
-                EnsureSpeedFieldCached(ClaimedEntity.GetType());
-                if (speedFieldInfos.TryGetValue(ClaimedEntity.GetType(), out var speedField)
-                    && speedField != null
-                    && speedField.FieldType == typeof(Vector2))
-                {
-                    Vector2 speed = Vector2.Zero;
-                    speed += direction * baseDirectionMultiplier;
-                    speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
-                    if (applyLiftSpeed)
-                    {
-                        speed += AggregatedLiftSpeed;
-                    }
 
-                    speedField.SetValue(ClaimedEntity, speed);
+                Vector2 speed = Vector2.Zero;
+                speed += direction * baseDirectionMultiplier;
+                speed.Y = (direction.Y - verticalSpeedOffset) * verticalSpeedMultiplier;
+                if (applyLiftSpeed)
+                {
+                    speed += AggregatedLiftSpeed;
                 }
 
-                SetHoldableTimer(ClaimedEntity.Get<Holdable>(), 0);
+                var holdable = ClaimedEntity.Get<Holdable>();
+
+                holdable.SetSpeed(speed);
+                holdable.cannotHoldTimer = 0f;
+
                 ClaimedEntity = null;
             }
 
@@ -838,15 +804,13 @@ namespace Celeste.Mod.BalintHelper.Entities
 
             target.ClaimedEntity = entity;
             entity.Position = SnapPosition(target);
-            SetHoldableTimer(entity.Get<Holdable>(), 0);
+            var holdable = entity.Get<Holdable>();
+            holdable.cannotHoldTimer = 0;
 
             (entity as Actor)?.ZeroRemainderX();
             (entity as Actor)?.ZeroRemainderY();
 
-            if (speedFieldInfos.TryGetValue(entity.GetType(), out var speedField))
-            {
-                speedField?.SetValue(entity, Vector2.Zero);
-            }
+            holdable.SetSpeed(Vector2.Zero);
 
             if (playEffects)
             {
@@ -879,7 +843,7 @@ namespace Celeste.Mod.BalintHelper.Entities
             var ped = FindClaimingPedestal(entity);
             if (ped != null && ped.ClaimedEntity != null)
             {
-                SetHoldableTimer(ped.ClaimedEntity.Get<Holdable>(), 0);
+                ped.ClaimedEntity.Get<Holdable>().cannotHoldTimer = 0f;
                 ped.ClaimedEntity = null;
                 if (staticMovers && triggerMoverOnGrab)
                 {
@@ -1041,19 +1005,6 @@ namespace Celeste.Mod.BalintHelper.Entities
         public bool WantsEntity(Entity e)
         {
             return managedEntities.Matches(e);
-        }
-
-        public void EnsureSpeedFieldCached(Type type)
-        {
-            if (!speedFieldInfos.ContainsKey(type))
-            {
-                var fi = type.GetField("Speed", BindingFlags.Instance | BindingFlags.Public);
-                if (fi?.FieldType != typeof(Vector2))
-                {
-                    fi = null;
-                }
-                speedFieldInfos[type] = fi;
-            }
         }
 
         private static Vector2 SnapPosition(CustomPedestal pedestal)
