@@ -13,7 +13,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
 
         public override object?[] GetConstructorParameters()
         {
-            return [];
+            return [BottomInclusive, TopInclusive];
         }
         public readonly bool TopInclusive;
         public readonly bool BottomInclusive;
