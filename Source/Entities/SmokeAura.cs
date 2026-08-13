@@ -48,7 +48,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 FadeMode = ParticleType.FadeModes.Linear,
                 LifeMin = 1.0f,
                 LifeMax = 2.0f,
-                Size = 0.66f,
+                Size = 0.4f,
                 SpeedMin = 4f,
                 SpeedMax = 10f,
                 Direction = -(float)Math.PI / 2f,
