@@ -16,9 +16,8 @@ namespace Celeste.Mod.BalintHelper.Entities
         private static readonly Color DefaultColorA = Calc.HexToColor("463759");
         private static readonly Color DefaultColorB = Calc.HexToColor("8f7aa8");
 
-        public static ParticleType P_Smoke;
-        public static ParticleType P_Sparkle;
-
+        private static ParticleType? P_Smoke;
+        private static ParticleType? P_Sparkle;
         public static void InitializeParticles()
         {
             if (P_Smoke != null && P_Sparkle != null)

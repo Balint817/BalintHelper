@@ -504,10 +504,7 @@ namespace Celeste.Mod.BalintHelper.Entities
                 {
                     if (claimingPedestal.isBroken || !claimingPedestal.isEnabled)
                     {
-                        if (claimingPedestal.ClaimedEntity != null)
-                        {
-                            claimingPedestal.ClaimedEntity.Get<Holdable>().cannotHoldTimer = 0f;
-                        }
+                        claimingPedestal.ClaimedEntity?.Get<Holdable>().cannotHoldTimer = 0f;
                         claimingPedestal.ClaimedEntity = null;
                     }
                     else
