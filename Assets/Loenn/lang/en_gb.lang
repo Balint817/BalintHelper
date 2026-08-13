@@ -44,6 +44,10 @@ entities.BalintHelper/TemplateEntitySelector.placements.description.main=It's ev
 entities.BalintHelper/MusicSliderController.placements.description.main=A controller that takes the current time of the music and stores it in a slider.
 entities.BalintHelper/SmokeAura.placements.description.main=it's jank
 
+-- effects
+
+style.effects.BalintHelper/MusicWaveform.name=Music Waveform
+
 -- instruction triggers
 
 triggers.BalintHelper/BaseInstructionTrigger/AllocInstruction.placements.name.main=Instruction (Allocate Memory)
