@@ -9,7 +9,7 @@ waveform.defaultData = {
     color = "ffffff",
     height = 32.0,
     barCount = 64,
-    barSpacing = 1.0,
+    barFillPercent = 1.0,
     smoothing = 0.35,
     gain = 1.0,
     edgeOffset = 0.0,
@@ -47,13 +47,14 @@ waveform.fieldInformation = {
     },
     barCount = {
         fieldType = "integer",
-        minimumValue = 4,
-        description = "The number of bars spanning the width of the camera."
+        minimumValue = 1,
+        description = "The number of bars spanning the full width of the screen. The screen is divided into this many equal-width slots regardless of value, so bars always fill the width exactly."
     },
-    barSpacing = {
+    barFillPercent = {
         fieldType = "number",
-        minimumValue = 0.0,
-        description = "The gap in pixels between adjacent bars."
+        minimumValue = 0.05,
+        maximumValue = 1.0,
+        description = "What fraction of each bar's slot width the bar itself occupies, from 0.05 (thin bars, wide gaps) to 1.0 (no gaps, bars touch)."
     },
     smoothing = {
         fieldType = "number",
@@ -68,7 +69,7 @@ waveform.fieldInformation = {
     },
     edgeOffset = {
         fieldType = "number",
-        description = "Pushes the waveform's baseline inward from the camera edge it's attached to, in pixels."
+        description = "Pushes the waveform's baseline inward from the screen edge it's attached to, in pixels."
     },
     idleBehavior = {
         options = idleBehaviorValues,
@@ -83,7 +84,7 @@ waveform.fieldOrder = {
     "color",
     "height",
     "barCount",
-    "barSpacing",
+    "barFillPercent",
     "smoothing",
     "gain",
     "edgeOffset",
