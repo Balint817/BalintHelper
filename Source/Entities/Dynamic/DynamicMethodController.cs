@@ -371,10 +371,6 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
             }
             var nodes = data.NodesOffset(-data.Position + trigger.Position);
 
-            Logger.Log(LogLevel.Warn, "DynamicMethodController", $"Base nodes: {string.Join(", ", data.Nodes)}");
-            Logger.Log(LogLevel.Warn, "DynamicMethodController", $"Node positions: {string.Join(", ", nodes)}");
-            Logger.Log(LogLevel.Warn, "DynamicMethodController", $"Trigger bounds: {string.Join(", ", allTriggers.Select(x => new Rectangle((int)x.X, (int)x.Y, (int)x.Width, (int)x.Height)))}");
-
             foreach (var node in nodes)
             {
                 var hit = allTriggers.FirstOrDefault(t => t.CollidePoint(node));
