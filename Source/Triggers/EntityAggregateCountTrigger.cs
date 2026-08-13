@@ -25,6 +25,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
         private readonly EntityTypeFilter managedEntities;
 
         public int CurrentCount { get; private set; }
+        private bool firstUpdate = true;
 
         public EntityAggregateCountTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
@@ -35,10 +36,8 @@ namespace Celeste.Mod.BalintHelper.Triggers
         }
         public void UpdateCounter()
         {
-            if (Scene is not Level level)
-            {
-                return;
-            }
+            firstUpdate = false;
+            var level = SceneAs<Level>();
 
             var triggers = level.Tracker.GetEntities<EntityAggregateCountTrigger>().Cast<EntityAggregateCountTrigger>().Where(x => x.CounterId == CounterId).ToArray();
             var inconsistent = triggers.FirstOrDefault(x => x.Mode != Mode);
@@ -95,10 +94,10 @@ namespace Celeste.Mod.BalintHelper.Triggers
                 }
             }
 
-            if (newCount != CurrentCount)
+            if (newCount != CurrentCount || controller.firstUpdate)
             {
                 CurrentCount = newCount;
-                controller?.UpdateCounter();
+                controller.UpdateCounter();
             }
         }
     }
