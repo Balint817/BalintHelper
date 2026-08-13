@@ -14,7 +14,7 @@ using System.Reflection;
 namespace Celeste.Mod.BalintHelper.Entities.Dynamic
 {
     [Tracked(false)]
-    public class DynamicMethodController : Entity
+    public sealed class DynamicMethodController : Entity
     {
         private const BindingFlags AllConstructorFlags =
             BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
