@@ -48,6 +48,7 @@ namespace Celeste.Mod.BalintHelper
             }
 
             TypeNameCodec.ResolveAmbiguousType += AmbiguousTypeResolver;
+            SmokeAuraHooks.Load();
         }
         public override void Initialize()
         {
@@ -91,6 +92,7 @@ namespace Celeste.Mod.BalintHelper
             }
 
             TypeNameCodec.ResolveAmbiguousType -= AmbiguousTypeResolver;
+            SmokeAuraHooks.Unload();
 
             Instance = null!;
         }
