@@ -37,7 +37,7 @@ namespace Celeste.Mod.BalintHelper.Backdrops
         // Attempts to populate the targetAmplitudes[barCount] buffer with
         // the current song's per-bar peak amplitude, scaled by the gain and clamped to [0, 1].
         // Returns false if no music is currently audible or no audio data has been captured yet.
-        public static bool TryGetAmplitudes(float[] targetAmplitudes, int barCount, float gain)
+        public static bool TryGetAmplitudes(float[] targetAmplitudes, int barCount, float gain, float earlyPower, float latePower)
         {
             EventInstance instance = Audio.currentMusicEvent;
             if (instance == null || !instance.isValid())
@@ -89,7 +89,7 @@ namespace Celeste.Mod.BalintHelper.Backdrops
                         peak = abs;
                     }
                 }
-                targetAmplitudes[bar] = Calc.Clamp(peak * gain, 0f, 1f);
+                targetAmplitudes[bar] = MathF.Pow(Calc.Clamp(MathF.Pow(peak * gain, earlyPower), 0f, 1f), latePower);
             }
 
             return true;

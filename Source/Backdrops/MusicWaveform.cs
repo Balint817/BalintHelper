@@ -35,6 +35,8 @@ namespace Celeste.Mod.BalintHelper.Backdrops
         private readonly float gain;
         private readonly float edgeOffset;
         private readonly IdleBehavior idleBehavior;
+        private readonly float earlyPower;
+        private readonly float latePower;
 
         private readonly float[] targetAmplitudes;
         private readonly float[] currentAmplitudes;
@@ -54,6 +56,8 @@ namespace Celeste.Mod.BalintHelper.Backdrops
             gain = data.AttrFloat("gain", 1f);
             edgeOffset = data.AttrFloat("edgeOffset", 0f);
             idleBehavior = (IdleBehavior)Enum.Parse(typeof(IdleBehavior), data.Attr("idleBehavior", "Ripple"));
+            earlyPower = data.AttrFloat("earlyPower", 1f);
+            latePower = data.AttrFloat("latePower", 1f);
 
             targetAmplitudes = new float[barCount];
             currentAmplitudes = new float[barCount];
@@ -77,7 +81,7 @@ namespace Celeste.Mod.BalintHelper.Backdrops
                 return;
             }
 
-            if (!MusicWaveformCapture.TryGetAmplitudes(targetAmplitudes, barCount, gain))
+            if (!MusicWaveformCapture.TryGetAmplitudes(targetAmplitudes, barCount, gain, earlyPower, latePower))
             {
                 ApplyIdleBehavior();
             }

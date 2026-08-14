@@ -14,6 +14,8 @@ waveform.defaultData = {
     gain = 1.0,
     edgeOffset = 0.0,
     idleBehavior = "Ripple",
+    earlyPower = 1.0,
+    latePower = 1.0,
 }
 
 
@@ -75,6 +77,16 @@ waveform.fieldInformation = {
         options = idleBehaviorValues,
         editable = false,
         description = "What the waveform does when no music is currently playing.\nRipple = plays a gentle idle wave animation\nFlat = bars stay flat/still"
+    },
+    earlyPower = {
+        fieldType = "number",
+        minimumValue = 0.0,
+        description = "Exponent applied to the raw waveform amplitude BEFORE it's clamped.\nHigher values make the waveform MORE sensitive to quiet sounds."
+    },
+    latePower = {
+        fieldType = "number",
+        minimumValue = 0.0,
+        description = "Exponent applied to the raw waveform amplitude AFTER it's clamped.\nHigher values make the waveform LESS sensitive to quiet sounds."
     }
 }
 
@@ -86,7 +98,9 @@ waveform.fieldOrder = {
     "barCount",
     "barFillPercent",
     "smoothing",
+    "earlyPower",
     "gain",
+    "latePower",
     "edgeOffset",
     "idleBehavior",
 }
