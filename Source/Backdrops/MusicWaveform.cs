@@ -46,7 +46,7 @@ namespace Celeste.Mod.BalintHelper.Backdrops
         public MusicWaveform(BinaryPacker.Element data) : base()
         {
             placement = (WaveformPlacement)Enum.Parse(typeof(WaveformPlacement), data.Attr("placement", "Bottom"));
-            color = Calc.HexToColor(data.Attr("color", "ffffff"));
+            color = Calc.HexToColorWithAlpha(data.Attr("color", "ffffffff"));
             height = data.AttrFloat("height", 32f);
             barCount = Math.Max(1, data.AttrInt("barCount", 64));
             barFillPercent = Calc.Clamp(data.AttrFloat("barFillPercent", 0.8f), 0.05f, 1f);

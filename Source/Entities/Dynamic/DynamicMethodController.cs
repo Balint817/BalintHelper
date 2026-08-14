@@ -200,6 +200,7 @@ namespace Celeste.Mod.BalintHelper.Entities.Dynamic
                     else
                     {
                         next = successors.Count > 0 ? successors[0] : null;
+                        WallBooster
                     }
 
                     if (next is null)

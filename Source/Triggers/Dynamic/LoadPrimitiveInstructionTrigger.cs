@@ -191,7 +191,7 @@ namespace Celeste.Mod.BalintHelper.Triggers.Dynamic
                     {
                         try
                         {
-                            return Calc.HexToColor(value.Trim());
+                            return Calc.HexToColorWithAlpha(value.Trim());
                         }
                         catch (Exception)
                         {

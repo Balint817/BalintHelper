@@ -1072,7 +1072,7 @@ namespace Celeste.Mod.BalintHelper.Entities
         };
 
         private static Color ReadColor(EntityData data, string key, string fallbackHex)
-            => Calc.HexToColor(data.Attr(key, fallbackHex));
+            => Calc.HexToColorWithAlpha(data.Attr(key, fallbackHex));
 
         private void EmitReturnLine(Vector2 from, CustomPedestal target)
         {
