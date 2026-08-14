@@ -38,7 +38,7 @@ entity.fieldOrder = {
     "mode",
 }
 
-entity.texture = "BalintHelper/musicSliderController"
+entity.texture = "loenn/BalintHelper/musicslider"
 
 entity.justification = { 0.5, 0.5 }
 
