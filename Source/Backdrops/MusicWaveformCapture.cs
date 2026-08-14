@@ -89,7 +89,12 @@ namespace Celeste.Mod.BalintHelper.Backdrops
                         peak = abs;
                     }
                 }
-                targetAmplitudes[bar] = MathF.Pow(Calc.Clamp(MathF.Pow(peak * gain, earlyPower), 0f, 1f), latePower);
+                var result = MathF.Pow(Calc.Clamp(MathF.Pow(peak * gain, earlyPower), 0f, 1f), latePower);
+                if (!float.IsFinite(result))
+                {
+                    result = 0;
+                }
+                targetAmplitudes[bar] = result;
             }
 
             return true;
