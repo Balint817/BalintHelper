@@ -11,6 +11,7 @@ trigger.placements = {
 
             mode = "LowestId",
             disableTheoFreeze = false,
+            priority = 0
         }
     }
 }
@@ -42,6 +43,10 @@ trigger.fieldInformation = {
     disableTheoFreeze = {
         fieldType = "boolean",
         description = "If enabled, always prefer the holdable the player is already supposed to be holding.\nThis prevents 'Theo Freeze'."
+    },
+    priority = {
+        fieldType = "number",
+        description = "The priority to use when triggering more than one of these triggers\n(if equal, the game's internal priority is used)",
     }
 }
 

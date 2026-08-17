@@ -24,12 +24,15 @@ namespace Celeste.Mod.BalintHelper.Entities
         {
             Tag = Tags.Persistent | Tags.Global;
         }
-        public Holdable GetTarget(Player player)
+        public Holdable? GetTarget(Player player)
         {
             var triggers = player.Scene.Tracker
                 .GetEntities<HoldablePriorityTrigger>()
                 .Cast<HoldablePriorityTrigger>()
                 .Where(t => t.PlayerIsInside)
+                .GroupBy(t => t.Priority)
+                .OrderBy(group => group.Key)
+                .SelectMany(group => group)
                 .ToList();
 
             if (triggers.Count == 0)
@@ -82,12 +85,12 @@ namespace Celeste.Mod.BalintHelper.Entities
             }
         }
 
-        private Holdable SelectBy(Player player, List<Holdable> candidates,
+        private Holdable? SelectBy(Player player, List<Holdable> candidates,
                                   HoldableSelectMode mode)
         {
             if (candidates.Count == 0)
             {
-                return null!;
+                return null;
             }
             return mode switch
             {

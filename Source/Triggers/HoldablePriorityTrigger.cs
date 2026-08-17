@@ -33,6 +33,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
 
         public readonly HoldableSelectMode Mode;
         public readonly HoldableSelectFlags Flags;
+        public readonly int Priority;
 
         public HoldablePriorityTrigger(EntityData data, Vector2 offset)
             : base(data, offset)
@@ -41,6 +42,7 @@ namespace Celeste.Mod.BalintHelper.Triggers
             Flags = data.Bool("disableTheoFreeze", false)
                     ? HoldableSelectFlags.DisableTheoFreeze
                     : HoldableSelectFlags.None;
+            Priority = data.Int("priority", 0);
 
         }
 
