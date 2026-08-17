@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="DynamicInstructions/DynamicInstructions.csproj" />
+  <Project Path="Source/BalintHelper.csproj" />
+  <Project Path="TestApp/TestApp.csproj" />
+</Solution>
